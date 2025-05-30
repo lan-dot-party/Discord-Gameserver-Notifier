@@ -1,0 +1,79 @@
+discord:
+  webhooks:
+    - name: "Default Channel"
+      url: "YOUR_WEBHOOK_URL_HERE"
+      
+discovery:
+  beacon:
+    interval: 300  # Sekunden zwischen Beacon-Nachrichten
+    enabled_games:
+      - ut99
+      - ut2004
+      - ut3
+      - source
+      - renegadex
+      - trackmania
+      - warcraft3
+      - wreckfest
+      - flatout2
+      - minecraft
+      - toxikk
+  listener:
+    interface: "0.0.0.0"  # Interface für Broadcast-Listening
+
+database:
+  path: "data/servers.db"
+  cleanup:
+    inactive_minutes: 30  # Lösche Server nach X Minuten Inaktivität
+
+logging:
+  level: "INFO"
+  file: "logs/server_discovery.log"
+  max_size: 10485760  # 10MB
+  backup_count: 5
+
+games:
+  ut99:
+    enabled: true
+    query_port: 7778
+    beacon_interval: 300
+  ut2004:
+    enabled: true
+    query_port: 7778
+    beacon_interval: 300
+  ut3:
+    enabled: true
+    query_port: 7778
+    beacon_interval: 300
+  source:
+    enabled: true
+    query_port: 27015
+    beacon_interval: 300
+  renegadex:
+    enabled: true
+    query_port: 27015
+    beacon_interval: 300
+  trackmania:
+    enabled: true
+    query_port: 2350
+    beacon_interval: 300
+  warcraft3:
+    enabled: true
+    query_port: 6112
+    beacon_interval: 300
+  wreckfest:
+    enabled: true
+    query_port: 27015
+    beacon_interval: 300
+  flatout2:
+    enabled: true
+    query_port: 27015
+    beacon_interval: 300
+  minecraft:
+    enabled: true
+    query_port: 25565
+    beacon_interval: 300
+  toxikk:
+    enabled: true
+    query_port: 7778
+    beacon_interval: 300
