@@ -1,2 +1,10 @@
 TaskList.md
 discovery/__pycache__/*
+config/config.yaml
+gameservers.db
+notifier.log
+src/__pycache__/__init__.cpython-313.pyc
+src/config/__pycache__/__init__.cpython-313.pyc
+src/config/__pycache__/config_manager.cpython-313.pyc
+src/utils/__pycache__/__init__.cpython-313.pyc
+src/utils/__pycache__/logger.cpython-313.pyc

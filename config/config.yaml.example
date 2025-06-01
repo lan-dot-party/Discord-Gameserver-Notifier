@@ -1,0 +1,31 @@
+# Example configuration file for Discord Gameserver Notifier
+# Rename to config.yaml and adjust values as needed
+
+network:
+  scan_ranges:
+    - "192.168.1.0/24"
+    - "10.0.0.0/24"
+  scan_interval: 300  # seconds
+  timeout: 5  # seconds for server responses
+
+games:
+  enabled:
+    - "ut3"           # Unreal Tournament 3
+    - "source"        # Source Engine games
+    - "renegadex"     # Renegade X
+    - "warcraft3"     # Warcraft 3
+
+discord:
+  webhook_url: "https://discord.com/api/webhooks/..."
+  channel_id: "1234567890"
+  mentions:
+    - "@everyone"     # Optional
+
+database:
+  path: "./gameservers.db"
+  cleanup_after_fails: 5  # Delete server after X failed attempts
+
+debugging:
+  log_level: "INFO"   # DEBUG, INFO, WARNING, ERROR
+  log_to_file: true
+  log_file: "./notifier.log" 
