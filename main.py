@@ -148,7 +148,18 @@ class GameServerNotifier:
             server: The discovered server information
         """
         self.logger.info(f"Discovered {server.game_type} server: {server.ip_address}:{server.port}")
-        self.logger.debug(f"Server details: {server.server_info}")
+        
+        # Log game-specific details
+        if server.game_type == 'source':
+            self.logger.debug(f"Source server details: Name='{server.server_info.get('name', 'Unknown')}', "
+                            f"Map='{server.server_info.get('map', 'Unknown')}', "
+                            f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}")
+        elif server.game_type == 'renegadex':
+            self.logger.debug(f"RenegadeX server details: Name='{server.server_info.get('name', 'Unknown')}', "
+                            f"Map='{server.server_info.get('map', 'Unknown')}', "
+                            f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}, "
+                            f"Version='{server.server_info.get('game_version', 'Unknown')}', "
+                            f"Passworded={server.server_info.get('passworded', False)}")
         
         # TODO: In future tasks, this will:
         # - Store server in database

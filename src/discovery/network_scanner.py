@@ -7,6 +7,7 @@ import ipaddress
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
+import json
 
 # Import opengsq protocols
 import sys
@@ -14,6 +15,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'opengsq-python'))
 
 from opengsq.protocols.source import Source
+from opengsq.protocols.renegadex import RenegadeX
 from opengsq.protocol_base import ProtocolBase
 
 
@@ -60,6 +62,11 @@ class NetworkScanner:
             'source': {
                 'port': 27015,
                 'query_data': b'\xFF\xFF\xFF\xFF\x54Source Engine Query\x00'
+            },
+            'renegadex': {
+                'port': 7777,  # Game server port
+                'broadcast_port': 45542,  # Broadcast listening port
+                'passive': True  # Uses passive listening instead of active queries
             }
         }
         
@@ -107,6 +114,8 @@ class NetworkScanner:
         try:
             if game_type == 'source':
                 servers = await self._scan_source_servers(protocol_config)
+            elif game_type == 'renegadex':
+                servers = await self._scan_renegadex_servers(protocol_config)
         except Exception as e:
             self.logger.error(f"Error scanning for {game_type} servers: {e}")
         
@@ -253,6 +262,136 @@ class NetworkScanner:
             self.logger.debug(f"Failed to parse Source response: {e}")
         
         return None
+    
+    async def _scan_renegadex_servers(self, protocol_config: Dict[str, Any]) -> List[ServerResponse]:
+        """
+        Scan for Renegade X servers using passive broadcast listening.
+        
+        Args:
+            protocol_config: Configuration for the RenegadeX protocol
+            
+        Returns:
+            List of ServerResponse objects for RenegadeX servers
+        """
+        servers = []
+        broadcast_port = protocol_config['broadcast_port']
+        
+        self.logger.debug(f"Starting passive listening for RenegadeX broadcasts on port {broadcast_port}")
+        
+        try:
+            # Create a queue to collect broadcast messages
+            broadcast_queue = asyncio.Queue()
+            
+            # Create UDP socket for listening to broadcasts
+            loop = asyncio.get_running_loop()
+            transport, protocol = await loop.create_datagram_endpoint(
+                lambda: RenegadeXBroadcastProtocol(broadcast_queue),
+                local_addr=('0.0.0.0', broadcast_port),
+                allow_broadcast=True
+            )
+            
+            try:
+                # Listen for broadcasts for the timeout period
+                self.logger.debug(f"Listening for RenegadeX broadcasts for {self.timeout} seconds...")
+                end_time = asyncio.get_event_loop().time() + self.timeout
+                
+                # Dictionary to collect data from each server
+                server_data_buffers = {}
+                
+                while asyncio.get_event_loop().time() < end_time:
+                    try:
+                        # Wait for broadcast messages
+                        remaining_time = end_time - asyncio.get_event_loop().time()
+                        if remaining_time <= 0:
+                            break
+                            
+                        data, addr = await asyncio.wait_for(
+                            broadcast_queue.get(), 
+                            timeout=min(remaining_time, 1.0)
+                        )
+                        
+                        # Collect data from this server
+                        server_key = addr[0]  # Use IP as key
+                        if server_key not in server_data_buffers:
+                            server_data_buffers[server_key] = bytearray()
+                        
+                        server_data_buffers[server_key].extend(data)
+                        
+                        # Try to parse the accumulated data
+                        try:
+                            complete_data = bytes(server_data_buffers[server_key])
+                            server_info = await self._parse_renegadex_response(complete_data)
+                            if server_info:
+                                # Successfully parsed - create server response
+                                server_response = ServerResponse(
+                                    ip_address=addr[0],
+                                    port=server_info.get('port', protocol_config['port']),
+                                    game_type='renegadex',
+                                    server_info=server_info,
+                                    response_time=0.0
+                                )
+                                
+                                # Check if we already found this server
+                                if not any(s.ip_address == addr[0] for s in servers):
+                                    servers.append(server_response)
+                                    self.logger.debug(f"Discovered RenegadeX server: {addr[0]}:{server_info.get('port', protocol_config['port'])}")
+                                
+                                # Clear the buffer for this server
+                                server_data_buffers[server_key] = bytearray()
+                        except:
+                            # Not complete yet, continue collecting
+                            pass
+                        
+                    except asyncio.TimeoutError:
+                        continue
+                    except Exception as e:
+                        self.logger.debug(f"Error processing RenegadeX broadcast: {e}")
+                
+            finally:
+                transport.close()
+                
+        except Exception as e:
+            self.logger.error(f"Error listening for RenegadeX broadcasts: {e}")
+        
+        return servers
+    
+    async def _parse_renegadex_response(self, response_data: bytes) -> Optional[Dict[str, Any]]:
+        """
+        Parse a RenegadeX broadcast response.
+        
+        Args:
+            response_data: Raw JSON broadcast data from RenegadeX server
+            
+        Returns:
+            Dictionary containing parsed server information, or None if parsing failed
+        """
+        try:
+            # RenegadeX sends JSON data
+            json_str = response_data.decode('utf-8')
+            server_data = json.loads(json_str)
+            
+            # Use opengsq's RenegadeX protocol to parse the response
+            from opengsq.responses.renegadex import Status
+            status = Status.from_dict(server_data)
+            
+            return {
+                'name': status.name,
+                'map': status.map,
+                'port': status.port,
+                'players': status.players,
+                'max_players': status.variables.player_limit,
+                'game_version': status.game_version,
+                'passworded': status.variables.passworded,
+                'steam_required': status.variables.steam_required,
+                'team_mode': status.variables.team_mode,
+                'game_type': status.variables.game_type,
+                'ranked': status.variables.ranked
+            }
+            
+        except Exception as e:
+            self.logger.debug(f"Failed to parse RenegadeX response: {e}")
+        
+        return None
 
 
 class BroadcastResponseProtocol(asyncio.DatagramProtocol):
@@ -270,6 +409,23 @@ class BroadcastResponseProtocol(asyncio.DatagramProtocol):
     def error_received(self, exc: Exception) -> None:
         """Called when an error is received"""
         self.logger.debug(f"Error received: {exc}")
+
+
+class RenegadeXBroadcastProtocol(asyncio.DatagramProtocol):
+    """Protocol for collecting RenegadeX broadcast messages"""
+    
+    def __init__(self, broadcast_queue: asyncio.Queue):
+        self.broadcast_queue = broadcast_queue
+        self.logger = logging.getLogger("GameServerNotifier.RenegadeXBroadcastProtocol")
+    
+    def datagram_received(self, data: bytes, addr: Tuple[str, int]) -> None:
+        """Called when a RenegadeX broadcast is received"""
+        self.logger.debug(f"Received RenegadeX broadcast from {addr[0]}:{addr[1]} ({len(data)} bytes)")
+        self.broadcast_queue.put_nowait((data, addr))
+    
+    def error_received(self, exc: Exception) -> None:
+        """Called when an error is received"""
+        self.logger.debug(f"RenegadeX broadcast error: {exc}")
 
 
 class DiscoveryEngine:
