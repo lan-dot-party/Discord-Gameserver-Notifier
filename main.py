@@ -160,6 +160,12 @@ class GameServerNotifier:
                             f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}, "
                             f"Version='{server.server_info.get('game_version', 'Unknown')}', "
                             f"Passworded={server.server_info.get('passworded', False)}")
+        elif server.game_type == 'warcraft3':
+            self.logger.debug(f"Warcraft3 server details: Name='{server.server_info.get('name', 'Unknown')}', "
+                            f"Map='{server.server_info.get('map', 'Unknown')}', "
+                            f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}, "
+                            f"Product='{server.server_info.get('product', 'Unknown')}', "
+                            f"Version={server.server_info.get('version', 'Unknown')}")
         
         # TODO: In future tasks, this will:
         # - Store server in database

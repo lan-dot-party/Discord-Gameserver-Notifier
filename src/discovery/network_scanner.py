@@ -16,6 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'opengsq-pyt
 
 from opengsq.protocols.source import Source
 from opengsq.protocols.renegadex import RenegadeX
+from opengsq.protocols.warcraft3 import Warcraft3
 from opengsq.protocol_base import ProtocolBase
 
 
@@ -67,6 +68,10 @@ class NetworkScanner:
                 'port': 7777,  # Game server port
                 'broadcast_port': 45542,  # Broadcast listening port
                 'passive': True  # Uses passive listening instead of active queries
+            },
+            'warcraft3': {
+                'port': 6112,  # Game server port
+                'query_data': b'\xF7\x2F\x10\x00\x50\x58\x33\x57\x1A\x00\x00\x00\x00\x00\x00\x00'  # Search game packet
             }
         }
         
@@ -116,6 +121,8 @@ class NetworkScanner:
                 servers = await self._scan_source_servers(protocol_config)
             elif game_type == 'renegadex':
                 servers = await self._scan_renegadex_servers(protocol_config)
+            elif game_type == 'warcraft3':
+                servers = await self._scan_warcraft3_servers(protocol_config)
         except Exception as e:
             self.logger.error(f"Error scanning for {game_type} servers: {e}")
         
@@ -390,6 +397,140 @@ class NetworkScanner:
             
         except Exception as e:
             self.logger.debug(f"Failed to parse RenegadeX response: {e}")
+        
+        return None
+
+    async def _scan_warcraft3_servers(self, protocol_config: Dict[str, Any]) -> List[ServerResponse]:
+        """
+        Scan for Warcraft 3 servers using active broadcast queries.
+        
+        Args:
+            protocol_config: Configuration for the Warcraft3 protocol
+            
+        Returns:
+            List of ServerResponse objects for Warcraft3 servers
+        """
+        servers = []
+        port = protocol_config['port']
+        
+        # For each network range, send broadcast queries
+        for network_range in self.scan_ranges:
+            try:
+                network = ipaddress.ip_network(network_range, strict=False)
+                broadcast_addr = str(network.broadcast_address)
+                
+                self.logger.debug(f"Broadcasting Warcraft3 query to {broadcast_addr}:{port}")
+                
+                # Send broadcast query and collect responses
+                responses = await self._send_broadcast_query(
+                    broadcast_addr, port, protocol_config['query_data']
+                )
+                
+                # Process responses
+                for response_data, sender_addr in responses:
+                    try:
+                        server_info = await self._parse_warcraft3_response(response_data)
+                        if server_info:
+                            server_response = ServerResponse(
+                                ip_address=sender_addr[0],
+                                port=sender_addr[1],
+                                game_type='warcraft3',
+                                server_info=server_info,
+                                response_time=0.0
+                            )
+                            servers.append(server_response)
+                            self.logger.debug(f"Discovered Warcraft3 server: {sender_addr[0]}:{sender_addr[1]}")
+                    
+                    except Exception as e:
+                        self.logger.debug(f"Failed to parse Warcraft3 response from {sender_addr}: {e}")
+                        
+            except Exception as e:
+                self.logger.error(f"Error broadcasting Warcraft3 to network {network_range}: {e}")
+        
+        return servers
+    
+    async def _parse_warcraft3_response(self, response_data: bytes) -> Optional[Dict[str, Any]]:
+        """
+        Parse a Warcraft 3 server response.
+        
+        Args:
+            response_data: Raw response data from Warcraft3 server
+            
+        Returns:
+            Dictionary containing parsed server information, or None if parsing failed
+        """
+        try:
+            # Check if this is a valid Warcraft3 response
+            if len(response_data) < 4:
+                return None
+            
+            # Check for Warcraft3 protocol signature (0xF7)
+            if response_data[0] != 0xF7:
+                return None
+            
+            # Check for game info response (0x30)
+            if response_data[1] != 0x30:
+                return None
+            
+            # Use opengsq's Warcraft3 protocol to parse the response
+            temp_warcraft3 = Warcraft3("127.0.0.1", 6112)  # Dummy values
+            
+            # Create a BinaryReader for parsing
+            from opengsq.binary_reader import BinaryReader
+            br = BinaryReader(response_data)
+            
+            # Skip protocol signature and packet type
+            br.read_bytes(2)
+            
+            # Read packet size
+            packet_size = int.from_bytes(br.read_bytes(2), 'little')
+            
+            # Read game version info
+            product = br.read_bytes(4).decode('ascii', errors='ignore')
+            version = int.from_bytes(br.read_bytes(4), 'little')
+            host_counter = int.from_bytes(br.read_bytes(4), 'little')
+            entry_key = int.from_bytes(br.read_bytes(4), 'little')
+            
+            # Read game name (null-terminated)
+            game_name = ""
+            while br.remaining_bytes() > 0:
+                char = int.from_bytes(br.read_bytes(1), 'little')
+                if char == 0:
+                    break
+                game_name += chr(char)
+            
+            # Skip unknown byte if available
+            if br.remaining_bytes() > 0:
+                br.read_bytes(1)
+            
+            # Read remaining fields if available
+            slots_total = 0
+            slots_used = 0
+            if br.remaining_bytes() >= 12:
+                # Skip settings string (find next null terminator)
+                while br.remaining_bytes() > 0:
+                    char = int.from_bytes(br.read_bytes(1), 'little')
+                    if char == 0:
+                        break
+                
+                if br.remaining_bytes() >= 12:
+                    slots_total = int.from_bytes(br.read_bytes(4), 'little')
+                    game_flags = int.from_bytes(br.read_bytes(4), 'little')
+                    slots_used = int.from_bytes(br.read_bytes(4), 'little')
+            
+            return {
+                'name': game_name or f"Warcraft3 Server",
+                'map': "Unknown Map",
+                'product': product,
+                'version': version,
+                'players': slots_used,
+                'max_players': slots_total,
+                'host_counter': host_counter,
+                'entry_key': entry_key
+            }
+            
+        except Exception as e:
+            self.logger.debug(f"Failed to parse Warcraft3 response: {e}")
         
         return None
 
