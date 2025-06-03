@@ -13,6 +13,7 @@ from typing import Optional
 import logging
 from src.config.config_manager import ConfigManager
 from src.utils.logger import LoggerSetup
+from src.discovery.network_scanner import DiscoveryEngine, ServerResponse
 
 class GameServerNotifier:
     """Main application class for the Discord Gameserver Notifier."""
@@ -23,6 +24,18 @@ class GameServerNotifier:
         self.logger = LoggerSetup.setup_logger(self.config_manager.config)
         self.running = False
         self.shutdown_event = asyncio.Event()
+        
+        # Initialize discovery engine
+        try:
+            self.discovery_engine = DiscoveryEngine(self.config_manager.config)
+            self.discovery_engine.set_callbacks(
+                on_discovered=self._on_server_discovered,
+                on_lost=self._on_server_lost
+            )
+            self.logger.info("Discovery engine initialized successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize discovery engine: {e}", exc_info=True)
+            self.discovery_engine = None
         
         # Setup signal handlers
         for sig in (signal.SIGTERM, signal.SIGINT):
@@ -61,19 +74,28 @@ class GameServerNotifier:
         self.logger.info("Starting main application loop...")
         self.running = True
         
+        # Start the discovery engine
+        if self.discovery_engine:
+            try:
+                await self.discovery_engine.start()
+                self.logger.info("Discovery engine started successfully")
+            except Exception as e:
+                self.logger.error(f"Failed to start discovery engine: {e}", exc_info=True)
+        else:
+            self.logger.warning("Discovery engine not available - skipping network scanning")
+        
         while self.running:
             try:
                 # TODO: These will be implemented in future tasks
-                # await self.discovery_engine.scan()
                 # await self.database_manager.cleanup()
                 # await self.webhook_manager.process_notifications()
                 
-                # Temporary placeholder for future implementations
-                self.logger.debug("Main loop iteration - waiting for implementation")
+                # The discovery engine runs in the background via its own task
+                self.logger.debug("Main loop iteration - discovery engine running in background")
                 
                 # Check for shutdown signal
                 try:
-                    await asyncio.wait_for(self.shutdown_event.wait(), timeout=1.0)
+                    await asyncio.wait_for(self.shutdown_event.wait(), timeout=10.0)
                     if self.shutdown_event.is_set():
                         break
                 except asyncio.TimeoutError:
@@ -89,13 +111,19 @@ class GameServerNotifier:
         self.logger.info("Shutting down...")
         
         try:
+            # Stop the discovery engine
+            if self.discovery_engine:
+                try:
+                    await self.discovery_engine.stop()
+                    self.logger.info("Discovery engine stopped successfully")
+                except Exception as e:
+                    self.logger.error(f"Error stopping discovery engine: {e}", exc_info=True)
+            
             # TODO: These will be implemented in future tasks
-            # await self.discovery_engine.stop()
             # await self.database_manager.close()
             # await self.webhook_manager.close()
             
-            # Temporary placeholder for future implementations
-            self.logger.debug("Shutdown sequence - waiting for implementation")
+            self.logger.info("All components shut down successfully")
             
         except Exception as e:
             self.logger.error(f"Error during shutdown: {str(e)}", exc_info=True)
@@ -111,6 +139,34 @@ class GameServerNotifier:
             self.logger.critical(f"Critical error in main application: {str(e)}", exc_info=True)
         finally:
             await self.shutdown()
+
+    async def _on_server_discovered(self, server: ServerResponse) -> None:
+        """
+        Callback for when a new server is discovered.
+        
+        Args:
+            server: The discovered server information
+        """
+        self.logger.info(f"Discovered {server.game_type} server: {server.ip_address}:{server.port}")
+        self.logger.debug(f"Server details: {server.server_info}")
+        
+        # TODO: In future tasks, this will:
+        # - Store server in database
+        # - Send Discord notification
+        # - Update server status
+
+    async def _on_server_lost(self, server: ServerResponse) -> None:
+        """
+        Callback for when a server is no longer responding.
+        
+        Args:
+            server: The lost server information
+        """
+        self.logger.info(f"Lost {server.game_type} server: {server.ip_address}:{server.port}")
+        
+        # TODO: In future tasks, this will:
+        # - Update database status
+        # - Send Discord notification about server going offline
 
 def main():
     """Application entry point."""
