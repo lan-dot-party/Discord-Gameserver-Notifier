@@ -4,4 +4,8 @@ Server discovery and game wrapper package
 
 from .network_scanner import NetworkScanner, DiscoveryEngine, ServerResponse, BroadcastProtocol, RenegadeXBroadcastProtocol
 
-__all__ = ['NetworkScanner', 'DiscoveryEngine', 'ServerResponse', 'BroadcastProtocol', 'RenegadeXBroadcastProtocol'] 
+__all__ = ['NetworkScanner', 'DiscoveryEngine', 'ServerResponse', 'BroadcastProtocol', 'RenegadeXBroadcastProtocol']
+
+"""
+Discovery package for game server scanning and monitoring.
+""" 

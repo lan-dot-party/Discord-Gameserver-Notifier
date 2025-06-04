@@ -152,28 +152,56 @@ class NetworkScanner:
                 
                 self.logger.debug(f"Broadcasting Source query to {broadcast_addr}:{port}")
                 
-                # Send broadcast query and collect responses
+                # Send broadcast query and collect initial responses
                 responses = await self._send_broadcast_query(
                     broadcast_addr, port, protocol_config['query_data']
                 )
                 
-                # Process responses
+                # Process responses and query each responding server directly
                 for response_data, sender_addr in responses:
                     try:
-                        server_info = await self._parse_source_response(response_data)
-                        if server_info:
-                            server_response = ServerResponse(
-                                ip_address=sender_addr[0],
-                                port=sender_addr[1],
-                                game_type='source',
-                                server_info=server_info,
-                                response_time=0.0  # Will be calculated in actual implementation
-                            )
-                            servers.append(server_response)
-                            self.logger.debug(f"Discovered Source server: {sender_addr[0]}:{sender_addr[1]}")
-                    
+                        # Create direct Source query instance for the responding server
+                        source_query = Source(sender_addr[0], sender_addr[1])
+                        
+                        try:
+                            # Query the server directly for full info
+                            server_info = await source_query.get_info()
+                            
+                            if server_info:
+                                # Convert SourceInfo object to dictionary
+                                info_dict = {
+                                    'name': server_info.name,
+                                    'map': server_info.map,
+                                    'game': server_info.game,
+                                    'players': server_info.players,
+                                    'max_players': server_info.max_players,
+                                    'server_type': str(server_info.server_type),
+                                    'environment': str(server_info.environment),
+                                    'protocol': server_info.protocol,
+                                    'visibility': server_info.visibility,
+                                    'vac': server_info.vac,
+                                    'version': server_info.version,
+                                    'port': server_info.port,
+                                    'steam_id': server_info.steam_id if hasattr(server_info, 'steam_id') else None,
+                                    'keywords': server_info.keywords if hasattr(server_info, 'keywords') else None
+                                }
+                                
+                                server_response = ServerResponse(
+                                    ip_address=sender_addr[0],
+                                    port=sender_addr[1],
+                                    game_type='source',
+                                    server_info=info_dict,
+                                    response_time=0.0
+                                )
+                                servers.append(server_response)
+                                self.logger.debug(f"Discovered Source server: {sender_addr[0]}:{sender_addr[1]}")
+                                self.logger.debug(f"Source server details: Name='{info_dict['name']}', Map='{info_dict['map']}', Players={info_dict['players']}/{info_dict['max_players']}, Game={info_dict['game']}")
+                        
+                        except Exception as e:
+                            self.logger.debug(f"Failed to query Source server at {sender_addr}: {e}")
+                            
                     except Exception as e:
-                        self.logger.debug(f"Failed to parse response from {sender_addr}: {e}")
+                        self.logger.debug(f"Failed to process response from {sender_addr}: {e}")
                         
             except Exception as e:
                 self.logger.error(f"Error broadcasting to network {network_range}: {e}")
