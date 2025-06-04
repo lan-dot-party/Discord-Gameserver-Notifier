@@ -166,6 +166,11 @@ class GameServerNotifier:
                             f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}, "
                             f"Product='{server.server_info.get('product', 'Unknown')}', "
                             f"Version={server.server_info.get('version', 'Unknown')}")
+        elif server.game_type == 'flatout2':
+            self.logger.debug(f"Flatout2 server details: Name='{server.server_info.get('hostname', 'Unknown')}', "
+                            f"Flags={server.server_info.get('flags', '0')}, "
+                            f"Status={server.server_info.get('status', '0')}, "
+                            f"Timestamp={server.server_info.get('timestamp', '0')}")
         
         # TODO: In future tasks, this will:
         # - Store server in database
