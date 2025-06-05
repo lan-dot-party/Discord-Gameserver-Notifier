@@ -373,6 +373,7 @@ class NetworkScanner:
                 
                 # Dictionary to collect data from each server
                 server_data_buffers = {}
+                server_fragment_counts = {}
                 
                 while asyncio.get_event_loop().time() < end_time:
                     try:
@@ -390,33 +391,40 @@ class NetworkScanner:
                         server_key = addr[0]  # Use IP as key
                         if server_key not in server_data_buffers:
                             server_data_buffers[server_key] = bytearray()
+                            server_fragment_counts[server_key] = 0
                         
                         server_data_buffers[server_key].extend(data)
+                        server_fragment_counts[server_key] += 1
                         
-                        # Try to parse the accumulated data
-                        try:
-                            complete_data = bytes(server_data_buffers[server_key])
-                            server_info = await self._parse_renegadex_response(complete_data)
-                            if server_info:
-                                # Successfully parsed - create server response
-                                server_response = ServerResponse(
-                                    ip_address=addr[0],
-                                    port=server_info.get('port', protocol_config['port']),
-                                    game_type='renegadex',
-                                    server_info=server_info,
-                                    response_time=0.0
-                                )
-                                
-                                # Check if we already found this server
-                                if not any(s.ip_address == addr[0] for s in servers):
-                                    servers.append(server_response)
-                                    self.logger.debug(f"Discovered RenegadeX server: {addr[0]}:{server_info.get('port', protocol_config['port'])}")
-                                
-                                # Clear the buffer for this server
-                                server_data_buffers[server_key] = bytearray()
-                        except:
-                            # Not complete yet, continue collecting
-                            pass
+                        self.logger.debug(f"RenegadeX: Collected fragment {server_fragment_counts[server_key]} from {addr[0]} ({len(data)} bytes, total: {len(server_data_buffers[server_key])} bytes)")
+                        
+                        # Only try to parse if we have a potentially complete JSON message
+                        # Check if the accumulated data looks like complete JSON (ends with '}')
+                        complete_data = bytes(server_data_buffers[server_key])
+                        if self._is_complete_renegadex_json(complete_data):
+                            try:
+                                server_info = await self._parse_renegadex_response(complete_data)
+                                if server_info:
+                                    # Successfully parsed - create server response
+                                    server_response = ServerResponse(
+                                        ip_address=addr[0],
+                                        port=server_info.get('port', protocol_config['port']),
+                                        game_type='renegadex',
+                                        server_info=server_info,
+                                        response_time=0.0
+                                    )
+                                    
+                                    # Check if we already found this server
+                                    if not any(s.ip_address == addr[0] for s in servers):
+                                        servers.append(server_response)
+                                        self.logger.debug(f"Discovered RenegadeX server: {addr[0]}:{server_info.get('port', protocol_config['port'])} (assembled from {server_fragment_counts[server_key]} fragments)")
+                                    
+                                    # Clear the buffer for this server
+                                    server_data_buffers[server_key] = bytearray()
+                                    server_fragment_counts[server_key] = 0
+                            except Exception as e:
+                                # Only log parsing errors if we think we have complete data
+                                self.logger.debug(f"RenegadeX: Failed to parse seemingly complete JSON from {addr[0]}: {e}")
                         
                     except asyncio.TimeoutError:
                         continue
@@ -431,9 +439,65 @@ class NetworkScanner:
         
         return servers
     
+    def _is_complete_renegadex_json(self, data: bytes) -> bool:
+        """
+        Check if the accumulated RenegadeX data contains complete JSON.
+        This method tries to extract valid JSON even if there are duplicates or extra data.
+        
+        Args:
+            data: Accumulated broadcast data
+            
+        Returns:
+            True if data contains complete JSON, False otherwise
+        """
+        try:
+            # Convert to string and clean up
+            json_str = data.decode('utf-8', errors='ignore').strip()
+            
+            if not json_str:
+                return False
+            
+            # Try to find the first complete JSON object
+            # Look for the first '{' and try to find its matching '}'
+            start_idx = json_str.find('{')
+            if start_idx == -1:
+                return False
+            
+            # Count braces to find the end of the first complete JSON object
+            brace_count = 0
+            end_idx = -1
+            
+            for i in range(start_idx, len(json_str)):
+                if json_str[i] == '{':
+                    brace_count += 1
+                elif json_str[i] == '}':
+                    brace_count -= 1
+                    if brace_count == 0:
+                        end_idx = i
+                        break
+            
+            if end_idx == -1:
+                return False
+            
+            # Extract the potential JSON substring
+            potential_json = json_str[start_idx:end_idx + 1]
+            
+            # Try to parse it to verify it's valid JSON
+            try:
+                import json
+                json.loads(potential_json)
+                return True
+            except json.JSONDecodeError:
+                return False
+                
+        except Exception as e:
+            self.logger.debug(f"RenegadeX JSON validation error: {e}")
+            return False
+    
     async def _parse_renegadex_response(self, response_data: bytes) -> Optional[Dict[str, Any]]:
         """
         Parse a RenegadeX broadcast response.
+        Extracts the first valid JSON object from the accumulated data.
         
         Args:
             response_data: Raw JSON broadcast data from RenegadeX server
@@ -442,9 +506,37 @@ class NetworkScanner:
             Dictionary containing parsed server information, or None if parsing failed
         """
         try:
-            # RenegadeX sends JSON data
-            json_str = response_data.decode('utf-8')
-            server_data = json.loads(json_str)
+            # Convert to string and clean up
+            json_str = response_data.decode('utf-8', errors='ignore').strip()
+            
+            # Find the first complete JSON object (same logic as validation)
+            start_idx = json_str.find('{')
+            if start_idx == -1:
+                self.logger.debug(f"RenegadeX: No JSON start found in {len(json_str)} chars")
+                return None
+            
+            # Count braces to find the end of the first complete JSON object
+            brace_count = 0
+            end_idx = -1
+            
+            for i in range(start_idx, len(json_str)):
+                if json_str[i] == '{':
+                    brace_count += 1
+                elif json_str[i] == '}':
+                    brace_count -= 1
+                    if brace_count == 0:
+                        end_idx = i
+                        break
+            
+            if end_idx == -1:
+                self.logger.debug(f"RenegadeX: No JSON end found, brace_count={brace_count}")
+                return None
+            
+            # Extract and parse the JSON
+            json_data = json_str[start_idx:end_idx + 1]
+            self.logger.debug(f"RenegadeX: Extracted JSON ({len(json_data)} chars) from {len(json_str)} total chars")
+            
+            server_data = json.loads(json_data)
             
             # Use opengsq's RenegadeX protocol to parse the response
             from opengsq.responses.renegadex import Status
@@ -465,7 +557,10 @@ class NetworkScanner:
             }
             
         except Exception as e:
-            self.logger.debug(f"Failed to parse RenegadeX response: {e}")
+            self.logger.debug(f"Failed to parse RenegadeX response ({len(response_data)} bytes): {e}")
+            # Log first 200 chars of data for debugging
+            preview = response_data[:200].decode('utf-8', errors='ignore')
+            self.logger.debug(f"RenegadeX data preview: {repr(preview)}")
         
         return None
 
