@@ -16,6 +16,7 @@ from src.utils.logger import LoggerSetup
 from src.discovery.network_scanner import DiscoveryEngine, ServerResponse
 from src.discovery.server_info_wrapper import ServerInfoWrapper, StandardizedServerInfo
 from src.database.database_manager import DatabaseManager
+from src.discord.webhook_manager import WebhookManager
 
 class GameServerNotifier:
     """Main application class for the Discord Gameserver Notifier."""
@@ -38,6 +39,31 @@ class GameServerNotifier:
         except Exception as e:
             self.logger.error(f"Failed to initialize database manager: {e}", exc_info=True)
             self.database_manager = None
+        
+        # Initialize Discord webhook manager
+        try:
+            discord_config = self.config_manager.config.get('discord', {})
+            webhook_url = discord_config.get('webhook_url')
+            
+            if webhook_url and webhook_url != "https://discord.com/api/webhooks/...":
+                self.webhook_manager = WebhookManager(
+                    webhook_url=webhook_url,
+                    channel_id=discord_config.get('channel_id'),
+                    mentions=discord_config.get('mentions', [])
+                )
+                
+                # Test webhook connection
+                if self.webhook_manager.test_webhook():
+                    self.logger.info("Discord webhook manager initialized and tested successfully")
+                else:
+                    self.logger.warning("Discord webhook test failed - notifications may not work")
+            else:
+                self.logger.warning("Discord webhook URL not configured - Discord notifications disabled")
+                self.webhook_manager = None
+                
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Discord webhook manager: {e}", exc_info=True)
+            self.webhook_manager = None
         
         # Initialize discovery engine
         try:
@@ -186,8 +212,12 @@ class GameServerNotifier:
                 except Exception as e:
                     self.logger.error(f"Error closing database manager: {e}", exc_info=True)
             
-            # TODO: Discord webhook manager will be implemented in future tasks
-            # await self.webhook_manager.close()
+            # Close Discord webhook manager
+            if self.webhook_manager:
+                try:
+                    self.logger.info("Discord webhook manager closed successfully")
+                except Exception as e:
+                    self.logger.error(f"Error closing Discord webhook manager: {e}", exc_info=True)
             
             self.logger.info("All components shut down successfully")
             
@@ -231,22 +261,46 @@ class GameServerNotifier:
                     self.logger.debug(f"Additional info: {standardized_server.additional_info}")
             
             # Store server in database
+            is_new_server = False
             if self.database_manager:
                 try:
                     server_model = self.database_manager.add_or_update_server(standardized_server)
                     self.logger.info(f"Server stored in database with ID: {server_model.id}")
                     
-                    # Log if this is a new discovery vs update
+                    # Check if this is a new discovery vs update
                     if server_model.first_seen == server_model.last_seen:
                         self.logger.info(f"New server discovery recorded: {server_model.get_server_key()}")
+                        is_new_server = True
                     else:
                         self.logger.debug(f"Server updated in database: {server_model.get_server_key()}")
                         
                 except Exception as db_error:
                     self.logger.error(f"Failed to store server in database: {db_error}", exc_info=True)
             
-            # TODO: In future tasks, this will also:
-            # - Send Discord notification with formatted summary
+            # Send Discord notification for new server discoveries
+            if is_new_server and self.webhook_manager:
+                try:
+                    message_id = self.webhook_manager.send_new_server_notification(standardized_server)
+                    if message_id:
+                        self.logger.info(f"Discord notification sent for new server: {standardized_server.name}")
+                        
+                        # Update database with Discord message ID for future reference
+                        if self.database_manager:
+                            try:
+                                self.database_manager.update_discord_info(
+                                    standardized_server.ip_address,
+                                    standardized_server.port,
+                                    message_id,
+                                    self.webhook_manager.channel_id
+                                )
+                                self.logger.debug(f"Discord message ID stored in database: {message_id}")
+                            except Exception as db_error:
+                                self.logger.error(f"Failed to store Discord message ID: {db_error}", exc_info=True)
+                    else:
+                        self.logger.warning(f"Failed to send Discord notification for server: {standardized_server.name}")
+                        
+                except Exception as discord_error:
+                    self.logger.error(f"Error sending Discord notification: {discord_error}", exc_info=True)
             
         except Exception as e:
             self.logger.error(f"Error processing discovered server {server.ip_address}:{server.port}: {e}", exc_info=True)
@@ -296,8 +350,17 @@ class GameServerNotifier:
                 self.logger.debug(f"Lost server summary:\n{summary}")
             
             # Mark server as failed in database
+            discord_message_id = None
             if self.database_manager:
                 try:
+                    # Get Discord message ID before marking as failed
+                    server_model = self.database_manager.get_server_by_address(
+                        standardized_server.ip_address,
+                        standardized_server.port
+                    )
+                    if server_model:
+                        discord_message_id = server_model.discord_message_id
+                    
                     success = self.database_manager.mark_server_failed(
                         standardized_server.ip_address, 
                         standardized_server.port
@@ -310,8 +373,20 @@ class GameServerNotifier:
                 except Exception as db_error:
                     self.logger.error(f"Database error when marking server as failed: {db_error}", exc_info=True)
             
-            # TODO: In future tasks, this will also:
-            # - Send Discord notification about server going offline
+            # Send Discord notification about server going offline
+            if self.webhook_manager:
+                try:
+                    success = self.webhook_manager.send_server_offline_notification(
+                        standardized_server, 
+                        discord_message_id
+                    )
+                    if success:
+                        self.logger.info(f"Discord offline notification sent for server: {standardized_server.name}")
+                    else:
+                        self.logger.warning(f"Failed to send Discord offline notification for server: {standardized_server.name}")
+                        
+                except Exception as discord_error:
+                    self.logger.error(f"Error sending Discord offline notification: {discord_error}", exc_info=True)
             
         except Exception as e:
             self.logger.error(f"Error processing lost server {server.ip_address}:{server.port}: {e}", exc_info=True)
@@ -319,8 +394,14 @@ class GameServerNotifier:
             self.logger.info(f"Lost {server.game_type} server: {server.ip_address}:{server.port} (raw data)")
             
             # Mark server as failed in database (fallback for raw data)
+            discord_message_id = None
             if self.database_manager:
                 try:
+                    # Get Discord message ID before marking as failed
+                    server_model = self.database_manager.get_server_by_address(server.ip_address, server.port)
+                    if server_model:
+                        discord_message_id = server_model.discord_message_id
+                    
                     success = self.database_manager.mark_server_failed(server.ip_address, server.port)
                     if success:
                         self.logger.info(f"Server marked as failed in database (fallback): {server.ip_address}:{server.port}")
@@ -330,8 +411,36 @@ class GameServerNotifier:
                 except Exception as db_error:
                     self.logger.error(f"Database error when marking server as failed (fallback): {db_error}", exc_info=True)
             
-            # TODO: In future tasks, this will also:
-            # - Send Discord notification about server going offline
+            # Send Discord notification about server going offline (fallback)
+            if self.webhook_manager and discord_message_id:
+                try:
+                    # Create a basic standardized server info for Discord notification
+                    fallback_server_info = StandardizedServerInfo(
+                        name=f"{server.game_type.upper()} Server",
+                        game=server.game_type.title(),
+                        map="Unknown",
+                        players=0,
+                        max_players=0,
+                        version="Unknown",
+                        password_protected=False,
+                        ip_address=server.ip_address,
+                        port=server.port,
+                        game_type=server.game_type,
+                        response_time=server.response_time,
+                        additional_info={}
+                    )
+                    
+                    success = self.webhook_manager.send_server_offline_notification(
+                        fallback_server_info, 
+                        discord_message_id
+                    )
+                    if success:
+                        self.logger.info(f"Discord offline notification sent for server (fallback): {server.ip_address}:{server.port}")
+                    else:
+                        self.logger.warning(f"Failed to send Discord offline notification (fallback): {server.ip_address}:{server.port}")
+                        
+                except Exception as discord_error:
+                    self.logger.error(f"Error sending Discord offline notification (fallback): {discord_error}", exc_info=True)
 
 def main():
     """Application entry point."""

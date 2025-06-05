@@ -16,10 +16,19 @@ games:
     - "warcraft3"     # Warcraft 3
 
 discord:
+  # Discord Webhook URL - Get this from your Discord server settings
+  # Server Settings -> Integrations -> Webhooks -> Create Webhook
+  # Example: "https://discord.com/api/webhooks/1234567890123456789/AbCdEfGhIjKlMnOpQrStUvWxYz1234567890AbCdEfGhIjKlMnOpQrStUvWxYz"
   webhook_url: "https://discord.com/api/webhooks/..."
+  
+  # Optional: Discord Channel ID for reference (not required for webhooks)
   channel_id: "1234567890"
+  
+  # Optional: Mentions to include in new server notifications
   mentions:
-    - "@everyone"     # Optional
+    - "@everyone"     # Mention everyone
+    # - "@here"       # Mention online users only
+    # - "<@&ROLE_ID>" # Mention specific role (replace ROLE_ID with actual role ID)
 
 database:
   path: "./gameservers.db"
