@@ -15,6 +15,7 @@ from src.config.config_manager import ConfigManager
 from src.utils.logger import LoggerSetup
 from src.discovery.network_scanner import DiscoveryEngine, ServerResponse
 from src.discovery.server_info_wrapper import ServerInfoWrapper, StandardizedServerInfo
+from src.database.database_manager import DatabaseManager
 
 class GameServerNotifier:
     """Main application class for the Discord Gameserver Notifier."""
@@ -28,6 +29,15 @@ class GameServerNotifier:
         
         # Initialize server info wrapper for standardized server data
         self.server_wrapper = ServerInfoWrapper()
+        
+        # Initialize database manager
+        try:
+            db_path = self.config_manager.config.get('database', {}).get('path', './gameservers.db')
+            self.database_manager = DatabaseManager(db_path)
+            self.logger.info("Database manager initialized successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize database manager: {e}", exc_info=True)
+            self.database_manager = None
         
         # Initialize discovery engine
         try:
@@ -88,18 +98,47 @@ class GameServerNotifier:
         else:
             self.logger.warning("Discovery engine not available - skipping network scanning")
         
+        # Periodic cleanup interval (every 10 minutes)
+        cleanup_interval = 600  # 10 minutes in seconds
+        last_cleanup = 0
+        
         while self.running:
             try:
-                # TODO: These will be implemented in future tasks
-                # await self.database_manager.cleanup()
+                # Periodic database cleanup
+                if self.database_manager:
+                    import time
+                    current_time = time.time()
+                    if current_time - last_cleanup >= cleanup_interval:
+                        try:
+                            cleanup_config = self.config_manager.config.get('database', {})
+                            max_failed_attempts = cleanup_config.get('cleanup_after_fails', 5)
+                            inactive_hours = cleanup_config.get('inactive_hours', 24)
+                            
+                            cleanup_count = self.database_manager.cleanup_inactive_servers(
+                                max_failed_attempts=max_failed_attempts,
+                                inactive_hours=inactive_hours
+                            )
+                            
+                            if cleanup_count > 0:
+                                self.logger.info(f"Database cleanup completed: {cleanup_count} servers marked inactive")
+                            
+                            # Log database statistics
+                            stats = self.database_manager.get_database_stats()
+                            self.logger.info(f"Database stats: {stats['active_servers']}/{stats['total_servers']} active servers")
+                            
+                            last_cleanup = current_time
+                        except Exception as e:
+                            self.logger.error(f"Error during database cleanup: {e}", exc_info=True)
+                
+                # TODO: Discord webhook processing will be implemented in future tasks
                 # await self.webhook_manager.process_notifications()
                 
                 # The discovery engine runs in the background via its own task
                 self.logger.debug("Main loop iteration - discovery engine running in background")
                 
-                # Check for shutdown signal
+                # Check for shutdown signal with shorter timeout for more responsive cleanup
                 try:
-                    await asyncio.wait_for(self.shutdown_event.wait(), timeout=10.0)
+                    await asyncio.wait_for(self.shutdown_event.wait(), timeout=30.0)
                     if self.shutdown_event.is_set():
                         break
                 except asyncio.TimeoutError:
@@ -123,8 +162,31 @@ class GameServerNotifier:
                 except Exception as e:
                     self.logger.error(f"Error stopping discovery engine: {e}", exc_info=True)
             
-            # TODO: These will be implemented in future tasks
-            # await self.database_manager.close()
+            # Close database manager
+            if self.database_manager:
+                try:
+                    # Perform final cleanup before shutdown
+                    cleanup_config = self.config_manager.config.get('database', {})
+                    max_failed_attempts = cleanup_config.get('cleanup_after_fails', 5)
+                    inactive_hours = cleanup_config.get('inactive_hours', 24)
+                    
+                    final_cleanup_count = self.database_manager.cleanup_inactive_servers(
+                        max_failed_attempts=max_failed_attempts,
+                        inactive_hours=inactive_hours
+                    )
+                    
+                    if final_cleanup_count > 0:
+                        self.logger.info(f"Final database cleanup: {final_cleanup_count} servers marked inactive")
+                    
+                    # Log final database statistics
+                    final_stats = self.database_manager.get_database_stats()
+                    self.logger.info(f"Final database stats: {final_stats}")
+                    
+                    self.logger.info("Database manager closed successfully")
+                except Exception as e:
+                    self.logger.error(f"Error closing database manager: {e}", exc_info=True)
+            
+            # TODO: Discord webhook manager will be implemented in future tasks
             # await self.webhook_manager.close()
             
             self.logger.info("All components shut down successfully")
@@ -168,10 +230,23 @@ class GameServerNotifier:
                 if standardized_server.additional_info:
                     self.logger.debug(f"Additional info: {standardized_server.additional_info}")
             
-            # TODO: In future tasks, this will:
-            # - Store standardized server in database
+            # Store server in database
+            if self.database_manager:
+                try:
+                    server_model = self.database_manager.add_or_update_server(standardized_server)
+                    self.logger.info(f"Server stored in database with ID: {server_model.id}")
+                    
+                    # Log if this is a new discovery vs update
+                    if server_model.first_seen == server_model.last_seen:
+                        self.logger.info(f"New server discovery recorded: {server_model.get_server_key()}")
+                    else:
+                        self.logger.debug(f"Server updated in database: {server_model.get_server_key()}")
+                        
+                except Exception as db_error:
+                    self.logger.error(f"Failed to store server in database: {db_error}", exc_info=True)
+            
+            # TODO: In future tasks, this will also:
             # - Send Discord notification with formatted summary
-            # - Update server status
             
         except Exception as e:
             self.logger.error(f"Error processing discovered server {server.ip_address}:{server.port}: {e}", exc_info=True)
@@ -220,8 +295,22 @@ class GameServerNotifier:
                 summary = self.server_wrapper.format_server_summary(standardized_server)
                 self.logger.debug(f"Lost server summary:\n{summary}")
             
-            # TODO: In future tasks, this will:
-            # - Update database status for standardized server
+            # Mark server as failed in database
+            if self.database_manager:
+                try:
+                    success = self.database_manager.mark_server_failed(
+                        standardized_server.ip_address, 
+                        standardized_server.port
+                    )
+                    if success:
+                        self.logger.info(f"Server marked as failed in database: {standardized_server.ip_address}:{standardized_server.port}")
+                    else:
+                        self.logger.warning(f"Failed to mark server as failed (not found in database): {standardized_server.ip_address}:{standardized_server.port}")
+                        
+                except Exception as db_error:
+                    self.logger.error(f"Database error when marking server as failed: {db_error}", exc_info=True)
+            
+            # TODO: In future tasks, this will also:
             # - Send Discord notification about server going offline
             
         except Exception as e:
@@ -229,8 +318,19 @@ class GameServerNotifier:
             # Fallback to original logging if standardization fails
             self.logger.info(f"Lost {server.game_type} server: {server.ip_address}:{server.port} (raw data)")
             
-            # TODO: In future tasks, this will:
-            # - Update database status
+            # Mark server as failed in database (fallback for raw data)
+            if self.database_manager:
+                try:
+                    success = self.database_manager.mark_server_failed(server.ip_address, server.port)
+                    if success:
+                        self.logger.info(f"Server marked as failed in database (fallback): {server.ip_address}:{server.port}")
+                    else:
+                        self.logger.warning(f"Failed to mark server as failed (not found in database, fallback): {server.ip_address}:{server.port}")
+                        
+                except Exception as db_error:
+                    self.logger.error(f"Database error when marking server as failed (fallback): {db_error}", exc_info=True)
+            
+            # TODO: In future tasks, this will also:
             # - Send Discord notification about server going offline
 
 def main():

@@ -23,7 +23,9 @@ discord:
 
 database:
   path: "./gameservers.db"
-  cleanup_after_fails: 5  # Delete server after X failed attempts
+  cleanup_after_fails: 5  # Mark server inactive after X failed attempts
+  inactive_hours: 24       # Hours of inactivity before cleanup
+  cleanup_interval: 600    # Cleanup interval in seconds (10 minutes)
 
 debugging:
   log_level: "INFO"   # DEBUG, INFO, WARNING, ERROR
