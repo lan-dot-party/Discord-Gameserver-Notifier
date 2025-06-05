@@ -20,6 +20,9 @@ from opengsq.protocols.warcraft3 import Warcraft3
 from opengsq.protocols.flatout2 import Flatout2
 from opengsq.protocol_base import ProtocolBase
 
+# Import the server info wrapper
+from .server_info_wrapper import ServerInfoWrapper, StandardizedServerInfo
+
 
 @dataclass
 class ServerResponse:
@@ -58,6 +61,9 @@ class NetworkScanner:
         self.timeout = config.get('network', {}).get('timeout', 5.0)
         self.scan_ranges = config.get('network', {}).get('scan_ranges', [])
         self.enabled_games = config.get('games', {}).get('enabled', [])
+        
+        # Initialize the server info wrapper for standardization
+        self.server_wrapper = ServerInfoWrapper()
         
         # Protocol configurations
         self.protocol_configs = {
@@ -112,6 +118,29 @@ class NetworkScanner:
         
         self.logger.info(f"Network scan completed. Total servers found: {len(discovered_servers)}")
         return discovered_servers
+    
+    async def scan_for_standardized_servers(self) -> List[StandardizedServerInfo]:
+        """
+        Perform broadcast scan for all enabled game types and return standardized results.
+        
+        Returns:
+            List of StandardizedServerInfo objects for discovered servers
+        """
+        # Get raw server responses
+        raw_servers = await self.scan_for_servers()
+        
+        # Convert to standardized format
+        standardized_servers = []
+        for server_response in raw_servers:
+            try:
+                standardized_server = self.server_wrapper.standardize_server_response(server_response)
+                standardized_servers.append(standardized_server)
+                self.logger.debug(f"Standardized server: {standardized_server.name} ({standardized_server.game})")
+            except Exception as e:
+                self.logger.error(f"Failed to standardize server response from {server_response.ip_address}:{server_response.port}: {e}")
+        
+        self.logger.info(f"Standardized {len(standardized_servers)} servers")
+        return standardized_servers
     
     async def _scan_game_type(self, game_type: str) -> List[ServerResponse]:
         """
@@ -855,6 +884,16 @@ class DiscoveryEngine:
         """
         self.logger.info("Performing single network scan")
         return await self.scanner.scan_for_servers()
+    
+    async def scan_once_standardized(self) -> List[StandardizedServerInfo]:
+        """
+        Perform a single scan for servers and return standardized results.
+        
+        Returns:
+            List of standardized discovered servers
+        """
+        self.logger.info("Performing single standardized network scan")
+        return await self.scanner.scan_for_standardized_servers()
     
     async def _periodic_scan_loop(self):
         """Main loop for periodic server scanning"""
