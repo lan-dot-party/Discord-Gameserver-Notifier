@@ -1,0 +1,3 @@
+"""
+Discord integration package
+""" 
