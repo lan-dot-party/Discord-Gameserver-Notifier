@@ -10,3 +10,4 @@ src/utils/__pycache__/__init__.cpython-313.pyc
 src/utils/__pycache__/logger.cpython-313.pyc
 src/discovery/__pycache__/__init__.cpython-313.pyc
 src/discovery/__pycache__/network_scanner.cpython-313.pyc
+src/discovery/__pycache__/server_info_wrapper.cpython-313.pyc

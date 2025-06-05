@@ -14,6 +14,7 @@ import logging
 from src.config.config_manager import ConfigManager
 from src.utils.logger import LoggerSetup
 from src.discovery.network_scanner import DiscoveryEngine, ServerResponse
+from src.discovery.server_info_wrapper import ServerInfoWrapper, StandardizedServerInfo
 
 class GameServerNotifier:
     """Main application class for the Discord Gameserver Notifier."""
@@ -24,6 +25,9 @@ class GameServerNotifier:
         self.logger = LoggerSetup.setup_logger(self.config_manager.config)
         self.running = False
         self.shutdown_event = asyncio.Event()
+        
+        # Initialize server info wrapper for standardized server data
+        self.server_wrapper = ServerInfoWrapper()
         
         # Initialize discovery engine
         try:
@@ -147,35 +151,55 @@ class GameServerNotifier:
         Args:
             server: The discovered server information
         """
-        self.logger.info(f"Discovered {server.game_type} server: {server.ip_address}:{server.port}")
-        
-        # Log game-specific details
-        if server.game_type == 'source':
-            self.logger.debug(f"Source server details: Name='{server.server_info.get('name', 'Unknown')}', "
-                            f"Map='{server.server_info.get('map', 'Unknown')}', "
-                            f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}")
-        elif server.game_type == 'renegadex':
-            self.logger.debug(f"RenegadeX server details: Name='{server.server_info.get('name', 'Unknown')}', "
-                            f"Map='{server.server_info.get('map', 'Unknown')}', "
-                            f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}, "
-                            f"Version='{server.server_info.get('game_version', 'Unknown')}', "
-                            f"Passworded={server.server_info.get('passworded', False)}")
-        elif server.game_type == 'warcraft3':
-            self.logger.debug(f"Warcraft3 server details: Name='{server.server_info.get('name', 'Unknown')}', "
-                            f"Map='{server.server_info.get('map', 'Unknown')}', "
-                            f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}, "
-                            f"Product='{server.server_info.get('product', 'Unknown')}', "
-                            f"Version={server.server_info.get('version', 'Unknown')}")
-        elif server.game_type == 'flatout2':
-            self.logger.debug(f"Flatout2 server details: Name='{server.server_info.get('hostname', 'Unknown')}', "
-                            f"Flags={server.server_info.get('flags', '0')}, "
-                            f"Status={server.server_info.get('status', '0')}, "
-                            f"Timestamp={server.server_info.get('timestamp', '0')}")
-        
-        # TODO: In future tasks, this will:
-        # - Store server in database
-        # - Send Discord notification
-        # - Update server status
+        try:
+            # Standardize the server information using the wrapper
+            standardized_server = self.server_wrapper.standardize_server_response(server)
+            
+            self.logger.info(f"Discovered {standardized_server.game} server: {standardized_server.name}")
+            self.logger.info(f"Server details: {standardized_server.ip_address}:{standardized_server.port}")
+            self.logger.info(f"Players: {standardized_server.players}/{standardized_server.max_players}, Map: {standardized_server.map}")
+            
+            # Log the formatted server summary for better readability
+            if self.logger.isEnabledFor(logging.DEBUG):
+                summary = self.server_wrapper.format_server_summary(standardized_server)
+                self.logger.debug(f"Server summary:\n{summary}")
+                
+                # Log additional protocol-specific information
+                if standardized_server.additional_info:
+                    self.logger.debug(f"Additional info: {standardized_server.additional_info}")
+            
+            # TODO: In future tasks, this will:
+            # - Store standardized server in database
+            # - Send Discord notification with formatted summary
+            # - Update server status
+            
+        except Exception as e:
+            self.logger.error(f"Error processing discovered server {server.ip_address}:{server.port}: {e}", exc_info=True)
+            # Fallback to original logging if standardization fails
+            self.logger.info(f"Discovered {server.game_type} server: {server.ip_address}:{server.port} (raw data)")
+            
+            # Log game-specific details as fallback
+            if server.game_type == 'source':
+                self.logger.debug(f"Source server details: Name='{server.server_info.get('name', 'Unknown')}', "
+                                f"Map='{server.server_info.get('map', 'Unknown')}', "
+                                f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}")
+            elif server.game_type == 'renegadex':
+                self.logger.debug(f"RenegadeX server details: Name='{server.server_info.get('name', 'Unknown')}', "
+                                f"Map='{server.server_info.get('map', 'Unknown')}', "
+                                f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}, "
+                                f"Version='{server.server_info.get('game_version', 'Unknown')}', "
+                                f"Passworded={server.server_info.get('passworded', False)}")
+            elif server.game_type == 'warcraft3':
+                self.logger.debug(f"Warcraft3 server details: Name='{server.server_info.get('name', 'Unknown')}', "
+                                f"Map='{server.server_info.get('map', 'Unknown')}', "
+                                f"Players={server.server_info.get('players', 0)}/{server.server_info.get('max_players', 0)}, "
+                                f"Product='{server.server_info.get('product', 'Unknown')}', "
+                                f"Version={server.server_info.get('version', 'Unknown')}")
+            elif server.game_type == 'flatout2':
+                self.logger.debug(f"Flatout2 server details: Name='{server.server_info.get('hostname', 'Unknown')}', "
+                                f"Flags={server.server_info.get('flags', '0')}, "
+                                f"Status={server.server_info.get('status', '0')}, "
+                                f"Timestamp={server.server_info.get('timestamp', '0')}")
 
     async def _on_server_lost(self, server: ServerResponse) -> None:
         """
@@ -184,11 +208,30 @@ class GameServerNotifier:
         Args:
             server: The lost server information
         """
-        self.logger.info(f"Lost {server.game_type} server: {server.ip_address}:{server.port}")
-        
-        # TODO: In future tasks, this will:
-        # - Update database status
-        # - Send Discord notification about server going offline
+        try:
+            # Standardize the server information using the wrapper
+            standardized_server = self.server_wrapper.standardize_server_response(server)
+            
+            self.logger.info(f"Lost {standardized_server.game} server: {standardized_server.name}")
+            self.logger.info(f"Server was at: {standardized_server.ip_address}:{standardized_server.port}")
+            
+            # Log the formatted server summary for better readability
+            if self.logger.isEnabledFor(logging.DEBUG):
+                summary = self.server_wrapper.format_server_summary(standardized_server)
+                self.logger.debug(f"Lost server summary:\n{summary}")
+            
+            # TODO: In future tasks, this will:
+            # - Update database status for standardized server
+            # - Send Discord notification about server going offline
+            
+        except Exception as e:
+            self.logger.error(f"Error processing lost server {server.ip_address}:{server.port}: {e}", exc_info=True)
+            # Fallback to original logging if standardization fails
+            self.logger.info(f"Lost {server.game_type} server: {server.ip_address}:{server.port} (raw data)")
+            
+            # TODO: In future tasks, this will:
+            # - Update database status
+            # - Send Discord notification about server going offline
 
 def main():
     """Application entry point."""

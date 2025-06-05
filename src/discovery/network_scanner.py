@@ -10,10 +10,6 @@ from dataclasses import dataclass
 import json
 
 # Import opengsq protocols
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'opengsq-python'))
-
 from opengsq.protocols.source import Source
 from opengsq.protocols.renegadex import RenegadeX
 from opengsq.protocols.warcraft3 import Warcraft3
