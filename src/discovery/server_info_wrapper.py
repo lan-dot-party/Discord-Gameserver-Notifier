@@ -53,6 +53,8 @@ class ServerInfoWrapper:
             return self._standardize_warcraft3_server(server_response)
         elif game_type == 'flatout2':
             return self._standardize_flatout2_server(server_response)
+        elif game_type == 'ut3':
+            return self._standardize_ut3_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             return self._standardize_generic_server(server_response)
@@ -194,6 +196,51 @@ class ServerInfoWrapper:
             'flags': info.get('flags', '0'),
             'status': info.get('status', '0'),
             'config': info.get('config', '')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_ut3_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Unreal Tournament 3 server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', 'Unknown UT3 Server')
+        game = info.get('game', 'Unreal Tournament 3')
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', 0)
+        max_players = info.get('max_players', 0)
+        version = info.get('version', 'UT3')
+        
+        # Check if password protected
+        password_protected = info.get('password_protected', False)
+        
+        # Additional UT3-specific information
+        additional_info = {
+            'gamemode': info.get('gamemode', 'Unknown'),
+            'mutators': info.get('mutators', []),
+            'frag_limit': info.get('frag_limit'),
+            'time_limit': info.get('time_limit'),
+            'numbots': info.get('numbots', 0),
+            'bot_skill': info.get('bot_skill'),
+            'pure_server': info.get('pure_server', False),
+            'vs_bots': info.get('vs_bots', 'None'),
+            'force_respawn': info.get('force_respawn', False),
+            'stats_enabled': info.get('stats_enabled', False),
+            'lan_mode': info.get('lan_mode', True)
         }
         
         return StandardizedServerInfo(

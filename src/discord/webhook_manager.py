@@ -37,6 +37,7 @@ class WebhookManager:
             'renegadex': 0x00FF00,   # Green for RenegadeX
             'warcraft3': 0x0066CC,   # Blue for Warcraft 3
             'flatout2': 0xFF0000,    # Red for Flatout 2
+            'ut3': 0x9932CC,         # Purple for Unreal Tournament 3
             'default': 0x7289DA      # Discord Blurple
         }
         
@@ -45,6 +46,7 @@ class WebhookManager:
             'renegadex': '⚔️',
             'warcraft3': '🏰',
             'flatout2': '🏎️',
+            'ut3': '🔫',
             'default': '🎯'
         }
         

@@ -2,7 +2,7 @@
 
 ## Übersicht
 
-Die Network Discovery Funktionalität wurde erfolgreich implementiert und ermöglicht das automatische Erkennen von **Source Engine**, **Renegade X** und **Flatout 2** Spieleservern im lokalen Netzwerk.
+Die Network Discovery Funktionalität wurde erfolgreich implementiert und ermöglicht das automatische Erkennen von **Source Engine**, **Renegade X**, **Flatout 2** und **Unreal Tournament 3** Spieleservern im lokalen Netzwerk.
 
 ## Implementierte Komponenten
 
@@ -28,6 +28,7 @@ games:
     - "source"        # Source Engine games
     - "renegadex"     # Renegade X
     - "flatout2"      # Flatout 2
+    - "ut3"           # Unreal Tournament 3
 ```
 
 ### 2. DiscoveryEngine (`src/discovery/network_scanner.py`)
@@ -117,6 +118,26 @@ request_data = (
 - Erste Stufe sammelt alle verfügbaren Server-IPs
 - Zweite Stufe fragt jeden Server einzeln mit kleiner Verzögerung ab
 
+### Unreal Tournament 3
+
+**Implementierung:**
+- **Protocol**: UDK (Unreal Development Kit) LAN Beacon
+- **Port**: 14001
+- **Discovery Method**: Active broadcast queries
+- **Games**: Unreal Tournament 3
+- **Features**: 
+  - Game mode detection (Deathmatch, CTF, Warfare, etc.)
+  - Mutator information (Instagib, Low Gravity, etc.)
+  - Bot configuration and skill levels
+  - Server settings (frag/time limits, pure server, etc.)
+
+**Erkannte Server-Informationen:**
+- Server-Name
+- Aktuelle Map
+- Spieleranzahl (aktuell/maximal)
+- Spiel-Typ
+- Server-Typ und Umgebung
+
 ## Verwendung
 
 ### Konfiguration
@@ -133,6 +154,7 @@ request_data = (
        - "source"          # Source Engine Spiele
        - "renegadex"       # Renegade X
        - "flatout2"        # Flatout 2
+       - "ut3"             # Unreal Tournament 3
    ```
 
 ### Ausführung
@@ -152,7 +174,7 @@ Die Anwendung wird:
 ```
 INFO - Starting DiscoveryEngine
 INFO - NetworkScanner initialized with 2 scan ranges
-INFO - Enabled games: source, renegadex, flatout2
+INFO - Enabled games: source, renegadex, flatout2, ut3
 DEBUG - Broadcasting Source query to 192.168.1.255:27015
 DEBUG - Starting passive listening for RenegadeX broadcasts on port 45542
 DEBUG - Starting Flatout 2 two-step discovery process
@@ -166,9 +188,11 @@ DEBUG - Flatout2 server details: Name='Gombi', Flags=1353097456, Status=0
 INFO - Found 1 source servers
 INFO - Found 1 renegadex servers
 INFO - Found 1 flatout2 servers
+INFO - Found 1 ut3 servers
 INFO - Discovered source server: 192.168.1.100:27015
 INFO - Discovered renegadex server: 10.10.101.3:7777
 INFO - Discovered flatout2 server: 10.10.101.3:23757
+INFO - Discovered ut3 server: 192.168.1.101:14001
 DEBUG - RenegadeX server details: Name='Renegade X Server', Map='CNC-Field', Players=0/64, Version='5.89.877', Passworded=False
 ```
 
@@ -234,39 +258,10 @@ self.protocol_configs = {
             b"\x2e\x55\x19\xb4\xe1\x4f\x81\x4a"              # Standard packet end
         )
     },
+    'ut3': {
+        'port': 14001,
+        'query_data': b'\xFF\xFF\xFF\xFF\x54Unreal Tournament 3 Query\x00'
+    },
     # Weitere Protokolle können hier hinzugefügt werden
 }
 ```
-
-## Nächste Schritte
-
-1. **Datenbank-Integration:** Server in SQLite speichern
-2. **Discord-Benachrichtigungen:** Webhooks für neue Server
-3. **Weitere Protokolle:** UT3, Warcraft3
-4. **Server-Tracking:** Überwachung von Online/Offline-Status
-
-## Troubleshooting
-
-### Keine Server gefunden
-- Überprüfe Netzwerk-Konfiguration in `config.yaml`
-- Stelle sicher, dass entsprechende Server im Netzwerk laufen
-- Erhöhe das Timeout bei langsamen Netzwerken
-
-### RenegadeX-spezifische Probleme
-- Stelle sicher, dass Port 45542 nicht blockiert ist
-- RenegadeX Server senden kontinuierlich Broadcasts - warte mindestens 5 Sekunden
-- Überprüfe mit `netstat -u` ob Broadcasts ankommen
-
-### Flatout 2-spezifische Probleme
-- Stelle sicher, dass Port 23757 nicht blockiert ist
-- Bei "Address already in use" Fehlern: Erhöhe die Verzögerung zwischen Queries
-- Überprüfe mit `opengsq flatout2 --host <IP> --port 23757 --function get_status` einzelne Server
-- Flatout 2 Server müssen aktiv laufen und Broadcasts senden
-
-### Import-Fehler
-- Stelle sicher, dass opengsq-python als Submodul verfügbar ist
-- Überprüfe Python-Pfade und Abhängigkeiten
-
-### Broadcast-Probleme
-- Überprüfe Firewall-Einstellungen
-- Teste mit `tcpdump` oder Wireshark die UDP-Pakete 
