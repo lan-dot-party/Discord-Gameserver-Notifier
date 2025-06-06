@@ -100,7 +100,8 @@ Protokoll: SOURCE
 | RenegadeX | 🟢 Grün | ⚔️ | Command & Conquer RenegadeX |
 | Warcraft 3 | 🔵 Blau | 🏰 | Warcraft III und Custom Games |
 | Flatout 2 | 🔴 Rot | 🏎️ | Flatout 2 Racing |
-| Unbekannt | 🟣 Lila | 🎯 | Andere/Unbekannte Protokolle |
+| Unreal Tournament 3 | 🟣 Lila | 🔫 | Unreal Tournament 3 |
+| Unbekannt | 🟦 Blau | 🎯 | Andere/Unbekannte Protokolle |
 
 ## Troubleshooting
 
