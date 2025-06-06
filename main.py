@@ -130,8 +130,9 @@ class GameServerNotifier:
         else:
             self.logger.warning("Discovery engine not available - skipping network scanning")
         
-        # Periodic cleanup interval (every 10 minutes)
-        cleanup_interval = 600  # 10 minutes in seconds
+        # Periodic cleanup interval (every 2 minutes for LAN party responsiveness)
+        cleanup_config = self.config_manager.config.get('database', {})
+        cleanup_interval = cleanup_config.get('cleanup_interval', 120)  # 2 minutes in seconds
         last_cleanup = 0
         
         while self.running:
@@ -143,12 +144,12 @@ class GameServerNotifier:
                     if current_time - last_cleanup >= cleanup_interval:
                         try:
                             cleanup_config = self.config_manager.config.get('database', {})
-                            max_failed_attempts = cleanup_config.get('cleanup_after_fails', 5)
-                            inactive_hours = cleanup_config.get('inactive_hours', 24)
+                            max_failed_attempts = cleanup_config.get('cleanup_after_fails', 3)
+                            inactive_minutes = cleanup_config.get('inactive_minutes', 5)
                             
                             cleanup_count = self.database_manager.cleanup_inactive_servers(
                                 max_failed_attempts=max_failed_attempts,
-                                inactive_hours=inactive_hours
+                                inactive_minutes=inactive_minutes
                             )
                             
                             if cleanup_count > 0:
@@ -199,12 +200,12 @@ class GameServerNotifier:
                 try:
                     # Perform final cleanup before shutdown
                     cleanup_config = self.config_manager.config.get('database', {})
-                    max_failed_attempts = cleanup_config.get('cleanup_after_fails', 5)
-                    inactive_hours = cleanup_config.get('inactive_hours', 24)
+                    max_failed_attempts = cleanup_config.get('cleanup_after_fails', 3)
+                    inactive_minutes = cleanup_config.get('inactive_minutes', 5)
                     
                     final_cleanup_count = self.database_manager.cleanup_inactive_servers(
                         max_failed_attempts=max_failed_attempts,
-                        inactive_hours=inactive_hours
+                        inactive_minutes=inactive_minutes
                     )
                     
                     if final_cleanup_count > 0:
@@ -273,15 +274,28 @@ class GameServerNotifier:
             
             # Store server in database
             is_new_server = False
+            was_inactive_server = False
             if self.database_manager:
                 try:
+                    # Check if server was previously inactive before updating
+                    existing_server = self.database_manager.get_server_by_address(
+                        standardized_server.ip_address, 
+                        standardized_server.port
+                    )
+                    if existing_server and not existing_server.is_active:
+                        was_inactive_server = True
+                        self.logger.info(f"Previously inactive server coming back online: {standardized_server.ip_address}:{standardized_server.port}")
+                    
                     server_model = self.database_manager.add_or_update_server(standardized_server)
                     self.logger.info(f"Server stored in database with ID: {server_model.id}")
                     
-                    # Check if this is a new discovery vs update
+                    # Check if this is a new discovery, update, or reactivated server
                     if server_model.first_seen == server_model.last_seen:
                         self.logger.info(f"New server discovery recorded: {server_model.get_server_key()}")
                         is_new_server = True
+                    elif was_inactive_server:
+                        self.logger.info(f"Inactive server reactivated - treating as new discovery: {server_model.get_server_key()}")
+                        is_new_server = True  # Treat reactivated servers as new for Discord notifications
                     else:
                         self.logger.debug(f"Server updated in database: {server_model.get_server_key()}")
                         

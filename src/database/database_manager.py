@@ -377,14 +377,14 @@ class DatabaseManager:
                 self.logger.error(f"Failed to mark server as failed {ip_address}:{port}: {e}")
                 return False
     
-    def cleanup_inactive_servers(self, max_failed_attempts: int = 5, 
-                                inactive_hours: int = 24) -> int:
+    def cleanup_inactive_servers(self, max_failed_attempts: int = 3, 
+                                inactive_minutes: int = 5) -> int:
         """
         Clean up servers that have been inactive or failed too many times.
         
         Args:
             max_failed_attempts: Maximum failed attempts before marking inactive
-            inactive_hours: Hours of inactivity before cleanup
+            inactive_minutes: Minutes of inactivity before cleanup (perfect for LAN parties)
             
         Returns:
             Number of servers cleaned up
@@ -392,7 +392,7 @@ class DatabaseManager:
         with self._lock:
             try:
                 with self._get_connection() as conn:
-                    cutoff_time = datetime.now() - timedelta(hours=inactive_hours)
+                    cutoff_time = datetime.now() - timedelta(minutes=inactive_minutes)
                     
                     # Get servers to be cleaned up for history logging
                     cursor = conn.execute("""
