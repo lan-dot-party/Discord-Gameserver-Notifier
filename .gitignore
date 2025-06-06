@@ -23,3 +23,12 @@ dist/discord_gameserver_notifier-0.0.1-py3-none-any.whl
 dist/*
 dist/
 src/utils/__pycache__/network_filter.cpython-313.pyc
+__pycache__/main.cpython-313.pyc
+src/discovery/__pycache__/protocol_base.cpython-313.pyc
+src/discovery/protocols/__pycache__/__init__.cpython-313.pyc
+src/discovery/protocols/__pycache__/common.cpython-313.pyc
+src/discovery/protocols/__pycache__/flatout2.cpython-313.pyc
+src/discovery/protocols/__pycache__/renegadex.cpython-313.pyc
+src/discovery/protocols/__pycache__/source.cpython-313.pyc
+src/discovery/protocols/__pycache__/ut3.cpython-313.pyc
+src/discovery/protocols/__pycache__/warcraft3.cpython-313.pyc
