@@ -270,6 +270,7 @@ class GameServerNotifier:
             
             # Standardize the server information using the wrapper
             standardized_server = self.server_wrapper.standardize_server_response(server)
+            self.logger.debug(f"Standardized server: {standardized_server.name} ({standardized_server.game})")
             
             self.logger.info(f"Discovered {standardized_server.game} server: {standardized_server.name}")
             self.logger.info(f"Server details: {standardized_server.ip_address}:{standardized_server.port}")
@@ -379,6 +380,8 @@ class GameServerNotifier:
     async def _on_server_lost(self, server: ServerResponse) -> None:
         """
         Callback for when a server is no longer responding.
+        This method only marks the server as failed and does NOT delete Discord messages immediately.
+        Discord messages are deleted by the cleanup process when failed_attempts reaches the configured threshold.
         
         Args:
             server: The lost server information
@@ -402,18 +405,9 @@ class GameServerNotifier:
                 summary = self.server_wrapper.format_server_summary(standardized_server)
                 self.logger.debug(f"Lost server summary:\n{summary}")
             
-            # Mark server as failed in database
-            discord_message_id = None
+            # Mark server as failed in database (increment failed_attempts)
             if self.database_manager:
                 try:
-                    # Get Discord message ID before marking as failed
-                    server_model = self.database_manager.get_server_by_address(
-                        standardized_server.ip_address,
-                        standardized_server.port
-                    )
-                    if server_model:
-                        discord_message_id = server_model.discord_message_id
-                    
                     success = self.database_manager.mark_server_failed(
                         standardized_server.ip_address, 
                         standardized_server.port
@@ -426,20 +420,10 @@ class GameServerNotifier:
                 except Exception as db_error:
                     self.logger.error(f"Database error when marking server as failed: {db_error}", exc_info=True)
             
-            # Send Discord notification about server going offline
-            if self.webhook_manager:
-                try:
-                    success = self.webhook_manager.send_server_offline_notification(
-                        standardized_server, 
-                        discord_message_id
-                    )
-                    if success:
-                        self.logger.info(f"Discord offline notification sent for server: {standardized_server.name}")
-                    else:
-                        self.logger.warning(f"Failed to send Discord offline notification for server: {standardized_server.name}")
-                        
-                except Exception as discord_error:
-                    self.logger.error(f"Error sending Discord offline notification: {discord_error}", exc_info=True)
+            # NOTE: We do NOT delete Discord messages here immediately!
+            # Discord messages are deleted by the cleanup process (_check_and_cleanup_inactive_servers)
+            # when failed_attempts reaches the configured threshold (cleanup_after_fails).
+            # This ensures that temporary network issues don't immediately remove Discord notifications.
             
         except Exception as e:
             self.logger.error(f"Error processing lost server {server.ip_address}:{server.port}: {e}", exc_info=True)
@@ -447,14 +431,8 @@ class GameServerNotifier:
             self.logger.info(f"Lost {server.game_type} server: {server.ip_address}:{server.port} (raw data)")
             
             # Mark server as failed in database (fallback for raw data)
-            discord_message_id = None
             if self.database_manager:
                 try:
-                    # Get Discord message ID before marking as failed
-                    server_model = self.database_manager.get_server_by_address(server.ip_address, server.port)
-                    if server_model:
-                        discord_message_id = server_model.discord_message_id
-                    
                     success = self.database_manager.mark_server_failed(server.ip_address, server.port)
                     if success:
                         self.logger.info(f"Server marked as failed in database (fallback): {server.ip_address}:{server.port}")
@@ -463,50 +441,23 @@ class GameServerNotifier:
                         
                 except Exception as db_error:
                     self.logger.error(f"Database error when marking server as failed (fallback): {db_error}", exc_info=True)
-            
-            # Send Discord notification about server going offline (fallback)
-            if self.webhook_manager and discord_message_id:
-                try:
-                    # Create a basic standardized server info for Discord notification
-                    fallback_server_info = StandardizedServerInfo(
-                        name=f"{server.game_type.upper()} Server",
-                        game=server.game_type.title(),
-                        map="Unknown",
-                        players=0,
-                        max_players=0,
-                        version="Unknown",
-                        password_protected=False,
-                        ip_address=server.ip_address,
-                        port=server.port,
-                        game_type=server.game_type,
-                        response_time=server.response_time,
-                        additional_info={}
-                    )
-                    
-                    success = self.webhook_manager.send_server_offline_notification(
-                        fallback_server_info, 
-                        discord_message_id
-                    )
-                    if success:
-                        self.logger.info(f"Discord offline notification sent for server (fallback): {server.ip_address}:{server.port}")
-                    else:
-                        self.logger.warning(f"Failed to send Discord offline notification (fallback): {server.ip_address}:{server.port}")
-                        
-                except Exception as discord_error:
-                    self.logger.error(f"Error sending Discord offline notification (fallback): {discord_error}", exc_info=True)
 
-    async def _on_scan_complete(self, found_servers: List[Tuple[str, int]]) -> None:
+    async def _on_scan_complete(self, found_servers: List[ServerResponse], lost_servers: List[ServerResponse]) -> None:
         """
         Callback for when a scan is complete.
         Updates failed_attempts for servers that were not found in the scan.
         
         Args:
-            found_servers: List of (ip_address, port) tuples for servers found in the scan
+            found_servers: List of ServerResponse objects for servers found in the scan
+            lost_servers: List of ServerResponse objects for servers that were lost in the scan
         """
         try:
             if self.database_manager:
+                # Convert ServerResponse objects to (ip_address, port) tuples
+                found_server_tuples = [(server.ip_address, server.port) for server in found_servers]
+                
                 # Increment failed_attempts for servers that were not found
-                updated_count = self.database_manager.increment_failed_attempts_for_missing_servers(found_servers)
+                updated_count = self.database_manager.increment_failed_attempts_for_missing_servers(found_server_tuples)
                 if updated_count > 0:
                     self.logger.debug(f"Updated failed_attempts for {updated_count} missing servers")
         except Exception as e:
