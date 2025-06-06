@@ -9,10 +9,11 @@ import asyncio
 import signal
 import sys
 import os
-from typing import Optional
+from typing import Optional, List, Tuple
 import logging
 from src.config.config_manager import ConfigManager
 from src.utils.logger import LoggerSetup
+from src.utils.network_filter import NetworkFilter
 from src.discovery.network_scanner import DiscoveryEngine, ServerResponse
 from src.discovery.server_info_wrapper import ServerInfoWrapper, StandardizedServerInfo
 from src.database.database_manager import DatabaseManager
@@ -30,6 +31,11 @@ class GameServerNotifier:
         
         # Initialize server info wrapper for standardized server data
         self.server_wrapper = ServerInfoWrapper()
+        
+        # Initialize network filter for ignoring specific network ranges
+        network_config = self.config_manager.config.get('network', {})
+        ignore_ranges = network_config.get('ignore_ranges', [])
+        self.network_filter = NetworkFilter(ignore_ranges)
         
         # Initialize database manager
         try:
@@ -70,7 +76,8 @@ class GameServerNotifier:
             self.discovery_engine = DiscoveryEngine(self.config_manager.config)
             self.discovery_engine.set_callbacks(
                 on_discovered=self._on_server_discovered,
-                on_lost=self._on_server_lost
+                on_lost=self._on_server_lost,
+                on_scan_complete=self._on_scan_complete
             )
             self.logger.info("Discovery engine initialized successfully")
         except Exception as e:
@@ -124,40 +131,33 @@ class GameServerNotifier:
         else:
             self.logger.warning("Discovery engine not available - skipping network scanning")
         
-        # Periodic cleanup interval (every 10 minutes)
-        cleanup_interval = 600  # 10 minutes in seconds
+        # Periodic cleanup interval (configurable for responsive cleanup)
+        cleanup_config = self.config_manager.config.get('database', {})
+        cleanup_interval = cleanup_config.get('cleanup_interval', 60)  # 1 minute in seconds
         last_cleanup = 0
         
         while self.running:
             try:
-                # Periodic database cleanup
+                # Periodic database statistics logging
                 if self.database_manager:
                     import time
                     current_time = time.time()
                     if current_time - last_cleanup >= cleanup_interval:
                         try:
-                            cleanup_config = self.config_manager.config.get('database', {})
-                            max_failed_attempts = cleanup_config.get('cleanup_after_fails', 5)
-                            inactive_hours = cleanup_config.get('inactive_hours', 24)
-                            
-                            cleanup_count = self.database_manager.cleanup_inactive_servers(
-                                max_failed_attempts=max_failed_attempts,
-                                inactive_hours=inactive_hours
-                            )
-                            
-                            if cleanup_count > 0:
-                                self.logger.info(f"Database cleanup completed: {cleanup_count} servers marked inactive")
-                            
-                            # Log database statistics
+                            # Log database statistics periodically
                             stats = self.database_manager.get_database_stats()
-                            self.logger.info(f"Database stats: {stats['active_servers']}/{stats['total_servers']} active servers")
+                            self.logger.info(f"📊 Database stats: {stats['active_servers']}/{stats['total_servers']} active servers")
                             
                             last_cleanup = current_time
                         except Exception as e:
-                            self.logger.error(f"Error during database cleanup: {e}", exc_info=True)
+                            self.logger.error(f"Error during periodic stats logging: {e}", exc_info=True)
                 
-                # TODO: Discord webhook processing will be implemented in future tasks
-                # await self.webhook_manager.process_notifications()
+                # Check for inactive servers and delete their Discord messages
+                if self.database_manager and self.webhook_manager:
+                    try:
+                        await self._check_and_cleanup_inactive_servers()
+                    except Exception as e:
+                        self.logger.error(f"Error during inactive server check: {e}", exc_info=True)
                 
                 # The discovery engine runs in the background via its own task
                 self.logger.debug("Main loop iteration - discovery engine running in background")
@@ -193,12 +193,31 @@ class GameServerNotifier:
                 try:
                     # Perform final cleanup before shutdown
                     cleanup_config = self.config_manager.config.get('database', {})
-                    max_failed_attempts = cleanup_config.get('cleanup_after_fails', 5)
-                    inactive_hours = cleanup_config.get('inactive_hours', 24)
+                    max_failed_attempts = cleanup_config.get('cleanup_after_fails', 3)
+                    inactive_minutes = cleanup_config.get('inactive_minutes', 3)
+                    
+                    # Get servers that will be cleaned up (with Discord message IDs) before marking them inactive
+                    servers_to_cleanup = self.database_manager.get_servers_to_cleanup(
+                        max_failed_attempts=max_failed_attempts,
+                        inactive_minutes=inactive_minutes
+                    )
+                    
+                    # Delete Discord messages for servers that will be marked inactive
+                    if servers_to_cleanup and self.webhook_manager:
+                        for server in servers_to_cleanup:
+                            if server.discord_message_id:
+                                try:
+                                    success = self.webhook_manager.delete_server_message(server.discord_message_id)
+                                    if success:
+                                        self.logger.info(f"Final cleanup: Deleted Discord message for inactive server: {server.name} ({server.ip_address}:{server.port})")
+                                    else:
+                                        self.logger.warning(f"Final cleanup: Failed to delete Discord message for server: {server.name}")
+                                except Exception as discord_error:
+                                    self.logger.error(f"Final cleanup: Error deleting Discord message for server {server.name}: {discord_error}", exc_info=True)
                     
                     final_cleanup_count = self.database_manager.cleanup_inactive_servers(
                         max_failed_attempts=max_failed_attempts,
-                        inactive_hours=inactive_hours
+                        inactive_minutes=inactive_minutes
                     )
                     
                     if final_cleanup_count > 0:
@@ -244,6 +263,11 @@ class GameServerNotifier:
             server: The discovered server information
         """
         try:
+            # Check if this server should be ignored based on network filtering
+            if self.network_filter.should_ignore_server(server.ip_address, server.port):
+                self.logger.info(f"🚫 Server {server.ip_address}:{server.port} ({server.game_type}) IGNORED by network filter - skipping database and Discord processing")
+                return
+            
             # Standardize the server information using the wrapper
             standardized_server = self.server_wrapper.standardize_server_response(server)
             
@@ -262,32 +286,54 @@ class GameServerNotifier:
             
             # Store server in database
             is_new_server = False
+            was_inactive_server = False
             if self.database_manager:
                 try:
+                    # Check if server was previously inactive before updating
+                    existing_server = self.database_manager.get_server_by_address(
+                        standardized_server.ip_address, 
+                        standardized_server.port
+                    )
+                    if existing_server and not existing_server.is_active:
+                        was_inactive_server = True
+                        self.logger.info(f"Previously inactive server coming back online: {standardized_server.ip_address}:{standardized_server.port}")
+                    
                     server_model = self.database_manager.add_or_update_server(standardized_server)
                     self.logger.info(f"Server stored in database with ID: {server_model.id}")
                     
-                    # Check if this is a new discovery vs update
+                    # Check if this is a new discovery, update, or reactivated server
                     if server_model.first_seen == server_model.last_seen:
                         self.logger.info(f"New server discovery recorded: {server_model.get_server_key()}")
                         is_new_server = True
+                    elif was_inactive_server:
+                        self.logger.info(f"Inactive server reactivated - treating as new discovery: {server_model.get_server_key()}")
+                        is_new_server = True  # Treat reactivated servers as new for Discord notifications
                     else:
                         self.logger.debug(f"Server updated in database: {server_model.get_server_key()}")
                         
                 except Exception as db_error:
                     self.logger.error(f"Failed to store server in database: {db_error}", exc_info=True)
             
-            # Send Discord notification for new server discoveries
-            if is_new_server and self.webhook_manager:
+            # Send Discord notification for new server discoveries or servers without Discord message ID
+            should_send_discord = False
+            if is_new_server:
+                should_send_discord = True
+                self.logger.debug(f"Will send Discord notification: new server discovery")
+            elif self.database_manager and server_model and not server_model.discord_message_id:
+                should_send_discord = True
+                self.logger.debug(f"Will send Discord notification: existing server without Discord message ID")
+            
+            if should_send_discord and self.webhook_manager:
                 try:
                     message_id = self.webhook_manager.send_new_server_notification(standardized_server)
                     if message_id:
-                        self.logger.info(f"Discord notification sent for new server: {standardized_server.name}")
+                        notification_type = "new server" if is_new_server else "existing server (first Discord notification)"
+                        self.logger.info(f"Discord notification sent for {notification_type}: {standardized_server.name}")
                         
                         # Update database with Discord message ID for future reference
                         if self.database_manager:
                             try:
-                                self.database_manager.update_discord_info(
+                                self.database_manager.update_discord_info_by_address(
                                     standardized_server.ip_address,
                                     standardized_server.port,
                                     message_id,
@@ -338,6 +384,13 @@ class GameServerNotifier:
             server: The lost server information
         """
         try:
+            # Check if this server should be ignored based on network filtering
+            # Note: We still process "lost" events for ignored servers in case they were
+            # added to the database before the ignore rule was configured
+            if self.network_filter.should_ignore_server(server.ip_address, server.port):
+                self.logger.info(f"🚫 Lost server {server.ip_address}:{server.port} ({server.game_type}) IGNORED by network filter - skipping processing")
+                return
+            
             # Standardize the server information using the wrapper
             standardized_server = self.server_wrapper.standardize_server_response(server)
             
@@ -441,6 +494,80 @@ class GameServerNotifier:
                         
                 except Exception as discord_error:
                     self.logger.error(f"Error sending Discord offline notification (fallback): {discord_error}", exc_info=True)
+
+    async def _on_scan_complete(self, found_servers: List[Tuple[str, int]]) -> None:
+        """
+        Callback for when a scan is complete.
+        Updates failed_attempts for servers that were not found in the scan.
+        
+        Args:
+            found_servers: List of (ip_address, port) tuples for servers found in the scan
+        """
+        try:
+            if self.database_manager:
+                # Increment failed_attempts for servers that were not found
+                updated_count = self.database_manager.increment_failed_attempts_for_missing_servers(found_servers)
+                if updated_count > 0:
+                    self.logger.debug(f"Updated failed_attempts for {updated_count} missing servers")
+        except Exception as e:
+            self.logger.error(f"Error processing scan completion: {e}", exc_info=True)
+
+    async def _check_and_cleanup_inactive_servers(self) -> None:
+        """
+        Check for servers that should be marked inactive and delete their Discord messages.
+        This runs continuously in the main loop to provide immediate cleanup.
+        """
+        try:
+            cleanup_config = self.config_manager.config.get('database', {})
+            max_failed_attempts = cleanup_config.get('cleanup_after_fails', 3)
+            inactive_minutes = cleanup_config.get('inactive_minutes', 3)
+            
+            self.logger.debug(f"Checking for inactive servers (failed_attempts >= {max_failed_attempts} OR inactive > {inactive_minutes} min)")
+            
+            # Get servers that should be cleaned up
+            servers_to_cleanup = self.database_manager.get_servers_to_cleanup(
+                max_failed_attempts=max_failed_attempts,
+                inactive_minutes=inactive_minutes
+            )
+            
+            if servers_to_cleanup:
+                self.logger.debug(f"Found {len(servers_to_cleanup)} servers that need cleanup")
+                
+                # Delete Discord messages for servers that will be marked inactive
+                discord_deletions = 0
+                for server in servers_to_cleanup:
+                    if server.discord_message_id:
+                        try:
+                            self.logger.debug(f"Attempting to delete Discord message for server: {server.name} ({server.ip_address}:{server.port}) - Message ID: {server.discord_message_id}")
+                            success = self.webhook_manager.delete_server_message(server.discord_message_id)
+                            if success:
+                                discord_deletions += 1
+                                self.logger.info(f"✅ Deleted Discord message for inactive server: {server.name} ({server.ip_address}:{server.port})")
+                            else:
+                                self.logger.warning(f"❌ Failed to delete Discord message for server: {server.name} ({server.ip_address}:{server.port})")
+                        except Exception as discord_error:
+                            self.logger.error(f"Error deleting Discord message for server {server.name}: {discord_error}", exc_info=True)
+                    else:
+                        self.logger.debug(f"Server {server.name} ({server.ip_address}:{server.port}) has no Discord message ID to delete")
+                
+                # Mark servers as inactive in database
+                cleanup_count = self.database_manager.cleanup_inactive_servers(
+                    max_failed_attempts=max_failed_attempts,
+                    inactive_minutes=inactive_minutes
+                )
+                
+                if cleanup_count > 0:
+                    self.logger.info(f"🧹 Marked {cleanup_count} servers as inactive (Discord messages deleted: {discord_deletions})")
+                    
+                    # Log details about cleaned up servers
+                    for server in servers_to_cleanup:
+                        self.logger.debug(f"Cleaned up server: {server.name} ({server.ip_address}:{server.port}) - failed_attempts: {server.failed_attempts}, last_seen: {server.last_seen}")
+                
+            else:
+                self.logger.debug("No servers need cleanup at this time")
+                
+        except Exception as e:
+            self.logger.error(f"Error in inactive server cleanup check: {e}", exc_info=True)
 
 def main():
     """Application entry point."""
