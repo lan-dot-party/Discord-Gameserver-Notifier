@@ -17,3 +17,5 @@ src/discord/__pycache__/webhook_manager.cpython-313.pyc
 src/database/__pycache__/__init__.cpython-313.pyc
 src/database/__pycache__/models.cpython-313.pyc
 .DS_Store
+opengsq-python/*
+opengsq-python/

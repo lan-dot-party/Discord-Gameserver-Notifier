@@ -71,8 +71,9 @@ class ServerInfoWrapper:
         max_players = info.get('max_players', 0)
         version = info.get('version', 'Unknown')
         
-        # Determine if password protected (VAC enabled servers often require passwords)
-        password_protected = info.get('visibility', 1) == 0  # 0 = private, 1 = public
+        # Determine if password protected based on visibility
+        # According to Source protocol: 0 = Public (no password), 1 = Private (password required)
+        password_protected = info.get('visibility', 0) == 1  # 1 = private, 0 = public
         
         # Additional Source-specific information
         additional_info = {
