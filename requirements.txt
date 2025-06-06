@@ -2,6 +2,7 @@
 pyyaml>=6.0
 discord-webhook>=1.3.0
 opengsq>=3.3.0
+requests>=2.25.0
 
 # Note: The following packages are Python built-ins and don't need to be installed:
 # - sqlite3

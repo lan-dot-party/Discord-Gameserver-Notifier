@@ -1073,19 +1073,22 @@ class DiscoveryEngine:
         # Callbacks for discovered/lost servers
         self.on_server_discovered = None
         self.on_server_lost = None
+        self.on_scan_complete = None
         
         self.logger.info(f"DiscoveryEngine initialized with {self.scan_interval}s scan interval")
     
-    def set_callbacks(self, on_discovered=None, on_lost=None):
+    def set_callbacks(self, on_discovered=None, on_lost=None, on_scan_complete=None):
         """
         Set callback functions for server discovery events.
         
         Args:
             on_discovered: Callback function called when a new server is discovered
             on_lost: Callback function called when a server is no longer responding
+            on_scan_complete: Callback function called after each scan with list of found servers
         """
         self.on_server_discovered = on_discovered
         self.on_server_lost = on_lost
+        self.on_scan_complete = on_scan_complete
         self.logger.debug("Discovery callbacks configured")
     
     async def start(self):
@@ -1164,6 +1167,14 @@ class DiscoveryEngine:
                             await self.on_server_discovered(server)
                         except Exception as e:
                             self.logger.error(f"Error in server discovered callback: {e}")
+                
+                # Call scan complete callback with list of found servers
+                if self.on_scan_complete:
+                    try:
+                        found_servers = [(server.ip_address, server.port) for server in discovered_servers]
+                        await self.on_scan_complete(found_servers)
+                    except Exception as e:
+                        self.logger.error(f"Error in scan complete callback: {e}")
                 
                 # Wait for next scan interval
                 self.logger.info(f"Waiting {self.scan_interval} seconds until next scan...")

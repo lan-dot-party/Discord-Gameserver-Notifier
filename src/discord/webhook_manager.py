@@ -4,9 +4,11 @@ Discord webhook management and message handling
 
 import logging
 import asyncio
+import requests
 from typing import Optional, Dict, Any
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from datetime import datetime
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 from ..discovery.server_info_wrapper import StandardizedServerInfo
 
@@ -26,10 +28,14 @@ class WebhookManager:
             channel_id: Optional Discord channel ID for reference
             mentions: Optional list of mentions to include in messages
         """
-        self.webhook_url = webhook_url
+        # Automatically append ?wait=true to webhook URL for message ID retrieval
+        self.webhook_url = self._ensure_wait_parameter(webhook_url)
         self.channel_id = channel_id
         self.mentions = mentions or []
         self.logger = logging.getLogger("GameServerNotifier.WebhookManager")
+        
+        # Extract webhook ID and token for message deletion
+        self.webhook_id, self.webhook_token = self._extract_webhook_credentials(self.webhook_url)
         
         # Game-specific colors and emojis for embeds
         self.game_colors = {
@@ -51,6 +57,53 @@ class WebhookManager:
         }
         
         self.logger.info(f"WebhookManager initialized for channel {channel_id}")
+        self.logger.debug(f"Webhook URL configured with wait=true: {self.webhook_url}")
+    
+    def _ensure_wait_parameter(self, webhook_url: str) -> str:
+        """
+        Ensure the webhook URL has ?wait=true parameter for message ID retrieval.
+        
+        Args:
+            webhook_url: Original webhook URL
+            
+        Returns:
+            Webhook URL with ?wait=true parameter
+        """
+        parsed = urlparse(webhook_url)
+        query_params = parse_qs(parsed.query)
+        
+        # Add wait=true parameter
+        query_params['wait'] = ['true']
+        
+        # Reconstruct URL with updated query parameters
+        new_query = urlencode(query_params, doseq=True)
+        new_parsed = parsed._replace(query=new_query)
+        
+        return urlunparse(new_parsed)
+    
+    def _extract_webhook_credentials(self, webhook_url: str) -> tuple[Optional[str], Optional[str]]:
+        """
+        Extract webhook ID and token from webhook URL for message deletion.
+        
+        Args:
+            webhook_url: Discord webhook URL
+            
+        Returns:
+            Tuple of (webhook_id, webhook_token)
+        """
+        try:
+            parsed = urlparse(webhook_url)
+            path_parts = parsed.path.strip('/').split('/')
+            
+            if len(path_parts) >= 4 and path_parts[0] == 'api' and path_parts[1] == 'webhooks':
+                webhook_id = path_parts[2]
+                webhook_token = path_parts[3]
+                return webhook_id, webhook_token
+            
+        except Exception as e:
+            self.logger.warning(f"Could not extract webhook credentials: {e}")
+        
+        return None, None
     
     def send_new_server_notification(self, server_info: StandardizedServerInfo) -> Optional[str]:
         """
@@ -79,10 +132,14 @@ class WebhookManager:
             response = webhook.execute()
             
             if response.status_code == 200:
-                # Extract message ID from response if available
+                # Extract message ID from response
                 message_id = None
-                if hasattr(response, 'json') and response.json():
-                    message_id = response.json().get('id')
+                try:
+                    response_data = response.json()
+                    message_id = response_data.get('id')
+                    self.logger.debug(f"Received Discord response with message ID: {message_id}")
+                except Exception as json_error:
+                    self.logger.warning(f"Could not parse Discord response JSON: {json_error}")
                 
                 self.logger.info(f"Successfully sent new server notification for {server_info.name} ({server_info.ip_address}:{server_info.port})")
                 return message_id
@@ -94,18 +151,70 @@ class WebhookManager:
             self.logger.error(f"Error sending Discord notification: {str(e)}")
             return None
     
+    def delete_server_message(self, message_id: str) -> bool:
+        """
+        Delete a Discord message using the webhook.
+        
+        Args:
+            message_id: Discord message ID to delete
+            
+        Returns:
+            True if deletion was successful, False otherwise
+        """
+        if not self.webhook_id or not self.webhook_token:
+            self.logger.error("Cannot delete message: webhook credentials not available")
+            return False
+        
+        if not message_id:
+            self.logger.warning("Cannot delete message: message_id is empty")
+            return False
+        
+        try:
+            # Construct the delete URL
+            delete_url = f"https://discord.com/api/webhooks/{self.webhook_id}/{self.webhook_token}/messages/{message_id}"
+            
+            # Send DELETE request
+            response = requests.delete(delete_url)
+            
+            if response.status_code == 204:  # 204 No Content = successful deletion
+                self.logger.info(f"Successfully deleted Discord message: {message_id}")
+                return True
+            elif response.status_code == 404:
+                self.logger.warning(f"Discord message not found (already deleted?): {message_id}")
+                return True  # Consider this a success since the message is gone
+            else:
+                self.logger.error(f"Failed to delete Discord message {message_id}. Status: {response.status_code}")
+                if response.text:
+                    self.logger.error(f"Discord API response: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error deleting Discord message {message_id}: {str(e)}")
+            return False
+
     def send_server_offline_notification(self, server_info: StandardizedServerInfo, message_id: Optional[str] = None) -> bool:
         """
         Send a Discord notification when a server goes offline.
+        If message_id is provided, the original message will be deleted instead of sending a new notification.
         
         Args:
             server_info: Standardized server information
-            message_id: Optional message ID to edit instead of sending new message
+            message_id: Optional message ID to delete instead of sending new message
             
         Returns:
             True if successful, False if failed
         """
         try:
+            # If we have a message ID, delete the original message instead of sending offline notification
+            if message_id:
+                success = self.delete_server_message(message_id)
+                if success:
+                    self.logger.info(f"Deleted Discord message for offline server: {server_info.name} ({server_info.ip_address}:{server_info.port})")
+                else:
+                    self.logger.warning(f"Failed to delete Discord message for offline server: {server_info.name}")
+                return success
+            
+            # Fallback: send offline notification if no message ID available
             webhook = DiscordWebhook(url=self.webhook_url)
             
             # Create embed for offline server

@@ -378,13 +378,13 @@ class DatabaseManager:
                 return False
     
     def cleanup_inactive_servers(self, max_failed_attempts: int = 3, 
-                                inactive_minutes: int = 5) -> int:
+                                inactive_minutes: int = 3) -> int:
         """
         Clean up servers that have been inactive or failed too many times.
         
         Args:
-            max_failed_attempts: Maximum failed attempts before marking inactive
-            inactive_minutes: Minutes of inactivity before cleanup (perfect for LAN parties)
+            max_failed_attempts: Maximum failed attempts before marking inactive (default: 3)
+            inactive_minutes: Minutes of inactivity before cleanup (default: 3 minutes)
             
         Returns:
             Number of servers cleaned up
@@ -429,6 +429,41 @@ class DatabaseManager:
                 self.logger.error(f"Failed to cleanup inactive servers: {e}")
                 return 0
     
+    def get_servers_to_cleanup(self, max_failed_attempts: int = 3, 
+                              inactive_minutes: int = 3) -> List[GameServerModel]:
+        """
+        Get servers that will be cleaned up (marked as inactive) with their Discord message IDs.
+        This method should be called before cleanup_inactive_servers to get Discord message IDs for deletion.
+        
+        Args:
+            max_failed_attempts: Maximum failed attempts before marking inactive (default: 3)
+            inactive_minutes: Minutes of inactivity before cleanup (default: 3 minutes)
+            
+        Returns:
+            List of GameServerModel objects that will be cleaned up
+        """
+        with self._lock:
+            try:
+                with self._get_connection() as conn:
+                    cutoff_time = datetime.now() - timedelta(minutes=inactive_minutes)
+                    
+                    # Get servers that will be cleaned up
+                    cursor = conn.execute("""
+                        SELECT * FROM gameservers
+                        WHERE (failed_attempts >= ? OR last_seen < ?) AND is_active = 1
+                    """, (max_failed_attempts, cutoff_time))
+                    
+                    servers_to_cleanup = []
+                    for row in cursor.fetchall():
+                        server_model = self._row_to_gameserver_model(row)
+                        servers_to_cleanup.append(server_model)
+                    
+                    return servers_to_cleanup
+                    
+            except sqlite3.Error as e:
+                self.logger.error(f"Failed to get servers to cleanup: {e}")
+                return []
+    
     def update_discord_info(self, server_id: int, message_id: str, 
                            channel_id: str, embed_sent: bool = True) -> bool:
         """
@@ -464,6 +499,46 @@ class DatabaseManager:
                     
             except sqlite3.Error as e:
                 self.logger.error(f"Failed to update Discord info for server {server_id}: {e}")
+                return False
+    
+    def update_discord_info_by_address(self, ip_address: str, port: int, message_id: str, 
+                                     channel_id: str, embed_sent: bool = True) -> bool:
+        """
+        Update Discord message information for a server by IP address and port.
+        
+        Args:
+            ip_address: Server IP address
+            port: Server port
+            message_id: Discord message ID
+            channel_id: Discord channel ID
+            embed_sent: Whether embed was successfully sent
+            
+        Returns:
+            True if update was successful
+        """
+        with self._lock:
+            try:
+                with self._get_connection() as conn:
+                    cursor = conn.execute("""
+                        UPDATE gameservers 
+                        SET discord_message_id = ?, 
+                            discord_channel_id = ?,
+                            discord_embed_sent = ?,
+                            last_updated = CURRENT_TIMESTAMP
+                        WHERE ip_address = ? AND port = ?
+                    """, (message_id, channel_id, embed_sent, ip_address, port))
+                    
+                    success = cursor.rowcount > 0
+                    if success:
+                        conn.commit()
+                        self.logger.debug(f"Updated Discord info for server {ip_address}:{port}")
+                    else:
+                        self.logger.warning(f"No server found to update Discord info: {ip_address}:{port}")
+                    
+                    return success
+                    
+            except sqlite3.Error as e:
+                self.logger.error(f"Failed to update Discord info for server {ip_address}:{port}: {e}")
                 return False
     
     def get_server_history(self, server_id: int, limit: int = 50) -> List[ServerHistoryModel]:
@@ -536,6 +611,60 @@ class DatabaseManager:
             except sqlite3.Error as e:
                 self.logger.error(f"Failed to get database stats: {e}")
                 return {}
+    
+    def increment_failed_attempts_for_missing_servers(self, found_servers: List[Tuple[str, int]]) -> int:
+        """
+        Increment failed_attempts for servers that were not found in the current scan.
+        This method should be called after each scan with the list of servers that were found.
+        
+        Args:
+            found_servers: List of (ip_address, port) tuples for servers that were found in the current scan
+            
+        Returns:
+            Number of servers that had their failed_attempts incremented
+        """
+        with self._lock:
+            try:
+                with self._get_connection() as conn:
+                    # Get all active servers from database
+                    cursor = conn.execute("""
+                        SELECT ip_address, port FROM gameservers 
+                        WHERE is_active = 1
+                    """)
+                    
+                    all_active_servers = [(row['ip_address'], row['port']) for row in cursor.fetchall()]
+                    
+                    # Find servers that were not found in the current scan
+                    found_servers_set = set(found_servers)
+                    missing_servers = [server for server in all_active_servers if server not in found_servers_set]
+                    
+                    if not missing_servers:
+                        return 0
+                    
+                    # Increment failed_attempts for missing servers
+                    updated_count = 0
+                    for ip_address, port in missing_servers:
+                        cursor = conn.execute("""
+                            UPDATE gameservers 
+                            SET failed_attempts = failed_attempts + 1,
+                                last_updated = CURRENT_TIMESTAMP
+                            WHERE ip_address = ? AND port = ? AND is_active = 1
+                        """, (ip_address, port))
+                        
+                        if cursor.rowcount > 0:
+                            updated_count += 1
+                            self.logger.debug(f"Incremented failed_attempts for missing server: {ip_address}:{port}")
+                    
+                    conn.commit()
+                    
+                    if updated_count > 0:
+                        self.logger.info(f"Incremented failed_attempts for {updated_count} missing servers")
+                    
+                    return updated_count
+                    
+            except sqlite3.Error as e:
+                self.logger.error(f"Failed to increment failed_attempts for missing servers: {e}")
+                return 0
     
     # Private helper methods
     

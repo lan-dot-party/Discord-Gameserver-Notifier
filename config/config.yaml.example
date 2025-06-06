@@ -39,9 +39,9 @@ discord:
 
 database:
   path: "./gameservers.db"
-  cleanup_after_fails: 3  # Mark server inactive after X failed attempts
-  inactive_minutes: 5      # Minutes of inactivity before cleanup (perfect for LAN parties)
-  cleanup_interval: 120    # Cleanup interval in seconds (2 minutes for faster response)
+  cleanup_after_fails: 3   # Mark server inactive after X failed attempts
+  inactive_minutes: 3      # Minutes of inactivity before cleanup (perfect for LAN parties)
+  cleanup_interval: 60     # Cleanup interval in seconds (1 minute for responsive cleanup)
 
 debugging:
   log_level: "INFO"   # DEBUG, INFO, WARNING, ERROR
