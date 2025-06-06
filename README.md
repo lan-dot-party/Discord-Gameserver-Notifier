@@ -10,6 +10,7 @@ A Python-based tool for automatic detection of game servers in the local network
 - 💾 **Datenbank-Tracking**: Persistente Speicherung und Überwachung von Servern
 - ⚡ **Echtzeit-Updates**: Kontinuierliche Überwachung des Server-Status
 - 🔧 **Konfigurierbar**: Flexible Einstellungen für Netzwerkbereiche und Scan-Intervalle
+- 🚫 **Netzwerk-Filterung**: Ignoriere bestimmte Netzwerkbereiche (Test-/Entwicklungsumgebungen)
 
 ## Unterstützte Spiele
 
@@ -43,7 +44,8 @@ discord-gameserver-notifier/
 │   │   └── webhook_manager.py
 │   └── utils/
 │       ├── __init__.py
-│       └── logger.py
+│       ├── logger.py
+│       └── network_filter.py
 ├── config/
 │   └── config.yaml.example
 ├── requirements.txt

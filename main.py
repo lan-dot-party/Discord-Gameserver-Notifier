@@ -13,6 +13,7 @@ from typing import Optional
 import logging
 from src.config.config_manager import ConfigManager
 from src.utils.logger import LoggerSetup
+from src.utils.network_filter import NetworkFilter
 from src.discovery.network_scanner import DiscoveryEngine, ServerResponse
 from src.discovery.server_info_wrapper import ServerInfoWrapper, StandardizedServerInfo
 from src.database.database_manager import DatabaseManager
@@ -30,6 +31,11 @@ class GameServerNotifier:
         
         # Initialize server info wrapper for standardized server data
         self.server_wrapper = ServerInfoWrapper()
+        
+        # Initialize network filter for ignoring specific network ranges
+        network_config = self.config_manager.config.get('network', {})
+        ignore_ranges = network_config.get('ignore_ranges', [])
+        self.network_filter = NetworkFilter(ignore_ranges)
         
         # Initialize database manager
         try:
@@ -244,6 +250,11 @@ class GameServerNotifier:
             server: The discovered server information
         """
         try:
+            # Check if this server should be ignored based on network filtering
+            if self.network_filter.should_ignore_server(server.ip_address, server.port):
+                self.logger.info(f"🚫 Server {server.ip_address}:{server.port} ({server.game_type}) IGNORED by network filter - skipping database and Discord processing")
+                return
+            
             # Standardize the server information using the wrapper
             standardized_server = self.server_wrapper.standardize_server_response(server)
             
@@ -338,6 +349,13 @@ class GameServerNotifier:
             server: The lost server information
         """
         try:
+            # Check if this server should be ignored based on network filtering
+            # Note: We still process "lost" events for ignored servers in case they were
+            # added to the database before the ignore rule was configured
+            if self.network_filter.should_ignore_server(server.ip_address, server.port):
+                self.logger.info(f"🚫 Lost server {server.ip_address}:{server.port} ({server.game_type}) IGNORED by network filter - skipping processing")
+                return
+            
             # Standardize the server information using the wrapper
             standardized_server = self.server_wrapper.standardize_server_response(server)
             

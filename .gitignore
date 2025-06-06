@@ -22,3 +22,4 @@ opengsq-python/
 dist/discord_gameserver_notifier-0.0.1-py3-none-any.whl
 dist/*
 dist/
+src/utils/__pycache__/network_filter.cpython-313.pyc

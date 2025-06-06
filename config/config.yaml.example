@@ -7,6 +7,13 @@ network:
     - "10.0.0.0/24"
   scan_interval: 300  # seconds
   timeout: 5  # seconds for server responses
+  
+  # Network ranges to ignore - servers in these ranges will not be stored in database
+  # or trigger Discord notifications (useful for test servers, development environments, etc.)
+  ignore_ranges:
+    # - "192.168.100.0/24"  # Example: Ignore test network
+    # - "10.10.10.0/24"     # Example: Ignore development network
+    # - "172.16.0.0/16"     # Example: Ignore internal network
 
 games:
   enabled:
