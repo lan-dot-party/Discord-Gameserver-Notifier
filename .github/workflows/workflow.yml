@@ -145,7 +145,7 @@ jobs:
           --before-install "packaging/preinstall.sh" \
           --after-install "packaging/postinstall.sh" \
           --before-remove "packaging/preremove.sh" \
-          --rpm-service "packaging/discord-gameserver-notifier.service" \
+          --rpm-systemd "packaging/discord-gameserver-notifier.service" \
           --directories "/etc/dgn" \
           --directories "/var/lib/dgn" \
           --directories "/var/log/dgn" \
