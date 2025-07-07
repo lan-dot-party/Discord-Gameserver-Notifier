@@ -12,13 +12,17 @@ import os
 import argparse
 from typing import Optional, List, Tuple
 import logging
-from src.config.config_manager import ConfigManager
-from src.utils.logger import LoggerSetup
-from src.utils.network_filter import NetworkFilter
-from src.discovery.network_scanner import DiscoveryEngine, ServerResponse
-from src.discovery.server_info_wrapper import ServerInfoWrapper, StandardizedServerInfo
-from src.database.database_manager import DatabaseManager
-from src.discord.webhook_manager import WebhookManager
+try:
+    from importlib.metadata import version as get_version
+except ImportError:
+    from importlib_metadata import version as get_version
+from discord_gameserver_notifier.config.config_manager import ConfigManager
+from discord_gameserver_notifier.utils.logger import LoggerSetup
+from discord_gameserver_notifier.utils.network_filter import NetworkFilter
+from discord_gameserver_notifier.discovery.network_scanner import DiscoveryEngine, ServerResponse
+from discord_gameserver_notifier.discovery.server_info_wrapper import ServerInfoWrapper, StandardizedServerInfo
+from discord_gameserver_notifier.database.database_manager import DatabaseManager
+from discord_gameserver_notifier.discord.webhook_manager import WebhookManager
 
 class GameServerNotifier:
     """Main application class for the Discord Gameserver Notifier."""
@@ -547,10 +551,18 @@ Examples:
         help='Path to configuration file (overrides default search order)'
     )
     
+    # Get version dynamically from package metadata
+    try:
+        package_version = get_version('Discord-Gameserver-Notifier')
+        version_string = f'Discord Gameserver Notifier {package_version}'
+    except Exception:
+        # Fallback if package metadata is not available
+        version_string = 'Discord Gameserver Notifier (development version)'
+    
     parser.add_argument(
         '--version',
         action='version',
-        version='Discord Gameserver Notifier 0.0.4'
+        version=version_string
     )
     
     return parser.parse_args()

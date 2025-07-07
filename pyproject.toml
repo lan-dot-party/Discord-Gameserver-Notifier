@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "Discord-Gameserver-Notifier"
-version = "0.0.5"
+version = "0.0.6"
 dependencies = [
     "pyyaml>=6.0",
     "discord-webhook>=1.3.0",
@@ -24,7 +24,7 @@ license-files = ["LICEN[CS]E.*"]
 #keywords = ["egg", "bacon", "sausage", "tomatoes", "Lobster Thermidor"]
 
 [project.scripts]
-discord-gameserver-notifier = "src.main:main"
+discord-gameserver-notifier = "discord_gameserver_notifier.main:main"
 
 [project.urls]
 Homepage = "https://lan.party"
@@ -34,7 +34,7 @@ Repository = "https://github.com/lan-dot-party/Discord-Gameserver-Notifier.git"
 #Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["src/discord_gameserver_notifier"]
 artifacts = [
     "requirements.txt", 
     "README.md",
