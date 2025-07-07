@@ -18,13 +18,13 @@ SERVICE_EXAMPLE_CONFIG="/usr/lib/python3/dist-packages/config/config.yaml.servic
 
 echo "Discord Gameserver Notifier: Post-installation setup..."
 
-# Create configuration directory if it doesn't exist
+# Ensure configuration directory exists (should be created by preinstall.sh)
 if [ ! -d "$CONFIG_DIR" ]; then
-    echo "Creating configuration directory: $CONFIG_DIR"
+    echo "Warning: Configuration directory $CONFIG_DIR does not exist (should be created by preinstall.sh)"
     mkdir -p "$CONFIG_DIR"
     chmod 755 "$CONFIG_DIR"
 else
-    echo "Configuration directory already exists: $CONFIG_DIR"
+    echo "Configuration directory found: $CONFIG_DIR"
 fi
 
 # Copy example configuration if no config exists

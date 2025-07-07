@@ -111,6 +111,11 @@ jobs:
         mkdir -p var/lib/dgn
         mkdir -p var/log/dgn
         
+        # Create .gitkeep files to ensure directories exist (required for RPM)
+        touch etc/dgn/.gitkeep
+        touch var/lib/dgn/.gitkeep
+        touch var/log/dgn/.gitkeep
+        
         cd ..
         echo "Wheel contents extracted to: $(pwd)/wheel-contents"
         echo "Contents:"
@@ -154,9 +159,6 @@ jobs:
           --before-install "packaging/preinstall.sh" \
           --after-install "packaging/postinstall.sh" \
           --before-remove "packaging/preremove.sh" \
-          --directories "/etc/dgn" \
-          --directories "/var/lib/dgn" \
-          --directories "/var/log/dgn" \
           --verbose \
           wheel-contents/=/usr/lib/python3/dist-packages/
     
