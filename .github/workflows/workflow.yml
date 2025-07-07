@@ -206,3 +206,26 @@ jobs:
         path: dist/
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+
+  upload-to-release:
+    name: >-
+      Upload Linux packages 📦 to GitHub Release
+    needs:
+    - package-linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # IMPORTANT: mandatory for uploading release assets
+
+    steps:
+    - name: Download Linux packages
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-packages
+        path: packages/
+    
+    - name: Upload .deb and .rpm files to release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          packages/*.deb
+          packages/*.rpm
