@@ -27,6 +27,15 @@ fi
 # Create necessary directories
 echo "Creating service directories..."
 
+# Configuration directory
+if [ ! -d "/etc/dgn" ]; then
+    mkdir -p /etc/dgn
+    chmod 755 /etc/dgn
+    echo "Created configuration directory: /etc/dgn"
+else
+    echo "Configuration directory already exists: /etc/dgn"
+fi
+
 # Working directory for the service
 if [ ! -d "/var/lib/dgn" ]; then
     mkdir -p /var/lib/dgn
