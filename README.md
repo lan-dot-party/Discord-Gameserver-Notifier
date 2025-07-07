@@ -62,6 +62,61 @@ A Python-based tool for automatic detection of game servers in local networks wi
    python main.py
    ```
 
+### Package Installation (Recommended)
+
+For production deployments, install via package manager:
+
+```bash
+# Install from PyPI
+pip install Discord-Gameserver-Notifier
+
+# Run directly
+discord-gameserver-notifier --help
+```
+
+### Systemd Service (Linux)
+
+For automatic startup and service management on Linux systems:
+
+1. **Install the package** (creates systemd service automatically):
+   ```bash
+   # Via .deb package (Debian/Ubuntu)
+   sudo dpkg -i discord-gameserver-notifier_*.deb
+   
+   # Via .rpm package (RHEL/Fedora/openSUSE)
+   sudo rpm -i discord-gameserver-notifier-*.rpm
+   ```
+
+2. **Configure the service**:
+   ```bash
+   # Edit configuration
+   sudo nano /etc/dgn/config.yaml
+   ```
+
+3. **Manage the service**:
+   ```bash
+   # Start the service
+   sudo systemctl start discord-gameserver-notifier
+   
+   # Enable automatic startup
+   sudo systemctl enable discord-gameserver-notifier
+   
+   # Check status
+   sudo systemctl status discord-gameserver-notifier
+   
+   # View logs
+   sudo journalctl -u discord-gameserver-notifier -f
+   ```
+
+**Service Features:**
+- Runs as dedicated `dgn` system user
+- Automatic restart on failure
+- Proper logging to systemd journal
+- Security hardening (restricted filesystem access)
+- Configuration in `/etc/dgn/config.yaml`
+- Data stored in `/var/lib/dgn/`
+- Logs in `/var/log/dgn/`
+
 ## Configuration
 
 ### Basic Configuration

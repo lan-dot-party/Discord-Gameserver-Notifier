@@ -7,6 +7,8 @@ import os
 import yaml
 import ipaddress
 import logging
+import argparse
+import sys
 from typing import Dict, Any, List, Optional
 from urllib.parse import urlparse
 
@@ -37,18 +39,146 @@ class ConfigManager:
         }
     }
 
-    def __init__(self, config_path: str = 'config/config.yaml'):
-        """Initialize the ConfigManager with a path to the config file."""
-        self.config_path = config_path
+    def __init__(self, config_path: Optional[str] = None):
+        """
+        Initialize the ConfigManager with automatic config path resolution.
+        
+        Args:
+            config_path: Optional explicit path to config file. If None, uses fallback search order.
+        """
+        self.config_path = config_path or self._resolve_config_path()
         self.config = {}
         self.logger = logging.getLogger(__name__)
         self.load_config()
+
+    def _resolve_config_path(self) -> str:
+        """
+        Resolve configuration file path using fallback search order:
+        1. CLI argument --config <path>
+        2. Environment variable DGN_CONFIG
+        3. System-wide config: /etc/dgn/config.yaml
+        4. User config: $XDG_CONFIG_HOME/dgn/config.yaml or ~/.config/dgn/config.yaml
+        5. Repository fallback: config/config.yaml
+        
+        Returns:
+            str: Path to configuration file to use
+        """
+        # 1. Check CLI arguments (only if we're being called from main)
+        cli_config = self._get_cli_config_path()
+        if cli_config and os.path.exists(cli_config):
+            return cli_config
+        
+        # 2. Check environment variable
+        env_config = os.environ.get('DGN_CONFIG')
+        if env_config and os.path.exists(env_config):
+            return env_config
+        
+        # 3. System-wide config
+        system_config = '/etc/dgn/config.yaml'
+        if os.path.exists(system_config):
+            return system_config
+        
+        # 4. User config directory
+        user_config = self._get_user_config_path()
+        if user_config and os.path.exists(user_config):
+            return user_config
+        
+        # 5. Repository fallback
+        repo_config = 'config/config.yaml'
+        return repo_config
+
+    def _get_cli_config_path(self) -> Optional[str]:
+        """
+        Extract --config argument from command line if present.
+        
+        Returns:
+            Optional[str]: Config path from CLI argument or None
+        """
+        try:
+            # Create a temporary parser just to extract --config
+            parser = argparse.ArgumentParser(add_help=False)
+            parser.add_argument('--config', type=str, help='Path to configuration file')
+            
+            # Parse known args to avoid conflicts with other arguments
+            args, _ = parser.parse_known_args()
+            return args.config
+        except:
+            # If parsing fails, return None (no CLI config specified)
+            return None
+
+    def _get_user_config_path(self) -> Optional[str]:
+        """
+        Get user configuration directory path.
+        
+        Returns:
+            Optional[str]: User config path or None
+        """
+        # Check XDG_CONFIG_HOME first
+        xdg_config_home = os.environ.get('XDG_CONFIG_HOME')
+        if xdg_config_home:
+            return os.path.join(xdg_config_home, 'dgn', 'config.yaml')
+        
+        # Fall back to ~/.config
+        home_dir = os.path.expanduser('~')
+        if home_dir and home_dir != '~':  # Make sure expansion worked
+            return os.path.join(home_dir, '.config', 'dgn', 'config.yaml')
+        
+        return None
+
+    def get_config_search_paths(self) -> List[str]:
+        """
+        Get list of all configuration paths that were checked (for debugging).
+        
+        Returns:
+            List[str]: List of configuration paths in search order
+        """
+        paths = []
+        
+        # CLI argument
+        cli_config = self._get_cli_config_path()
+        if cli_config:
+            paths.append(f"CLI --config: {cli_config}")
+        
+        # Environment variable
+        env_config = os.environ.get('DGN_CONFIG')
+        if env_config:
+            paths.append(f"Environment DGN_CONFIG: {env_config}")
+        
+        # System-wide
+        paths.append("System-wide: /etc/dgn/config.yaml")
+        
+        # User config
+        user_config = self._get_user_config_path()
+        if user_config:
+            paths.append(f"User config: {user_config}")
+        
+        # Repository fallback
+        paths.append("Repository fallback: config/config.yaml")
+        
+        return paths
+
+    def _apply_environment_overrides(self) -> None:
+        """Apply environment variable overrides for service deployment."""
+        # Override database path from environment
+        db_path_env = os.environ.get('DGN_DATABASE_PATH')
+        if db_path_env:
+            self.config['database']['path'] = db_path_env
+            self.logger.debug(f"Database path overridden from environment: {db_path_env}")
+        
+        # Override log file path from environment
+        log_file_env = os.environ.get('DGN_LOG_FILE')
+        if log_file_env:
+            self.config['debugging']['log_file'] = log_file_env
+            self.logger.debug(f"Log file path overridden from environment: {log_file_env}")
 
     def load_config(self) -> None:
         """Load and validate the YAML configuration file."""
         try:
             if not os.path.exists(self.config_path):
                 self.logger.warning(f"Config file not found at {self.config_path}. Using default configuration.")
+                # Log the search paths for debugging
+                search_paths = self.get_config_search_paths()
+                self.logger.debug(f"Config search order was: {search_paths}")
                 self.config = self.DEFAULT_CONFIG.copy()
                 return
 
@@ -61,7 +191,10 @@ class ConfigManager:
             # Validate the configuration
             self._validate_config()
             
-            self.logger.info("Configuration loaded and validated successfully")
+            # Override paths from environment variables if set (useful for service deployment)
+            self._apply_environment_overrides()
+            
+            self.logger.info(f"Configuration loaded successfully from: {self.config_path}")
         except Exception as e:
             self.logger.error(f"Error loading configuration: {str(e)}")
             raise

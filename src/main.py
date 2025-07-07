@@ -9,6 +9,7 @@ import asyncio
 import signal
 import sys
 import os
+import argparse
 from typing import Optional, List, Tuple
 import logging
 from src.config.config_manager import ConfigManager
@@ -520,9 +521,46 @@ class GameServerNotifier:
         except Exception as e:
             self.logger.error(f"Error in inactive server cleanup check: {e}", exc_info=True)
 
+def parse_arguments() -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Discord Gameserver Notifier - Automatic detection of game servers with Discord notifications",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Configuration file search order:
+  1. --config <path> (command line argument)
+  2. DGN_CONFIG environment variable
+  3. /etc/dgn/config.yaml (system-wide)
+  4. ~/.config/dgn/config.yaml (user config)
+  5. config/config.yaml (repository fallback)
+
+Examples:
+  %(prog)s                           # Use default config search
+  %(prog)s --config /path/to/config.yaml
+  DGN_CONFIG=/etc/dgn/config.yaml %(prog)s
+        """
+    )
+    
+    parser.add_argument(
+        '--config',
+        type=str,
+        help='Path to configuration file (overrides default search order)'
+    )
+    
+    parser.add_argument(
+        '--version',
+        action='version',
+        version='Discord Gameserver Notifier 0.0.4'
+    )
+    
+    return parser.parse_args()
+
 def main():
     """Application entry point."""
     try:
+        # Parse command line arguments
+        args = parse_arguments()
+        
         # Create and run the application
         app = GameServerNotifier()
         asyncio.run(app.run())
