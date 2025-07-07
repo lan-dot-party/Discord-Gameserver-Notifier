@@ -84,7 +84,7 @@ jobs:
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
         echo "Detected version: $VERSION"
     
-    - name: Extract wheel contents
+    - name: Extract wheel contents and prepare systemd service
       run: |
         # Create temporary directory for wheel extraction
         mkdir -p wheel-contents
@@ -102,10 +102,14 @@ jobs:
         echo "Extracting wheel: $WHEEL_FILE"
         unzip -q "$WHEEL_FILE"
         
+        # Create systemd service directory and copy service file
+        mkdir -p usr/lib/systemd/system
+        cp ../packaging/discord-gameserver-notifier.service usr/lib/systemd/system/
+        
         cd ..
         echo "Wheel contents extracted to: $(pwd)/wheel-contents"
         echo "Contents:"
-        find wheel-contents -type f | head -10
+        find wheel-contents -type f | head -15
     
     - name: Build .deb package
       run: |
@@ -145,7 +149,6 @@ jobs:
           --before-install "packaging/preinstall.sh" \
           --after-install "packaging/postinstall.sh" \
           --before-remove "packaging/preremove.sh" \
-          --rpm-systemd "packaging/discord-gameserver-notifier.service" \
           --directories "/etc/dgn" \
           --directories "/var/lib/dgn" \
           --directories "/var/log/dgn" \
