@@ -32,3 +32,10 @@ src/discovery/protocols/__pycache__/renegadex.cpython-313.pyc
 src/discovery/protocols/__pycache__/source.cpython-313.pyc
 src/discovery/protocols/__pycache__/ut3.cpython-313.pyc
 src/discovery/protocols/__pycache__/warcraft3.cpython-313.pyc
+src/__pycache__/*
+src/config/__pycache__/*
+src/database/__pycache__/*
+src/discord/__pycache__/*
+src/discovery/__pycache__/*
+src/discovery/protocols/__pycache__/*
+src/utils/__pycache__/*
