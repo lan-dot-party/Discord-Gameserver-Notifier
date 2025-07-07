@@ -1,0 +1,51 @@
+[Unit]
+Description=Discord Gameserver Notifier
+Documentation=https://github.com/lan-dot-party/Discord-Gameserver-Notifier
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=dgn
+Group=dgn
+WorkingDirectory=/var/lib/dgn
+ExecStart=/usr/bin/discord-gameserver-notifier
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/dgn /var/log/dgn
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Resource limits
+LimitNOFILE=1024
+LimitNPROC=512
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=discord-gameserver-notifier
+
+# Environment
+Environment=DGN_CONFIG=/etc/dgn/config.yaml
+Environment=PYTHONUNBUFFERED=1
+Environment=DGN_DATABASE_PATH=/var/lib/dgn/gameservers.db
+Environment=DGN_LOG_FILE=/var/log/dgn/notifier.log
+
+[Install]
+WantedBy=multi-user.target 

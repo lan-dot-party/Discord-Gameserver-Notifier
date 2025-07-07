@@ -1,0 +1,54 @@
+# Service configuration file for Discord Gameserver Notifier
+# This is optimized for systemd service deployment
+# Copy to /etc/dgn/config.yaml and adjust values as needed
+
+network:
+  scan_ranges:
+    - "192.168.1.0/24"
+    # - "10.0.0.0/24"
+  scan_interval: 300  # seconds
+  timeout: 5  # seconds for server responses
+  
+  # Network ranges to ignore - servers in these ranges will not be stored in database
+  # or trigger Discord notifications (useful for test servers, development environments, etc.)
+  ignore_ranges:
+    # - "192.168.100.0/24"  # Example: Ignore test network
+    # - "10.10.10.0/24"     # Example: Ignore development network
+    # - "172.16.0.0/16"     # Example: Ignore internal network
+
+games:
+  enabled:
+    - "ut3"           # Unreal Tournament 3
+    - "source"        # Source Engine games
+    - "renegadex"     # Renegade X
+    - "warcraft3"     # Warcraft 3
+
+discord:
+  # Discord Webhook URL - Get this from your Discord server settings
+  # Server Settings -> Integrations -> Webhooks -> Create Webhook
+  # Example: "https://discord.com/api/webhooks/1234567890123456789/AbCdEfGhIjKlMnOpQrStUvWxYz1234567890AbCdEfGhIjKlMnOpQrStUvWxYz"
+  webhook_url: "REPLACE_WITH_YOUR_DISCORD_WEBHOOK_URL"
+  
+  # Optional: Discord Channel ID for reference (not required for webhooks)
+  channel_id: "1234567890"
+  
+  # Optional: Mentions to include in new server notifications
+  mentions:
+    - "@everyone"     # Mention everyone
+    # - "@here"       # Mention online users only
+    # - "<@&ROLE_ID>" # Mention specific role (replace ROLE_ID with actual role ID)
+
+database:
+  # Service deployment: Database stored in service working directory
+  # This path will be overridden by DGN_DATABASE_PATH environment variable
+  path: "/var/lib/dgn/gameservers.db"
+  cleanup_after_fails: 3   # Mark server inactive after X failed attempts
+  inactive_minutes: 3      # Minutes of inactivity before cleanup (perfect for LAN parties)
+  cleanup_interval: 60     # Cleanup interval in seconds (1 minute for responsive cleanup)
+
+debugging:
+  log_level: "INFO"   # DEBUG, INFO, WARNING, ERROR
+  log_to_file: true
+  # Service deployment: Log stored in service log directory
+  # This path will be overridden by DGN_LOG_FILE environment variable
+  log_file: "/var/log/dgn/notifier.log" 

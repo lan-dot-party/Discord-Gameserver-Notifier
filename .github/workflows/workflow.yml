@@ -35,6 +35,150 @@ jobs:
         name: python-package-distributions
         path: dist/
 
+  package-linux:
+    name: Build Linux packages (.deb/.rpm) 📦
+    needs:
+    - build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: false
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+    
+    - name: Download wheel distribution
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+    
+    - name: Install FPM dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ruby ruby-dev rubygems build-essential
+        sudo gem install fpm
+    
+    - name: Extract version from pyproject.toml
+      id: version
+      run: |
+        # Install tomllib backport for Python < 3.11 if needed
+        python3 -c "import tomllib" 2>/dev/null || python3 -m pip install tomli
+        
+        VERSION=$(python3 -c "
+        try:
+            import tomllib
+        except ImportError:
+            import tomli as tomllib
+        
+        with open('pyproject.toml', 'rb') as f:
+            data = tomllib.load(f)
+        print(data['project']['version'])
+        ")
+        
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Detected version: $VERSION"
+    
+    - name: Extract wheel contents
+      run: |
+        # Create temporary directory for wheel extraction
+        mkdir -p wheel-contents
+        cd wheel-contents
+        
+        # Find and extract wheel file
+        WHEEL_FILE=$(find ../dist/ -name "*.whl" | head -1)
+        
+        if [ -z "$WHEEL_FILE" ]; then
+          echo "Error: No wheel file found in dist/"
+          ls -la ../dist/
+          exit 1
+        fi
+        
+        echo "Extracting wheel: $WHEEL_FILE"
+        unzip -q "$WHEEL_FILE"
+        
+        cd ..
+        echo "Wheel contents extracted to: $(pwd)/wheel-contents"
+        echo "Contents:"
+        find wheel-contents -type f | head -10
+    
+    - name: Build .deb package
+      run: |
+        fpm -s dir -t deb \
+          --name "discord-gameserver-notifier" \
+          --version "${{ steps.version.outputs.VERSION }}" \
+          --description "Automated Discord notifications for LAN gameservers" \
+          --url "https://github.com/lan-dot-party/Discord-Gameserver-Notifier" \
+          --maintainer "LAN.party Team <info@lan.party>" \
+          --license "GPL-3.0" \
+          --architecture "all" \
+          --depends "python3 >= 3.8" \
+          --depends "python3-pip" \
+          --before-install "packaging/preinstall.sh" \
+          --after-install "packaging/postinstall.sh" \
+          --before-remove "packaging/preremove.sh" \
+          --deb-systemd "packaging/discord-gameserver-notifier.service" \
+          --deb-no-default-config-files \
+          --directories "/etc/dgn" \
+          --directories "/var/lib/dgn" \
+          --directories "/var/log/dgn" \
+          --verbose \
+          wheel-contents/=/usr/lib/python3/dist-packages/
+    
+    - name: Build .rpm package
+      run: |
+        fpm -s dir -t rpm \
+          --name "discord-gameserver-notifier" \
+          --version "${{ steps.version.outputs.VERSION }}" \
+          --description "Automated Discord notifications for LAN gameservers" \
+          --url "https://github.com/lan-dot-party/Discord-Gameserver-Notifier" \
+          --maintainer "LAN.party Team <info@lan.party>" \
+          --license "GPL-3.0" \
+          --architecture "noarch" \
+          --depends "python3 >= 3.8" \
+          --depends "python3-pip" \
+          --before-install "packaging/preinstall.sh" \
+          --after-install "packaging/postinstall.sh" \
+          --before-remove "packaging/preremove.sh" \
+          --rpm-service "packaging/discord-gameserver-notifier.service" \
+          --directories "/etc/dgn" \
+          --directories "/var/lib/dgn" \
+          --directories "/var/log/dgn" \
+          --verbose \
+          wheel-contents/=/usr/lib/python3/dist-packages/
+    
+    - name: Validate packages
+      run: |
+        echo "=== Generated packages ==="
+        ls -la *.deb *.rpm 2>/dev/null || echo "No packages found"
+        
+        # Validate .deb package
+        if ls *.deb 1> /dev/null 2>&1; then
+          echo "=== .deb package info ==="
+          dpkg-deb --info *.deb
+          echo "=== .deb package contents (first 20 files) ==="
+          dpkg-deb --contents *.deb | head -20
+        fi
+        
+        # Validate .rpm package  
+        if ls *.rpm 1> /dev/null 2>&1; then
+          echo "=== .rpm package info ==="
+          rpm -qip *.rpm 2>/dev/null || echo "rpm command not available, skipping rpm validation"
+        fi
+    
+    - name: Upload Linux packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-packages
+        path: |
+          *.deb
+          *.rpm
+
   publish-to-pypi:
     name: >-
       Publish Python 🐍 distribution 📦 to PyPI
