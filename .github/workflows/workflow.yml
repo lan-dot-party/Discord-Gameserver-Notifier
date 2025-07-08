@@ -102,9 +102,10 @@ jobs:
         echo "Extracting wheel: $WHEEL_FILE"
         unzip -q "$WHEEL_FILE"
         
-        # Copy the original wheel file for installation
+        # Copy the original wheel file for installation and get the filename
         mkdir -p usr/lib/python3/dist-packages
         cp "$WHEEL_FILE" usr/lib/python3/dist-packages/
+        WHEEL_FILENAME=$(basename "$WHEEL_FILE")
         
         # Create systemd service directory and copy service file
         mkdir -p usr/lib/systemd/system
@@ -133,6 +134,7 @@ jobs:
         find wheel-contents -type f | head -25
         echo "Executable script created at: wheel-contents/usr/bin/discord-gameserver-notifier"
         echo "Wheel file copied to: wheel-contents/usr/lib/python3/dist-packages/"
+        echo "WHEEL_FILENAME=$WHEEL_FILENAME" >> $GITHUB_ENV
     
     - name: Build .deb package
       run: |
@@ -159,7 +161,7 @@ jobs:
           --verbose \
           wheel-contents/discord_gameserver_notifier/=/usr/lib/python3/dist-packages/discord_gameserver_notifier/ \
           wheel-contents/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/=/usr/lib/python3/dist-packages/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/ \
-          wheel-contents/usr/lib/python3/dist-packages/*.whl=/usr/lib/python3/dist-packages/ \
+          wheel-contents/usr/lib/python3/dist-packages/$WHEEL_FILENAME=/usr/lib/python3/dist-packages/$WHEEL_FILENAME \
           wheel-contents/usr/bin/discord-gameserver-notifier=/usr/bin/discord-gameserver-notifier \
           wheel-contents/etc/dgn/.gitkeep=/etc/dgn/.gitkeep \
           wheel-contents/var/lib/dgn/.gitkeep=/var/lib/dgn/.gitkeep \
@@ -185,7 +187,7 @@ jobs:
           --verbose \
           wheel-contents/discord_gameserver_notifier/=/usr/lib/python3/dist-packages/discord_gameserver_notifier/ \
           wheel-contents/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/=/usr/lib/python3/dist-packages/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/ \
-          wheel-contents/usr/lib/python3/dist-packages/*.whl=/usr/lib/python3/dist-packages/ \
+          wheel-contents/usr/lib/python3/dist-packages/$WHEEL_FILENAME=/usr/lib/python3/dist-packages/$WHEEL_FILENAME \
           wheel-contents/usr/bin/discord-gameserver-notifier=/usr/bin/discord-gameserver-notifier \
           wheel-contents/etc/dgn/.gitkeep=/etc/dgn/.gitkeep \
           wheel-contents/var/lib/dgn/.gitkeep=/var/lib/dgn/.gitkeep \
