@@ -310,6 +310,7 @@ jobs:
         cp ../packaging/PKGBUILD .
         cp ../packaging/discord-gameserver-notifier.service .
         cp ../packaging/discord-gameserver-notifier-exec .
+        cp ../packaging/discord-gameserver-notifier.install .
         
         # Extract config files from wheel
         python -m zipfile -e "$WHEEL_FILENAME" temp-extract/
