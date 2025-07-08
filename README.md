@@ -38,7 +38,50 @@ A Python-based tool for automatic detection of game servers in local networks wi
 - Network access for UDP broadcast queries
 - Discord webhook URL (optional, for notifications)
 
-### Quick Start
+### Installation Methods
+
+#### Option 1: Package Installation (Recommended)
+
+**From PyPI:**
+```bash
+# Install from PyPI
+pip install Discord-Gameserver-Notifier
+
+# Run directly
+discord-gameserver-notifier --help
+```
+
+**From GitHub Releases:**
+
+Choose the appropriate package for your system from the [releases page](https://github.com/lan-dot-party/Discord-Gameserver-Notifier/releases):
+
+**Debian/Ubuntu (.deb):**
+```bash
+# Download and install .deb package
+wget https://github.com/lan-dot-party/Discord-Gameserver-Notifier/releases/latest/download/discord-gameserver-notifier_*.deb
+sudo dpkg -i discord-gameserver-notifier_*.deb
+sudo apt-get install -f  # Fix dependencies if needed
+```
+
+**RHEL/Fedora/openSUSE (.rpm):**
+```bash
+# Download and install .rpm package
+wget https://github.com/lan-dot-party/Discord-Gameserver-Notifier/releases/latest/download/discord-gameserver-notifier-*.rpm
+sudo rpm -i discord-gameserver-notifier-*.rpm
+```
+
+**Arch Linux (.pkg.tar.zst):**
+```bash
+# Download and install Arch package
+wget https://github.com/lan-dot-party/Discord-Gameserver-Notifier/releases/latest/download/discord-gameserver-notifier-*.pkg.tar.zst
+sudo pacman -U discord-gameserver-notifier-*.pkg.tar.zst
+```
+
+All package installations place the executable in `/usr/bin/discord-gameserver-notifier` and are ready to use system-wide.
+
+#### Option 2: Manual Installation (Development)
+
+For development or manual installation:
 
 1. **Clone the repository:**
    ```bash
@@ -62,44 +105,25 @@ A Python-based tool for automatic detection of game servers in local networks wi
    python main.py
    ```
 
-### Package Installation (Recommended)
-
-For production deployments, install via package manager:
-
-```bash
-# Install from PyPI
-pip install Discord-Gameserver-Notifier
-
-# Run directly
-discord-gameserver-notifier --help
-```
-
 ### Systemd Service (Linux)
 
-For automatic startup and service management on Linux systems:
+For automatic startup and service management on Linux systems, the systemd service is automatically created when installing via package managers (.deb, .rpm, .pkg.tar.zst or PyPI):
 
-1. **Install the package** (creates systemd service automatically):
-   ```bash
-   # Via .deb package (Debian/Ubuntu)
-   sudo dpkg -i discord-gameserver-notifier_*.deb
-   
-   # Via .rpm package (RHEL/Fedora/openSUSE)
-   sudo rpm -i discord-gameserver-notifier-*.rpm
-   ```
+1. **Install the package** (any of the package installation methods above will automatically create the systemd service)
 
 2. **Configure the service**:
    ```bash
-   # Edit configuration
+   # Edit configuration (service file is already created)
    sudo nano /etc/dgn/config.yaml
    ```
 
-3. **Manage the service**:
+3. **Enable and start the service**:
    ```bash
-   # Start the service
-   sudo systemctl start discord-gameserver-notifier
-   
    # Enable automatic startup
    sudo systemctl enable discord-gameserver-notifier
+   
+   # Start the service
+   sudo systemctl start discord-gameserver-notifier
    
    # Check status
    sudo systemctl status discord-gameserver-notifier
@@ -116,6 +140,7 @@ For automatic startup and service management on Linux systems:
 - Configuration in `/etc/dgn/config.yaml`
 - Data stored in `/var/lib/dgn/`
 - Logs in `/var/log/dgn/`
+- Executable located in `/usr/bin/discord-gameserver-notifier`
 
 ## Configuration
 
@@ -189,6 +214,22 @@ See `docs/NETWORK_FILTERING.md` for more information.
 
 ### Running the Application
 
+**After Package Installation:**
+```bash
+# Standard execution
+discord-gameserver-notifier
+
+# With debug logging
+discord-gameserver-notifier --log-level DEBUG
+
+# Background execution
+nohup discord-gameserver-notifier &
+
+# View help
+discord-gameserver-notifier --help
+```
+
+**Manual Installation:**
 ```bash
 # Standard execution
 python main.py
