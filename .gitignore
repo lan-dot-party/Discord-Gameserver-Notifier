@@ -11,3 +11,4 @@ dist/*
 dist/
 *.pyc
 __pycache__/
+notifier-venv/
