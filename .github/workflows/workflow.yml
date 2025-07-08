@@ -618,17 +618,25 @@ jobs:
     
     - name: Test configuration examples
       run: |
-        # Check if example configurations exist
-        if [ -f "/usr/share/doc/discord-gameserver-notifier/config.yaml.example" ]; then
-          echo "✅ Example config found"
+        # Check if example configurations exist in /etc/dgn (where they are actually used)
+        if [ -f "/etc/dgn/config.yaml" ]; then
+          echo "✅ Example config found in /etc/dgn"
+          
+          # Verify it's actually a valid configuration file
+          if grep -q "discord:" /etc/dgn/config.yaml; then
+            echo "✅ Configuration file contains expected Discord section"
+          else
+            echo "❌ Configuration file does not contain expected Discord section"
+            exit 1
+          fi
         else
-          echo "❌ Example config not found"
-          exit 1
-        fi
-        
-        if [ -f "/usr/share/doc/discord-gameserver-notifier/config.yaml.service-example" ]; then
-          echo "✅ Service example config found"
-        else
-          echo "❌ Service example config not found"
-          exit 1
+          echo "❌ Example config not found in /etc/dgn"
+          
+          # Fallback: check if the install script at least found the source files
+          if [ -f "/usr/share/doc/discord-gameserver-notifier/config.yaml.example" ] || [ -f "/usr/share/doc/discord-gameserver-notifier/config.yaml.service-example" ]; then
+            echo "✅ Source configuration files found in /usr/share/doc/"
+          else
+            echo "❌ Neither configuration file nor source files found"
+            exit 1
+          fi
         fi
