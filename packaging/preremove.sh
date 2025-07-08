@@ -27,6 +27,16 @@ else
     echo "Systemctl not available - skipping service management."
 fi
 
+# Remove virtual environment
+VENV_DIR="/opt/discord-gameserver-notifier"
+if [ -d "$VENV_DIR" ]; then
+    echo "Removing virtual environment at $VENV_DIR..."
+    rm -rf "$VENV_DIR"
+    echo "Virtual environment removed."
+else
+    echo "Virtual environment not found - nothing to remove."
+fi
+
 echo "Pre-removal cleanup completed!"
 
 exit 0 

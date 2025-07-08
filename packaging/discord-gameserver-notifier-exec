@@ -1,22 +1,26 @@
-#!/usr/bin/env python3
+#!/bin/bash
 """
 Discord Gameserver Notifier - Executable script
-This script calls the main function from the installed package.
+This script calls the main function from the venv-installed package.
 """
 
-import sys
-import os
+# Path to the virtual environment
+VENV_PATH="/opt/discord-gameserver-notifier"
+PYTHON_EXEC="$VENV_PATH/bin/python"
 
-# Add the package directory to Python path
-sys.path.insert(0, '/usr/lib/python3/dist-packages')
+# Check if venv exists
+if [ ! -f "$PYTHON_EXEC" ]; then
+    echo "Error: Virtual environment not found at $VENV_PATH" >&2
+    echo "Please ensure the package is properly installed." >&2
+    exit 1
+fi
 
-try:
-    from discord_gameserver_notifier.main import main
-    main()
-except ImportError as e:
-    print(f"Error importing discord_gameserver_notifier: {e}", file=sys.stderr)
-    print("Please ensure the package is properly installed.", file=sys.stderr)
-    sys.exit(1)
-except Exception as e:
-    print(f"Error running discord_gameserver_notifier: {e}", file=sys.stderr)
-    sys.exit(1) 
+# Check if the main module exists
+if ! "$PYTHON_EXEC" -c "import discord_gameserver_notifier.main" >/dev/null 2>&1; then
+    echo "Error: discord_gameserver_notifier module not found in venv" >&2
+    echo "Please ensure the package is properly installed." >&2
+    exit 1
+fi
+
+# Execute the main function
+exec "$PYTHON_EXEC" -m discord_gameserver_notifier.main "$@" 
