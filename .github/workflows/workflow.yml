@@ -102,6 +102,10 @@ jobs:
         echo "Extracting wheel: $WHEEL_FILE"
         unzip -q "$WHEEL_FILE"
         
+        # Copy the original wheel file for installation
+        mkdir -p usr/lib/python3/dist-packages
+        cp "$WHEEL_FILE" usr/lib/python3/dist-packages/
+        
         # Create systemd service directory and copy service file
         mkdir -p usr/lib/systemd/system
         cp ../packaging/discord-gameserver-notifier.service usr/lib/systemd/system/
@@ -115,17 +119,20 @@ jobs:
         mkdir -p etc/dgn
         mkdir -p var/lib/dgn
         mkdir -p var/log/dgn
+        mkdir -p opt  # For the venv location
         
         # Create .gitkeep files to ensure directories exist (required for RPM)
         touch etc/dgn/.gitkeep
         touch var/lib/dgn/.gitkeep
         touch var/log/dgn/.gitkeep
+        touch opt/.gitkeep
         
         cd ..
         echo "Wheel contents extracted to: $(pwd)/wheel-contents"
         echo "Contents:"
-        find wheel-contents -type f | head -20
+        find wheel-contents -type f | head -25
         echo "Executable script created at: wheel-contents/usr/bin/discord-gameserver-notifier"
+        echo "Wheel file copied to: wheel-contents/usr/lib/python3/dist-packages/"
     
     - name: Build .deb package
       run: |
@@ -139,6 +146,7 @@ jobs:
           --architecture "all" \
           --depends "python3 >= 3.8" \
           --depends "python3-pip" \
+          --depends "python3-venv" \
           --before-install "packaging/preinstall.sh" \
           --after-install "packaging/postinstall.sh" \
           --before-remove "packaging/preremove.sh" \
@@ -147,13 +155,16 @@ jobs:
           --directories "/etc/dgn" \
           --directories "/var/lib/dgn" \
           --directories "/var/log/dgn" \
+          --directories "/opt" \
           --verbose \
           wheel-contents/discord_gameserver_notifier/=/usr/lib/python3/dist-packages/discord_gameserver_notifier/ \
           wheel-contents/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/=/usr/lib/python3/dist-packages/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/ \
+          wheel-contents/usr/lib/python3/dist-packages/*.whl=/usr/lib/python3/dist-packages/ \
           wheel-contents/usr/bin/discord-gameserver-notifier=/usr/bin/discord-gameserver-notifier \
           wheel-contents/etc/dgn/.gitkeep=/etc/dgn/.gitkeep \
           wheel-contents/var/lib/dgn/.gitkeep=/var/lib/dgn/.gitkeep \
-          wheel-contents/var/log/dgn/.gitkeep=/var/log/dgn/.gitkeep
+          wheel-contents/var/log/dgn/.gitkeep=/var/log/dgn/.gitkeep \
+          wheel-contents/opt/.gitkeep=/opt/.gitkeep
     
     - name: Build .rpm package
       run: |
@@ -167,16 +178,19 @@ jobs:
           --architecture "noarch" \
           --depends "python3 >= 3.8" \
           --depends "python3-pip" \
+          --depends "python3-venv" \
           --before-install "packaging/preinstall.sh" \
           --after-install "packaging/postinstall.sh" \
           --before-remove "packaging/preremove.sh" \
           --verbose \
           wheel-contents/discord_gameserver_notifier/=/usr/lib/python3/dist-packages/discord_gameserver_notifier/ \
           wheel-contents/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/=/usr/lib/python3/dist-packages/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/ \
+          wheel-contents/usr/lib/python3/dist-packages/*.whl=/usr/lib/python3/dist-packages/ \
           wheel-contents/usr/bin/discord-gameserver-notifier=/usr/bin/discord-gameserver-notifier \
           wheel-contents/etc/dgn/.gitkeep=/etc/dgn/.gitkeep \
           wheel-contents/var/lib/dgn/.gitkeep=/var/lib/dgn/.gitkeep \
-          wheel-contents/var/log/dgn/.gitkeep=/var/log/dgn/.gitkeep
+          wheel-contents/var/log/dgn/.gitkeep=/var/log/dgn/.gitkeep \
+          wheel-contents/opt/.gitkeep=/opt/.gitkeep
     
     - name: Validate packages
       run: |
