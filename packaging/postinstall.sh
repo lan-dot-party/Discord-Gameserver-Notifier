@@ -42,61 +42,33 @@ else
     echo "Virtual environment already exists"
 fi
 
+# Upgrade pip and install wheel package first
+echo "Upgrading pip and installing wheel package..."
+"$VENV_DIR/bin/pip" install --upgrade pip wheel
+
 # Install wheel package into venv
 echo "Installing Discord Gameserver Notifier into virtual environment..."
-if [ -d "$WHEEL_DIR/discord_gameserver_notifier" ]; then
-    # Install the package from the copied wheel contents
-    "$VENV_DIR/bin/pip" install --no-deps "$WHEEL_DIR"/../discord_gameserver_notifier*.whl 2>/dev/null || {
-        # Fallback: Create a local installable package
-        echo "Creating local package installation..."
-        TEMP_PKG_DIR=$(mktemp -d)
-        cp -r "$WHEEL_DIR/discord_gameserver_notifier" "$TEMP_PKG_DIR/"
-        
-        # Detect version from wheel filename
-        WHEEL_VERSION=$(ls "$WHEEL_DIR"/../discord_gameserver_notifier*.whl 2>/dev/null | head -1 | sed -n 's/.*discord_gameserver_notifier-\([0-9.]*\)-.*/\1/p')
-        if [ -z "$WHEEL_VERSION" ]; then
-            WHEEL_VERSION="0.0.6"  # fallback
-        fi
-        
-        # Create a minimal setup.py for local installation
-        cat > "$TEMP_PKG_DIR/setup.py" << EOF
-from setuptools import setup, find_packages
 
-setup(
-    name="Discord-Gameserver-Notifier",
-    version="$WHEEL_VERSION",
-    packages=find_packages(),
-    install_requires=[
-        "pyyaml>=6.0",
-        "discord-webhook>=1.3.0", 
-        "opengsq>=3.4.0"
-    ],
-    entry_points={
-        'console_scripts': [
-            'discord-gameserver-notifier-pkg=discord_gameserver_notifier.main:main',
-        ],
-    }
-)
-EOF
-        
-        # Install the package and its dependencies
-        "$VENV_DIR/bin/pip" install "$TEMP_PKG_DIR"
-        
-        # Cleanup
-        rm -rf "$TEMP_PKG_DIR"
-    }
-    echo "Package installed successfully into virtual environment"
-else
-    echo "Warning: Package files not found in expected location"
+# Find the wheel file
+WHEEL_FILE=$(find "$WHEEL_DIR" -name "discord_gameserver_notifier*.whl" | head -1)
+if [ -z "$WHEEL_FILE" ]; then
+    echo "Error: No wheel file found in $WHEEL_DIR"
+    ls -la "$WHEEL_DIR"
+    exit 1
 fi
+
+echo "Installing wheel file: $WHEEL_FILE"
+
+# Install the wheel package with all dependencies
+"$VENV_DIR/bin/pip" install "$WHEEL_FILE"
 
 # Verify installation
 echo "Verifying installation..."
 if "$VENV_DIR/bin/python" -c "import discord_gameserver_notifier.main" >/dev/null 2>&1; then
     echo "✅ Package verification successful"
 else
-    echo "❌ Package verification failed - trying to install dependencies manually"
-    "$VENV_DIR/bin/pip" install pyyaml>=6.0 discord-webhook>=1.3.0 opengsq>=3.4.0
+    echo "❌ Package verification failed - installation problem"
+    exit 1
 fi
 
 # Copy example configuration if no config exists
