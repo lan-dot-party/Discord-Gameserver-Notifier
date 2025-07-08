@@ -161,7 +161,7 @@ jobs:
           --version "${{ steps.version.outputs.VERSION }}" \
           --description "Automated Discord notifications for LAN gameservers" \
           --url "https://github.com/lan-dot-party/Discord-Gameserver-Notifier" \
-          --maintainer "LAN.party Team <info@lan.party>" \
+          --maintainer "LAN.party Team <packaging@lan.party>" \
           --license "GPL-3.0" \
           --architecture "all" \
           --depends "python3 >= 3.8" \
@@ -194,7 +194,7 @@ jobs:
           --version "${{ steps.version.outputs.VERSION }}" \
           --description "Automated Discord notifications for LAN gameservers" \
           --url "https://github.com/lan-dot-party/Discord-Gameserver-Notifier" \
-          --maintainer "LAN.party Team <info@lan.party>" \
+          --maintainer "LAN.party Team <packaging@lan.party>" \
           --license "GPL-3.0" \
           --architecture "noarch" \
           --depends "python3 >= 3.8" \
