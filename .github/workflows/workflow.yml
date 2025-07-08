@@ -303,8 +303,8 @@ jobs:
         echo "Using wheel: $WHEEL_FILE"
         WHEEL_FILENAME=$(basename "$WHEEL_FILE")
         
-        # Copy wheel and rename for PKGBUILD
-        cp "$WHEEL_FILE" "discord-gameserver-notifier-${{ steps.version.outputs.VERSION }}.whl"
+        # Copy wheel with original filename
+        cp "$WHEEL_FILE" .
         
         # Copy packaging files
         cp ../packaging/PKGBUILD .
@@ -312,7 +312,7 @@ jobs:
         cp ../packaging/discord-gameserver-notifier-exec .
         
         # Extract config files from wheel
-        python -m zipfile -e "discord-gameserver-notifier-${{ steps.version.outputs.VERSION }}.whl" temp-extract/
+        python -m zipfile -e "$WHEEL_FILENAME" temp-extract/
         
         # Copy config files
         if [ -f "temp-extract/config/config.yaml.example" ]; then
@@ -329,11 +329,9 @@ jobs:
             touch config.yaml.service-example
         fi
         
-        # Update PKGBUILD with actual version
+        # Update PKGBUILD with actual version and wheel filename
         sed -i "s/VERSION_PLACEHOLDER/${{ steps.version.outputs.VERSION }}/g" PKGBUILD
-        
-        # Update source line in PKGBUILD to match actual filename
-        sed -i "s/\$pkgname-\$pkgver\.whl/discord-gameserver-notifier-${{ steps.version.outputs.VERSION }}.whl/g" PKGBUILD
+        sed -i "s/WHEEL_FILENAME_PLACEHOLDER/$WHEEL_FILENAME/g" PKGBUILD
         
         echo "PKGBUILD prepared:"
         cat PKGBUILD
