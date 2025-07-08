@@ -207,6 +207,7 @@ jobs:
           wheel-contents/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/=/usr/lib/python3/dist-packages/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/ \
           wheel-contents/usr/lib/python3/dist-packages/$WHEEL_FILENAME=/usr/lib/python3/dist-packages/$WHEEL_FILENAME \
           wheel-contents/usr/bin/discord-gameserver-notifier=/usr/bin/discord-gameserver-notifier \
+          wheel-contents/usr/lib/systemd/system/discord-gameserver-notifier.service=/usr/lib/systemd/system/discord-gameserver-notifier.service \
           wheel-contents/etc/dgn/.gitkeep=/etc/dgn/.gitkeep \
           wheel-contents/var/lib/dgn/.gitkeep=/var/lib/dgn/.gitkeep \
           wheel-contents/var/log/dgn/.gitkeep=/var/log/dgn/.gitkeep \
