@@ -252,7 +252,7 @@ jobs:
     - name: Update system and install dependencies
       run: |
         pacman -Syu --noconfirm
-        pacman -S --noconfirm base-devel git python python-pip python-build python-installer python-wheel python-hatchling
+        pacman -S --noconfirm base-devel git python python-pip python-build python-installer python-wheel python-hatchling python-virtualenv python-yaml
     
     - uses: actions/checkout@v4
       with:
@@ -346,6 +346,7 @@ jobs:
         
         # Create non-root user for makepkg (required)
         useradd -m builder
+        echo 'builder ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
         chown -R builder:builder .
         
         # Build package as non-root user
