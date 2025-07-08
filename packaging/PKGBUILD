@@ -8,6 +8,7 @@ url="https://github.com/lan-dot-party/Discord-Gameserver-Notifier"
 license=('GPL3')
 depends=('python>=3.7' 'python-pip' 'python-virtualenv' 'python-yaml' 'systemd')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-hatchling')
+install=discord-gameserver-notifier.install
 source=("WHEEL_FILENAME_PLACEHOLDER")
 sha256sums=('SKIP')
 
@@ -17,8 +18,12 @@ build() {
 }
 
 package() {
-    # Install the wheel
-    python -m installer --destdir="$pkgdir" "$srcdir/WHEEL_FILENAME_PLACEHOLDER"
+    # Get Python version dynamically
+    PYTHON_VERSION=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+    
+    # Install the wheel to site-packages for the install script to find it
+    install -Dm644 "$srcdir/WHEEL_FILENAME_PLACEHOLDER" \
+        "$pkgdir/usr/lib/python${PYTHON_VERSION}/site-packages/WHEEL_FILENAME_PLACEHOLDER"
     
     # Install systemd service (from build directory, not src)
     install -Dm644 "$startdir/discord-gameserver-notifier.service" \
