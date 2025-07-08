@@ -281,3 +281,131 @@ jobs:
         files: |
           packages/*.deb
           packages/*.rpm
+
+  test-deb-package:
+    name: Test .deb package installation 🧪
+    needs:
+    - package-linux
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download Linux packages
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-packages
+        path: packages/
+    
+    - name: Extract version from package filename
+      id: version
+      run: |
+        DEB_FILE=$(find packages/ -name "*.deb" | head -1)
+        if [ -z "$DEB_FILE" ]; then
+          echo "Error: No .deb file found"
+          exit 1
+        fi
+        
+        # Extract version from filename (format: discord-gameserver-notifier_VERSION_all.deb)
+        VERSION=$(basename "$DEB_FILE" | sed 's/discord-gameserver-notifier_\(.*\)_all\.deb/\1/')
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "DEB_FILE=$DEB_FILE" >> $GITHUB_OUTPUT
+        echo "Detected version: $VERSION"
+        echo "Package file: $DEB_FILE"
+    
+    - name: Install .deb package
+      run: |
+        echo "Installing package: ${{ steps.version.outputs.DEB_FILE }}"
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-pip python3-venv
+        sudo dpkg -i "${{ steps.version.outputs.DEB_FILE }}" || sudo apt-get install -fy
+    
+    - name: Test installed package
+      run: |
+        echo "Testing discord-gameserver-notifier --version"
+        VERSION_OUTPUT=$(discord-gameserver-notifier --version)
+        echo "Command output: $VERSION_OUTPUT"
+        
+        # Check if the version matches
+        EXPECTED_VERSION="${{ steps.version.outputs.VERSION }}"
+        if [[ "$VERSION_OUTPUT" == *"$EXPECTED_VERSION"* ]]; then
+          echo "✅ Version test passed! Expected: $EXPECTED_VERSION, Got: $VERSION_OUTPUT"
+        else
+          echo "❌ Version test failed! Expected: $EXPECTED_VERSION, Got: $VERSION_OUTPUT"
+          exit 1
+        fi
+    
+    - name: Test systemd service file
+      run: |
+        # Check if systemd service file exists
+        if [ -f "/usr/lib/systemd/system/discord-gameserver-notifier.service" ]; then
+          echo "✅ Systemd service file found"
+          systemctl cat discord-gameserver-notifier || echo "Service file exists but not loaded"
+        else
+          echo "❌ Systemd service file not found"
+          exit 1
+        fi
+
+  test-rpm-package:
+    name: Test .rpm package installation 🧪
+    needs:
+    - package-linux
+    runs-on: ubuntu-latest
+    container: rockylinux:9
+
+    steps:
+    - name: Install dependencies
+      run: |
+        dnf update -y
+        dnf install -y python3 python3-pip findutils
+    
+    - name: Download Linux packages
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-packages
+        path: packages/
+    
+    - name: Extract version from package filename
+      id: version
+      run: |
+        RPM_FILE=$(find packages/ -name "*.rpm" | head -1)
+        if [ -z "$RPM_FILE" ]; then
+          echo "Error: No .rpm file found"
+          exit 1
+        fi
+        
+        # Extract version from filename (format: discord-gameserver-notifier-VERSION-1.noarch.rpm)
+        VERSION=$(basename "$RPM_FILE" | sed 's/discord-gameserver-notifier-\(.*\)-1\.noarch\.rpm/\1/')
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "RPM_FILE=$RPM_FILE" >> $GITHUB_OUTPUT
+        echo "Detected version: $VERSION"
+        echo "Package file: $RPM_FILE"
+    
+    - name: Install .rpm package
+      run: |
+        echo "Installing package: ${{ steps.version.outputs.RPM_FILE }}"
+        dnf install -y "${{ steps.version.outputs.RPM_FILE }}"
+    
+    - name: Test installed package
+      run: |
+        echo "Testing discord-gameserver-notifier --version"
+        VERSION_OUTPUT=$(discord-gameserver-notifier --version)
+        echo "Command output: $VERSION_OUTPUT"
+        
+        # Check if the version matches
+        EXPECTED_VERSION="${{ steps.version.outputs.VERSION }}"
+        if [[ "$VERSION_OUTPUT" == *"$EXPECTED_VERSION"* ]]; then
+          echo "✅ Version test passed! Expected: $EXPECTED_VERSION, Got: $VERSION_OUTPUT"
+        else
+          echo "❌ Version test failed! Expected: $EXPECTED_VERSION, Got: $VERSION_OUTPUT"
+          exit 1
+        fi
+    
+    - name: Test systemd service file
+      run: |
+        # Check if systemd service file exists
+        if [ -f "/usr/lib/systemd/system/discord-gameserver-notifier.service" ]; then
+          echo "✅ Systemd service file found"
+          systemctl cat discord-gameserver-notifier || echo "Service file exists but not loaded"
+        else
+          echo "❌ Systemd service file not found"
+          exit 1
+        fi
