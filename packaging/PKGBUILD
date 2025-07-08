@@ -20,12 +20,12 @@ package() {
     # Install the wheel
     python -m installer --destdir="$pkgdir" "$srcdir/WHEEL_FILENAME_PLACEHOLDER"
     
-    # Install systemd service
-    install -Dm644 "$srcdir/discord-gameserver-notifier.service" \
+    # Install systemd service (from build directory, not src)
+    install -Dm644 "$startdir/discord-gameserver-notifier.service" \
         "$pkgdir/usr/lib/systemd/system/discord-gameserver-notifier.service"
     
-    # Install executable wrapper
-    install -Dm755 "$srcdir/discord-gameserver-notifier-exec" \
+    # Install executable wrapper (from build directory, not src)
+    install -Dm755 "$startdir/discord-gameserver-notifier-exec" \
         "$pkgdir/usr/bin/discord-gameserver-notifier"
     
     # Create required directories
@@ -34,9 +34,9 @@ package() {
     install -dm755 "$pkgdir/var/log/dgn"
     install -dm755 "$pkgdir/opt"
     
-    # Install example configurations
-    install -Dm644 "$srcdir/config.yaml.example" \
+    # Install example configurations (from build directory, not src)
+    install -Dm644 "$startdir/config.yaml.example" \
         "$pkgdir/usr/share/doc/$pkgname/config.yaml.example"
-    install -Dm644 "$srcdir/config.yaml.service-example" \
+    install -Dm644 "$startdir/config.yaml.service-example" \
         "$pkgdir/usr/share/doc/$pkgname/config.yaml.service-example"
 } 
