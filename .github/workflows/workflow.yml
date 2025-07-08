@@ -148,7 +148,12 @@ jobs:
           --directories "/var/lib/dgn" \
           --directories "/var/log/dgn" \
           --verbose \
-          wheel-contents/=/usr/lib/python3/dist-packages/
+          wheel-contents/discord_gameserver_notifier/=/usr/lib/python3/dist-packages/discord_gameserver_notifier/ \
+          wheel-contents/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/=/usr/lib/python3/dist-packages/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/ \
+          wheel-contents/usr/bin/discord-gameserver-notifier=/usr/bin/discord-gameserver-notifier \
+          wheel-contents/etc/dgn/.gitkeep=/etc/dgn/.gitkeep \
+          wheel-contents/var/lib/dgn/.gitkeep=/var/lib/dgn/.gitkeep \
+          wheel-contents/var/log/dgn/.gitkeep=/var/log/dgn/.gitkeep
     
     - name: Build .rpm package
       run: |
@@ -166,7 +171,12 @@ jobs:
           --after-install "packaging/postinstall.sh" \
           --before-remove "packaging/preremove.sh" \
           --verbose \
-          wheel-contents/=/usr/lib/python3/dist-packages/
+          wheel-contents/discord_gameserver_notifier/=/usr/lib/python3/dist-packages/discord_gameserver_notifier/ \
+          wheel-contents/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/=/usr/lib/python3/dist-packages/discord_gameserver_notifier-${{ steps.version.outputs.VERSION }}.dist-info/ \
+          wheel-contents/usr/bin/discord-gameserver-notifier=/usr/bin/discord-gameserver-notifier \
+          wheel-contents/etc/dgn/.gitkeep=/etc/dgn/.gitkeep \
+          wheel-contents/var/lib/dgn/.gitkeep=/var/lib/dgn/.gitkeep \
+          wheel-contents/var/log/dgn/.gitkeep=/var/log/dgn/.gitkeep
     
     - name: Validate packages
       run: |
