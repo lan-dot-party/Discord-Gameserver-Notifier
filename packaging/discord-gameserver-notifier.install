@@ -123,11 +123,15 @@ post_install() {
     if [ ! -f "$CONFIG_FILE" ]; then
         echo "No configuration file found at $CONFIG_FILE"
         
-        # Try service-specific config first, then regular config
+        # Versuche zunächst die Beispielkonfigurationsdateien im Dokumentationsverzeichnis
         if [ -f "$DOC_DIR/config.yaml.service-example" ]; then
             FOUND_EXAMPLE="$DOC_DIR/config.yaml.service-example"
         elif [ -f "$DOC_DIR/config.yaml.example" ]; then
             FOUND_EXAMPLE="$DOC_DIR/config.yaml.example"
+        else
+            # Fallback: Suche im installierten Python-Package (innerhalb des venv)
+            FOUND_EXAMPLE=$(find "$VENV_DIR"/lib/python*/site-packages/config -maxdepth 1 -type f \
+                             \( -name "config.yaml.service-example" -o -name "config.yaml.example" \) 2>/dev/null | head -n 1)
         fi
         
         if [ -n "$FOUND_EXAMPLE" ]; then
