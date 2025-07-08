@@ -12,6 +12,16 @@ DOC_DIR="/usr/share/doc/discord-gameserver-notifier"
 post_install() {
     echo "Discord Gameserver Notifier: Post-installation setup..."
     
+    # Create configuration directory
+    echo "Creating configuration directory..."
+    if [ ! -d "$CONFIG_DIR" ]; then
+        mkdir -p "$CONFIG_DIR"
+        chmod 755 "$CONFIG_DIR"
+        echo "Configuration directory created: $CONFIG_DIR"
+    else
+        echo "Configuration directory already exists: $CONFIG_DIR"
+    fi
+    
     # Create virtual environment
     echo "Creating virtual environment at $VENV_DIR..."
     if [ ! -d "$VENV_DIR" ]; then
