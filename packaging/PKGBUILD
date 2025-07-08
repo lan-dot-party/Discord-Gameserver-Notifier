@@ -9,8 +9,13 @@ license=('GPL3')
 depends=('python>=3.7' 'python-pip' 'python-virtualenv' 'python-yaml' 'systemd')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-hatchling')
 install=discord-gameserver-notifier.install
-source=("WHEEL_FILENAME_PLACEHOLDER")
-sha256sums=('SKIP')
+source=("WHEEL_FILENAME_PLACEHOLDER"
+        "discord-gameserver-notifier.service"
+        "discord-gameserver-notifier-exec"
+        "discord-gameserver-notifier.install"
+        "config.yaml.example"
+        "config.yaml.service-example")
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 build() {
     # No build step needed for wheel installation
@@ -25,12 +30,12 @@ package() {
     install -Dm644 "$srcdir/WHEEL_FILENAME_PLACEHOLDER" \
         "$pkgdir/usr/lib/python${PYTHON_VERSION}/site-packages/WHEEL_FILENAME_PLACEHOLDER"
     
-    # Install systemd service (from build directory, not src)
-    install -Dm644 "$startdir/discord-gameserver-notifier.service" \
+    # Install systemd service (from source directory)
+    install -Dm644 "$srcdir/discord-gameserver-notifier.service" \
         "$pkgdir/usr/lib/systemd/system/discord-gameserver-notifier.service"
     
-    # Install executable wrapper (from build directory, not src)
-    install -Dm755 "$startdir/discord-gameserver-notifier-exec" \
+    # Install executable wrapper (from source directory)
+    install -Dm755 "$srcdir/discord-gameserver-notifier-exec" \
         "$pkgdir/usr/bin/discord-gameserver-notifier"
     
     # Create required directories
@@ -39,9 +44,9 @@ package() {
     install -dm755 "$pkgdir/var/log/dgn"
     install -dm755 "$pkgdir/opt"
     
-    # Install example configurations (from build directory, not src)
-    install -Dm644 "$startdir/config.yaml.example" \
+    # Install example configurations (from source directory)
+    install -Dm644 "$srcdir/config.yaml.example" \
         "$pkgdir/usr/share/doc/$pkgname/config.yaml.example"
-    install -Dm644 "$startdir/config.yaml.service-example" \
+    install -Dm644 "$srcdir/config.yaml.service-example" \
         "$pkgdir/usr/share/doc/$pkgname/config.yaml.service-example"
 } 
