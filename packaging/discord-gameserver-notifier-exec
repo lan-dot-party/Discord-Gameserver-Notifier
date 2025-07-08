@@ -1,0 +1,22 @@
+#!/usr/bin/env python3
+"""
+Discord Gameserver Notifier - Executable script
+This script calls the main function from the installed package.
+"""
+
+import sys
+import os
+
+# Add the package directory to Python path
+sys.path.insert(0, '/usr/lib/python3/dist-packages')
+
+try:
+    from discord_gameserver_notifier.main import main
+    main()
+except ImportError as e:
+    print(f"Error importing discord_gameserver_notifier: {e}", file=sys.stderr)
+    print("Please ensure the package is properly installed.", file=sys.stderr)
+    sys.exit(1)
+except Exception as e:
+    print(f"Error running discord_gameserver_notifier: {e}", file=sys.stderr)
+    sys.exit(1) 
