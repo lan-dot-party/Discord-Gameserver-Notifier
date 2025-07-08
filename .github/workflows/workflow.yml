@@ -110,11 +110,25 @@ jobs:
         mkdir -p etc/dgn
         mkdir -p var/lib/dgn
         mkdir -p var/log/dgn
+        mkdir -p usr/bin
         
         # Create .gitkeep files to ensure directories exist (required for RPM)
         touch etc/dgn/.gitkeep
         touch var/lib/dgn/.gitkeep
         touch var/log/dgn/.gitkeep
+        
+        # Create the console script executable
+        cat > usr/bin/discord-gameserver-notifier << 'EOF'
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import re
+import sys
+from discord_gameserver_notifier.main import main
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(main())
+EOF
+        chmod +x usr/bin/discord-gameserver-notifier
         
         cd ..
         echo "Wheel contents extracted to: $(pwd)/wheel-contents"
@@ -142,7 +156,9 @@ jobs:
           --directories "/var/lib/dgn" \
           --directories "/var/log/dgn" \
           --verbose \
-          wheel-contents/=/usr/lib/python3/dist-packages/
+          wheel-contents/discord_gameserver_notifier=/usr/lib/python3/dist-packages/discord_gameserver_notifier \
+          wheel-contents/Discord_Gameserver_Notifier-*dist-info=/usr/lib/python3/dist-packages/ \
+          wheel-contents/usr/bin/discord-gameserver-notifier=/usr/bin/discord-gameserver-notifier
     
     - name: Build .rpm package
       run: |
@@ -159,8 +175,14 @@ jobs:
           --before-install "packaging/preinstall.sh" \
           --after-install "packaging/postinstall.sh" \
           --before-remove "packaging/preremove.sh" \
+          --directories "/etc/dgn" \
+          --directories "/var/lib/dgn" \
+          --directories "/var/log/dgn" \
           --verbose \
-          wheel-contents/=/usr/lib/python3/dist-packages/
+          wheel-contents/discord_gameserver_notifier=/usr/lib/python3/dist-packages/discord_gameserver_notifier \
+          wheel-contents/Discord_Gameserver_Notifier-*dist-info=/usr/lib/python3/dist-packages/ \
+          wheel-contents/usr/bin/discord-gameserver-notifier=/usr/bin/discord-gameserver-notifier \
+          wheel-contents/usr/lib/systemd/system/discord-gameserver-notifier.service=/usr/lib/systemd/system/discord-gameserver-notifier.service
     
     - name: Validate packages
       run: |
