@@ -312,22 +312,21 @@ jobs:
         cp ../packaging/discord-gameserver-notifier-exec .
         cp ../packaging/discord-gameserver-notifier.install .
         
-        # Extract config files from wheel
-        python -m zipfile -e "$WHEEL_FILENAME" temp-extract/
-        
-        # Copy config files
-        if [ -f "temp-extract/config/config.yaml.example" ]; then
-            cp temp-extract/config/config.yaml.example .
+        # Copy config files directly from source repository (not from wheel)
+        if [ -f "../config/config.yaml.example" ]; then
+            cp ../config/config.yaml.example .
+            echo "Copied config.yaml.example from source"
         else
-            echo "Warning: config.yaml.example not found in wheel"
-            touch config.yaml.example
+            echo "Error: config.yaml.example not found in source"
+            exit 1
         fi
         
-        if [ -f "temp-extract/config/config.yaml.service-example" ]; then
-            cp temp-extract/config/config.yaml.service-example .
+        if [ -f "../config/config.yaml.service-example" ]; then
+            cp ../config/config.yaml.service-example .
+            echo "Copied config.yaml.service-example from source"
         else
-            echo "Warning: config.yaml.service-example not found in wheel"
-            touch config.yaml.service-example
+            echo "Error: config.yaml.service-example not found in source"
+            exit 1
         fi
         
         # Update PKGBUILD with actual version and wheel filename
