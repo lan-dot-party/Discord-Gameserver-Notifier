@@ -1,8 +1,8 @@
 #!/bin/bash
-"""
-Discord Gameserver Notifier - Executable script
-This script calls the main function from the venv-installed package.
-"""
+#
+# Discord Gameserver Notifier - Executable script
+# This script calls the main function from the venv-installed package.
+#
 
 # Path to the virtual environment
 VENV_PATH="/opt/discord-gameserver-notifier"
