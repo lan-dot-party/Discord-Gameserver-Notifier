@@ -161,7 +161,7 @@ jobs:
           --version "${{ steps.version.outputs.VERSION }}" \
           --description "Automated Discord notifications for LAN gameservers" \
           --url "https://github.com/lan-dot-party/Discord-Gameserver-Notifier" \
-          --maintainer "LAN.party Team <info@lan.party>" \
+          --maintainer "LAN.party Team <packaging@lan.party>" \
           --license "GPL-3.0" \
           --architecture "all" \
           --depends "python3 >= 3.8" \
@@ -194,7 +194,7 @@ jobs:
           --version "${{ steps.version.outputs.VERSION }}" \
           --description "Automated Discord notifications for LAN gameservers" \
           --url "https://github.com/lan-dot-party/Discord-Gameserver-Notifier" \
-          --maintainer "LAN.party Team <info@lan.party>" \
+          --maintainer "LAN.party Team <packaging@lan.party>" \
           --license "GPL-3.0" \
           --architecture "noarch" \
           --depends "python3 >= 3.8" \
@@ -241,6 +241,139 @@ jobs:
           *.deb
           *.rpm
 
+  package-arch:
+    name: Build Arch Linux package (.pkg.tar.zst) 📦
+    needs:
+    - build
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+
+    steps:
+    - name: Update system and install dependencies
+      run: |
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm base-devel git python python-pip python-build python-installer python-wheel python-hatchling
+    
+    - uses: actions/checkout@v4
+      with:
+        submodules: false
+        fetch-depth: 0
+    
+    - name: Download wheel distribution
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+    
+    - name: Extract version from pyproject.toml
+      id: version
+      run: |
+        # Install tomllib backport for Python < 3.11 if needed
+        python -c "import tomllib" 2>/dev/null || python -m pip install tomli
+        
+        VERSION=$(python -c "
+        try:
+            import tomllib
+        except ImportError:
+            import tomli as tomllib
+        
+        with open('pyproject.toml', 'rb') as f:
+            data = tomllib.load(f)
+        print(data['project']['version'])
+        ")
+        
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Detected version: $VERSION"
+    
+    - name: Prepare PKGBUILD and sources
+      run: |
+        # Create build directory
+        mkdir -p build-arch
+        cd build-arch
+        
+        # Find and copy wheel file
+        WHEEL_FILE=$(find ../dist/ -name "*.whl" | head -1)
+        
+        if [ -z "$WHEEL_FILE" ]; then
+          echo "Error: No wheel file found in dist/"
+          ls -la ../dist/
+          exit 1
+        fi
+        
+        echo "Using wheel: $WHEEL_FILE"
+        WHEEL_FILENAME=$(basename "$WHEEL_FILE")
+        
+        # Copy wheel and rename for PKGBUILD
+        cp "$WHEEL_FILE" "discord-gameserver-notifier-${{ steps.version.outputs.VERSION }}.whl"
+        
+        # Copy packaging files
+        cp ../packaging/PKGBUILD .
+        cp ../packaging/discord-gameserver-notifier.service .
+        cp ../packaging/discord-gameserver-notifier-exec .
+        
+        # Extract config files from wheel
+        python -m zipfile -e "discord-gameserver-notifier-${{ steps.version.outputs.VERSION }}.whl" temp-extract/
+        
+        # Copy config files
+        if [ -f "temp-extract/config/config.yaml.example" ]; then
+            cp temp-extract/config/config.yaml.example .
+        else
+            echo "Warning: config.yaml.example not found in wheel"
+            touch config.yaml.example
+        fi
+        
+        if [ -f "temp-extract/config/config.yaml.service-example" ]; then
+            cp temp-extract/config/config.yaml.service-example .
+        else
+            echo "Warning: config.yaml.service-example not found in wheel"
+            touch config.yaml.service-example
+        fi
+        
+        # Update PKGBUILD with actual version
+        sed -i "s/VERSION_PLACEHOLDER/${{ steps.version.outputs.VERSION }}/g" PKGBUILD
+        
+        # Update source line in PKGBUILD to match actual filename
+        sed -i "s/\$pkgname-\$pkgver\.whl/discord-gameserver-notifier-${{ steps.version.outputs.VERSION }}.whl/g" PKGBUILD
+        
+        echo "PKGBUILD prepared:"
+        cat PKGBUILD
+        echo "Sources available:"
+        ls -la
+    
+    - name: Build Arch package
+      run: |
+        cd build-arch
+        
+        # Create non-root user for makepkg (required)
+        useradd -m builder
+        chown -R builder:builder .
+        
+        # Build package as non-root user
+        sudo -u builder makepkg -s --noconfirm
+        
+        # Move package to parent directory
+        mv *.pkg.tar.zst ../
+        
+        echo "Package built successfully:"
+        ls -la ../*.pkg.tar.zst
+    
+    - name: Validate Arch package
+      run: |
+        echo "=== Generated Arch package ==="
+        ls -la *.pkg.tar.zst
+        
+        echo "=== Package info ==="
+        pacman -Qip *.pkg.tar.zst
+        
+        echo "=== Package contents (first 30 files) ==="
+        pacman -Qlp *.pkg.tar.zst | head -30
+    
+    - name: Upload Arch package
+      uses: actions/upload-artifact@v4
+      with:
+        name: arch-package
+        path: "*.pkg.tar.zst"
+
   publish-to-pypi:
     name: >-
       Publish Python 🐍 distribution 📦 to PyPI
@@ -264,6 +397,7 @@ jobs:
       Upload Linux packages 📦 to GitHub Release
     needs:
     - package-linux
+    - package-arch
     runs-on: ubuntu-latest
     permissions:
       contents: write  # IMPORTANT: mandatory for uploading release assets
@@ -275,12 +409,19 @@ jobs:
         name: linux-packages
         path: packages/
     
-    - name: Upload .deb and .rpm files to release
+    - name: Download Arch package
+      uses: actions/download-artifact@v4
+      with:
+        name: arch-package
+        path: packages/
+    
+    - name: Upload .deb, .rpm and .pkg.tar.zst files to release
       uses: softprops/action-gh-release@v1
       with:
         files: |
           packages/*.deb
           packages/*.rpm
+          packages/*.pkg.tar.zst
 
   test-deb-package:
     name: Test .deb package installation 🧪
@@ -407,5 +548,88 @@ jobs:
           systemctl cat discord-gameserver-notifier || echo "Service file exists but not loaded"
         else
           echo "❌ Systemd service file not found"
+          exit 1
+        fi
+
+  test-arch-package:
+    name: Test Arch package installation 🧪
+    needs:
+    - package-arch
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+
+    steps:
+    - name: Update system and install dependencies
+      run: |
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm python python-pip python-virtualenv python-yaml systemd
+    
+    - name: Download Arch package
+      uses: actions/download-artifact@v4
+      with:
+        name: arch-package
+        path: packages/
+    
+    - name: Extract version from package filename
+      id: version
+      run: |
+        PKG_FILE=$(find packages/ -name "*.pkg.tar.zst" | head -1)
+        if [ -z "$PKG_FILE" ]; then
+          echo "Error: No .pkg.tar.zst file found"
+          exit 1
+        fi
+        
+        # Extract version from filename (format: discord-gameserver-notifier-VERSION-1-any.pkg.tar.zst)
+        VERSION=$(basename "$PKG_FILE" | sed 's/discord-gameserver-notifier-\(.*\)-1-any\.pkg\.tar\.zst/\1/')
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "PKG_FILE=$PKG_FILE" >> $GITHUB_OUTPUT
+        echo "Detected version: $VERSION"
+        echo "Package file: $PKG_FILE"
+    
+    - name: Install Arch package
+      run: |
+        echo "Installing package: ${{ steps.version.outputs.PKG_FILE }}"
+        pacman -U --noconfirm "${{ steps.version.outputs.PKG_FILE }}"
+    
+    - name: Test installed package
+      run: |
+        echo "Testing discord-gameserver-notifier --version"
+        VERSION_OUTPUT=$(discord-gameserver-notifier --version)
+        echo "Command output: $VERSION_OUTPUT"
+        
+        # Check if the version matches
+        EXPECTED_VERSION="${{ steps.version.outputs.VERSION }}"
+        if [[ "$VERSION_OUTPUT" == *"$EXPECTED_VERSION"* ]]; then
+          echo "✅ Version test passed! Expected: $EXPECTED_VERSION, Got: $VERSION_OUTPUT"
+        else
+          echo "❌ Version test failed! Expected: $EXPECTED_VERSION, Got: $VERSION_OUTPUT"
+          exit 1
+        fi
+    
+    - name: Test systemd service file
+      run: |
+        # Check if systemd service file exists
+        if [ -f "/usr/lib/systemd/system/discord-gameserver-notifier.service" ]; then
+          echo "✅ Systemd service file found"
+          systemctl cat discord-gameserver-notifier || echo "Service file exists but not loaded"
+        else
+          echo "❌ Systemd service file not found"
+          exit 1
+        fi
+    
+    - name: Test configuration examples
+      run: |
+        # Check if example configurations exist
+        if [ -f "/usr/share/doc/discord-gameserver-notifier/config.yaml.example" ]; then
+          echo "✅ Example config found"
+        else
+          echo "❌ Example config not found"
+          exit 1
+        fi
+        
+        if [ -f "/usr/share/doc/discord-gameserver-notifier/config.yaml.service-example" ]; then
+          echo "✅ Service example config found"
+        else
+          echo "❌ Service example config not found"
           exit 1
         fi
