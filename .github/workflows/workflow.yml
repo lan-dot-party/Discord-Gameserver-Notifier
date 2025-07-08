@@ -128,6 +128,24 @@ jobs:
         touch var/log/dgn/.gitkeep
         touch opt/.gitkeep
         
+        # Create config directory and copy example configurations
+        mkdir -p usr/lib/python3/dist-packages/config
+        
+        # Copy example configuration files from the extracted wheel
+        if [ -f "config/config.yaml.example" ]; then
+            cp config/config.yaml.example usr/lib/python3/dist-packages/config/
+            echo "Copied config.yaml.example to package"
+        else
+            echo "Warning: config.yaml.example not found in wheel"
+        fi
+        
+        if [ -f "config/config.yaml.service-example" ]; then
+            cp config/config.yaml.service-example usr/lib/python3/dist-packages/config/
+            echo "Copied config.yaml.service-example to package"
+        else
+            echo "Warning: config.yaml.service-example not found in wheel"
+        fi
+        
         cd ..
         echo "Wheel contents extracted to: $(pwd)/wheel-contents"
         echo "Contents:"
@@ -166,7 +184,8 @@ jobs:
           wheel-contents/etc/dgn/.gitkeep=/etc/dgn/.gitkeep \
           wheel-contents/var/lib/dgn/.gitkeep=/var/lib/dgn/.gitkeep \
           wheel-contents/var/log/dgn/.gitkeep=/var/log/dgn/.gitkeep \
-          wheel-contents/opt/.gitkeep=/opt/.gitkeep
+          wheel-contents/opt/.gitkeep=/opt/.gitkeep \
+          wheel-contents/usr/lib/python3/dist-packages/config/=/usr/lib/python3/dist-packages/config/
     
     - name: Build .rpm package
       run: |
@@ -191,7 +210,8 @@ jobs:
           wheel-contents/etc/dgn/.gitkeep=/etc/dgn/.gitkeep \
           wheel-contents/var/lib/dgn/.gitkeep=/var/lib/dgn/.gitkeep \
           wheel-contents/var/log/dgn/.gitkeep=/var/log/dgn/.gitkeep \
-          wheel-contents/opt/.gitkeep=/opt/.gitkeep
+          wheel-contents/opt/.gitkeep=/opt/.gitkeep \
+          wheel-contents/usr/lib/python3/dist-packages/config/=/usr/lib/python3/dist-packages/config/
     
     - name: Validate packages
       run: |
