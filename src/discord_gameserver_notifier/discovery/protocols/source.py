@@ -8,7 +8,6 @@ import logging
 from typing import List, Dict, Any, Optional, Tuple
 
 from opengsq.protocols.source import Source
-from opengsq.binary_reader import BinaryReader
 from ..protocol_base import ProtocolBase
 from .common import ServerResponse, BroadcastResponseProtocol
 
@@ -29,16 +28,123 @@ class BroadcastProtocol(ProtocolBase):
 
 
 
-class SourceProtocol:
+class SourceProtocol(ProtocolBase):
     """Source engine protocol handler for broadcast discovery"""
     
     def __init__(self, timeout: float = 5.0):
+        super().__init__("255.255.255.255", 27015, timeout)
+        self._allow_broadcast = True
         self.timeout = timeout
         self.logger = logging.getLogger(__name__)
         self.protocol_config = {
             'port': 27015,
             'query_data': b'\xFF\xFF\xFF\xFF\x54Source Engine Query\x00'
         }
+    
+    def get_discord_fields(self, server_info: dict) -> list:
+        """
+        Get additional Discord embed fields for Source engine servers.
+        
+        Args:
+            server_info: Server information dictionary from the protocol
+            
+        Returns:
+            List of dictionaries with 'name', 'value', and 'inline' keys
+        """
+        fields = []
+        
+        # Add VAC protection status (vac: 1 = enabled, 0 = disabled)
+        if 'vac' in server_info:
+            vac_status = "✅ Aktiviert" if server_info['vac'] == 1 else "❌ Deaktiviert"
+            fields.append({
+                'name': '🛡️ VAC Schutz',
+                'value': vac_status,
+                'inline': True
+            })
+        
+        # Add server type (dedicated/listen) - handle both numeric ASCII codes and character values
+        if 'server_type' in server_info:
+            server_type = server_info['server_type']
+            if server_type == 100 or server_type == 'd':  # 100 = ASCII 'd' (dedicated)
+                server_type_text = "🖥️ Dedicated Server"
+            elif server_type == 108 or server_type == 'l':  # 108 = ASCII 'l' (listen)
+                server_type_text = "🏠 Listen Server"
+            elif server_type == 112 or server_type == 'p':  # 112 = ASCII 'p' (SourceTV proxy)
+                server_type_text = "📺 SourceTV Relay"
+            else:
+                server_type_text = f"❓ {server_type}"
+            
+            fields.append({
+                'name': '🔧 Server Typ',
+                'value': server_type_text,
+                'inline': True
+            })
+        
+        # Add environment (OS) - handle both numeric ASCII codes and character values
+        if 'environment' in server_info:
+            environment = server_info['environment']
+            if environment == 108 or environment == 'l':  # 108 = ASCII 'l' (Linux)
+                env_text = "🐧 Linux"
+            elif environment == 119 or environment == 'w':  # 119 = ASCII 'w' (Windows)
+                env_text = "🪟 Windows"
+            elif environment == 109 or environment == 'm':  # 109 = ASCII 'm' (Mac)
+                env_text = "🍎 Mac"
+            elif environment == 111 or environment == 'o':  # 111 = ASCII 'o' (Mac old)
+                env_text = "🍎 Mac (legacy)"
+            else:
+                env_text = f"❓ {environment}"
+            
+            fields.append({
+                'name': '💻 Betriebssystem',
+                'value': env_text,
+                'inline': True
+            })
+        
+        # Add protocol version
+        if 'protocol' in server_info:
+            fields.append({
+                'name': '📡 Protokoll Version',
+                'value': str(server_info['protocol']),
+                'inline': True
+            })
+        
+        # Add bots count if available and > 0
+        if 'bots' in server_info and server_info['bots'] > 0:
+            fields.append({
+                'name': '🤖 Bots',
+                'value': str(server_info['bots']),
+                'inline': True
+            })
+        
+        # Add server visibility (0 = public, 1 = private)
+        if 'visibility' in server_info:
+            visibility_text = "🔒 Privat" if server_info['visibility'] == 1 else "🌐 Öffentlich"
+            fields.append({
+                'name': '👁️ Sichtbarkeit',
+                'value': visibility_text,
+                'inline': True
+            })
+        
+        # # Add Steam ID if available
+        # if 'steam_id' in server_info and server_info['steam_id']:
+        #     fields.append({
+        #         'name': '🎮 Steam ID',
+        #         'value': f"`{server_info['steam_id']}`",
+        #         'inline': False
+        #     })
+        
+        # Add keywords if available
+        if 'keywords' in server_info and server_info['keywords']:
+            keywords = server_info['keywords']
+            if len(keywords) > 100:
+                keywords = keywords[:97] + "..."
+            fields.append({
+                'name': '🏷️ Keywords',
+                'value': f"`{keywords}`",
+                'inline': False
+            })
+        
+        return fields
     
     async def scan_servers(self, scan_ranges: List[str]) -> List[ServerResponse]:
         """
@@ -72,46 +178,23 @@ class SourceProtocol:
                 # Process responses and query each responding server directly
                 for response_data, sender_addr in responses:
                     try:
-                        # Create direct Source query instance for the responding server
-                        source_query = Source(sender_addr[0], sender_addr[1])
+                        # Use opengsq-python library to get complete server info
+                        server_info_dict = await self._query_source_server_via_opengsq(
+                            sender_addr[0], sender_addr[1]
+                        )
                         
-                        try:
-                            # Query the server directly for full info
-                            server_info = await source_query.get_info()
-                            
-                            if server_info:
-                                # Convert SourceInfo object to dictionary
-                                info_dict = {
-                                    'name': server_info.name,
-                                    'map': server_info.map,
-                                    'game': server_info.game,
-                                    'players': server_info.players,
-                                    'max_players': server_info.max_players,
-                                    'server_type': str(server_info.server_type),
-                                    'environment': str(server_info.environment),
-                                    'protocol': server_info.protocol,
-                                    'visibility': server_info.visibility,
-                                    'vac': server_info.vac,
-                                    'version': server_info.version,
-                                    'port': server_info.port,
-                                    'steam_id': server_info.steam_id if hasattr(server_info, 'steam_id') else None,
-                                    'keywords': server_info.keywords if hasattr(server_info, 'keywords') else None
-                                }
-                                
-                                server_response = ServerResponse(
-                                    ip_address=sender_addr[0],
-                                    port=sender_addr[1],
-                                    game_type='source',
-                                    server_info=info_dict,
-                                    response_time=0.0
-                                )
-                                servers.append(server_response)
-                                self.logger.debug(f"Discovered Source server: {sender_addr[0]}:{sender_addr[1]}")
-                                self.logger.debug(f"Source server details: Name='{info_dict['name']}', Map='{info_dict['map']}', Players={info_dict['players']}/{info_dict['max_players']}, Game={info_dict['game']}")
+                        if server_info_dict:
+                            server_response = ServerResponse(
+                                ip_address=sender_addr[0],
+                                port=sender_addr[1],
+                                game_type='source',
+                                server_info=server_info_dict,
+                                response_time=0.0
+                            )
+                            servers.append(server_response)
+                            self.logger.debug(f"Discovered Source server: {sender_addr[0]}:{sender_addr[1]}")
+                            self.logger.debug(f"Source server details: Name='{server_info_dict.get('name', 'Unknown')}', Map='{server_info_dict.get('map', 'Unknown')}', Players={server_info_dict.get('players', 0)}/{server_info_dict.get('max_players', 0)}, Game={server_info_dict.get('game', 'Unknown')}")
                         
-                        except Exception as e:
-                            self.logger.debug(f"Failed to query Source server at {sender_addr}: {e}")
-                            
                     except Exception as e:
                         self.logger.debug(f"Failed to process response from {sender_addr}: {e}")
                         
@@ -159,50 +242,52 @@ class SourceProtocol:
         
         return responses
     
-    async def _parse_source_response(self, response_data: bytes) -> Optional[Dict[str, Any]]:
+    async def _query_source_server_via_opengsq(self, host: str, port: int) -> Optional[Dict[str, Any]]:
         """
-        Parse a Source engine server response.
+        Query a Source server using opengsq-python library to get complete server information.
         
         Args:
-            response_data: Raw response data from server
+            host: Server IP address
+            port: Server port
             
         Returns:
-            Dictionary containing parsed server information, or None if parsing failed
+            Dictionary containing complete server information with all fields needed for Discord
         """
         try:
-            # Check if this is a valid Source response
-            if len(response_data) < 5:
-                return None
+            # Create Source protocol instance
+            source_client = Source(host, port, self.timeout)
             
-            # Skip the initial 4 bytes (0xFFFFFFFF header)
-            if response_data[:4] != b'\xFF\xFF\xFF\xFF':
-                return None
+            # Get server info using opengsq-python
+            server_info = await source_client.get_info()
             
-            # Check for Source info response header (0x49)
-            header = response_data[4]  # Read the 5th byte directly
+            # Convert SourceInfo object to dictionary format
+            # Handle enum values by extracting their numeric values
+            info_dict = {
+                'name': server_info.name,
+                'map': server_info.map,
+                'game': server_info.game,
+                'players': server_info.players,
+                'max_players': server_info.max_players,
+                'bots': server_info.bots,
+                'server_type': server_info.server_type.value if hasattr(server_info.server_type, 'value') else server_info.server_type,
+                'environment': server_info.environment.value if hasattr(server_info.environment, 'value') else server_info.environment,
+                'protocol': server_info.protocol,
+                'visibility': server_info.visibility.value if hasattr(server_info.visibility, 'value') else server_info.visibility,
+                'vac': server_info.vac.value if hasattr(server_info.vac, 'value') else server_info.vac,
+                'version': server_info.version,
+                'port': getattr(server_info, 'port', port),
+                'steam_id': getattr(server_info, 'steam_id', None),
+                'keywords': getattr(server_info, 'keywords', ''),
+                'folder': server_info.folder,
+                'id': getattr(server_info, 'id', None),
+                'edf': getattr(server_info, 'edf', None)
+            }
             
-            if header == 0x49:  # S2A_INFO_SRC
-                # Use opengsq's BinaryReader to parse the response
-                br = BinaryReader(response_data[5:])  # Skip 0xFFFFFFFF + header byte
-                
-                # Create a temporary Source instance for parsing
-                temp_source = Source("127.0.0.1", 27015)  # Dummy values
-                
-                # Parse using Source protocol's internal method
-                info = temp_source._Source__parse_from_info_src(br)
-                
-                return {
-                    'name': info.name,
-                    'map': info.map,
-                    'game': info.game,
-                    'players': info.players,
-                    'max_players': info.max_players,
-                    'server_type': str(info.server_type),
-                    'environment': str(info.environment),
-                    'protocol': info.protocol
-                }
+            self.logger.debug(f"opengsq-python returned server info for {host}:{port}")
+            self.logger.debug(f"VAC status: {info_dict.get('vac')}, Server type: {info_dict.get('server_type')}, Environment: {info_dict.get('environment')}")
+            
+            return info_dict
             
         except Exception as e:
-            self.logger.debug(f"Failed to parse Source response: {e}")
-        
-        return None 
+            self.logger.debug(f"Error querying Source server {host}:{port} via opengsq-python: {e}")
+            return None 

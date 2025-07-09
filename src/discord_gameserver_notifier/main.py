@@ -34,9 +34,6 @@ class GameServerNotifier:
         self.running = False
         self.shutdown_event = asyncio.Event()
         
-        # Initialize server info wrapper for standardized server data
-        self.server_wrapper = ServerInfoWrapper()
-        
         # Initialize network filter for ignoring specific network ranges
         network_config = self.config_manager.config.get('network', {})
         ignore_ranges = network_config.get('ignore_ranges', [])
@@ -88,6 +85,17 @@ class GameServerNotifier:
         except Exception as e:
             self.logger.error(f"Failed to initialize discovery engine: {e}", exc_info=True)
             self.discovery_engine = None
+        
+        # Initialize server info wrapper for standardized server data (AFTER discovery engine)
+        # Pass protocols from the discovery engine's scanner for discord_fields support
+        protocols = None
+        if self.discovery_engine and hasattr(self.discovery_engine, 'scanner') and hasattr(self.discovery_engine.scanner, 'protocols'):
+            protocols = self.discovery_engine.scanner.protocols
+            self.logger.debug(f"ServerInfoWrapper initialized with protocols: {list(protocols.keys())}")
+        else:
+            self.logger.warning("Discovery engine or protocols not available - ServerInfoWrapper will not have discord_fields support")
+            
+        self.server_wrapper = ServerInfoWrapper(protocols=protocols)
         
         # Setup signal handlers
         for sig in (signal.SIGTERM, signal.SIGINT):

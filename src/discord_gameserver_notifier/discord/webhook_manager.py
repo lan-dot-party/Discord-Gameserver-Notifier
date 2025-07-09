@@ -317,6 +317,18 @@ class WebhookManager:
                 inline=True
             )
         
+        # Add protocol-specific Discord fields if available
+        if server_info.discord_fields:
+            for field in server_info.discord_fields:
+                try:
+                    embed.add_embed_field(
+                        name=field.get('name', 'Unknown Field'),
+                        value=field.get('value', 'N/A'),
+                        inline=field.get('inline', True)
+                    )
+                except Exception as e:
+                    self.logger.warning(f"Error adding Discord field: {e}")
+        
         # Add footer with additional information
         footer_text = f"Protokoll: {server_info.game_type.upper()}"
         if not is_offline:

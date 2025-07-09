@@ -22,6 +22,7 @@ class StandardizedServerInfo:
     game_type: str                     # Protocol type (source, renegadex, etc.)
     response_time: float               # Response time in seconds
     additional_info: Dict[str, Any]    # Protocol-specific additional information
+    discord_fields: Optional[list] = None  # Additional Discord embed fields from protocol
 
 
 class ServerInfoWrapper:
@@ -30,8 +31,9 @@ class ServerInfoWrapper:
     into a unified format for consistent processing.
     """
     
-    def __init__(self):
+    def __init__(self, protocols: Optional[Dict[str, Any]] = None):
         self.logger = logging.getLogger("GameServerNotifier.ServerInfoWrapper")
+        self.protocols = protocols or {}
     
     def standardize_server_response(self, server_response) -> StandardizedServerInfo:
         """
@@ -45,19 +47,32 @@ class ServerInfoWrapper:
         """
         game_type = server_response.game_type.lower()
         
+        # Get standardized server info
         if game_type == 'source':
-            return self._standardize_source_server(server_response)
+            standardized_info = self._standardize_source_server(server_response)
         elif game_type == 'renegadex':
-            return self._standardize_renegadex_server(server_response)
+            standardized_info = self._standardize_renegadex_server(server_response)
         elif game_type == 'warcraft3':
-            return self._standardize_warcraft3_server(server_response)
+            standardized_info = self._standardize_warcraft3_server(server_response)
         elif game_type == 'flatout2':
-            return self._standardize_flatout2_server(server_response)
+            standardized_info = self._standardize_flatout2_server(server_response)
         elif game_type == 'ut3':
-            return self._standardize_ut3_server(server_response)
+            standardized_info = self._standardize_ut3_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
-            return self._standardize_generic_server(server_response)
+            standardized_info = self._standardize_generic_server(server_response)
+        
+        # Get additional Discord fields from protocol if available
+        if game_type in self.protocols:
+            protocol = self.protocols[game_type]
+            if hasattr(protocol, 'get_discord_fields'):
+                try:
+                    discord_fields = protocol.get_discord_fields(server_response.server_info)
+                    standardized_info.discord_fields = discord_fields
+                except Exception as e:
+                    self.logger.warning(f"Error getting Discord fields from {game_type} protocol: {e}")
+        
+        return standardized_info
     
     def _standardize_source_server(self, server_response) -> StandardizedServerInfo:
         """Standardize Source engine server information"""
@@ -119,9 +134,13 @@ class ServerInfoWrapper:
         # Additional RenegadeX-specific information
         additional_info = {
             'steam_required': info.get('steam_required', False),
-            'team_mode': info.get('team_mode', 'Unknown'),
-            'game_type': info.get('game_type', 'Unknown'),
-            'ranked': info.get('ranked', False)
+            'team_mode': info.get('team_mode', 0),
+            'game_type': info.get('game_type', 0),
+            'ranked': info.get('ranked', False),
+            'vehicle_limit': info.get('vehicle_limit', 0),
+            'mine_limit': info.get('mine_limit', 0),
+            'time_limit': info.get('time_limit', 0),
+            'spawn_crates': info.get('spawn_crates', False)
         }
         
         return StandardizedServerInfo(
@@ -336,7 +355,8 @@ class ServerInfoWrapper:
             'port': server_info.port,
             'game_type': server_info.game_type,
             'response_time': server_info.response_time,
-            'additional_info': server_info.additional_info
+            'additional_info': server_info.additional_info,
+            'discord_fields': server_info.discord_fields
         }
     
     def from_dict(self, data: Dict[str, Any]) -> StandardizedServerInfo:
@@ -361,5 +381,6 @@ class ServerInfoWrapper:
             port=data.get('port', 0),
             game_type=data.get('game_type', 'unknown'),
             response_time=data.get('response_time', 0.0),
-            additional_info=data.get('additional_info', {})
+            additional_info=data.get('additional_info', {}),
+            discord_fields=data.get('discord_fields', None)
         ) 

@@ -33,10 +33,7 @@ class NetworkScanner:
         self.scan_ranges = config.get('network', {}).get('scan_ranges', [])
         self.enabled_games = config.get('games', {}).get('enabled', [])
         
-        # Initialize the server info wrapper for standardization
-        self.server_wrapper = ServerInfoWrapper()
-        
-        # Initialize protocol instances
+        # Initialize protocol instances first
         self.protocols = {
             'source': SourceProtocol(self.timeout),
             'renegadex': RenegadeXProtocol(self.timeout),
@@ -44,6 +41,9 @@ class NetworkScanner:
             'ut3': UT3Protocol(self.timeout),
             'warcraft3': Warcraft3Protocol(timeout=self.timeout)
         }
+        
+        # Initialize the server info wrapper for standardization with protocols
+        self.server_wrapper = ServerInfoWrapper(protocols=self.protocols)
         
         self.logger.info(f"NetworkScanner initialized with {len(self.scan_ranges)} scan ranges")
         self.logger.info(f"Enabled games: {', '.join(self.enabled_games)}")

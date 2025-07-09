@@ -9,12 +9,14 @@ from typing import List, Dict, Any, Optional, Tuple
 
 from opengsq.protocols.flatout2 import Flatout2
 from .common import ServerResponse, BroadcastResponseProtocol
+from ..protocol_base import ProtocolBase
 
 
-class Flatout2Protocol:
+class Flatout2Protocol(ProtocolBase):
     """Flatout2 protocol handler for broadcast discovery"""
     
     def __init__(self, timeout: float = 5.0):
+        super().__init__('', 0, timeout)  # Initialize base class
         self.timeout = timeout
         self.logger = logging.getLogger(__name__)
         self.protocol_config = {
@@ -30,6 +32,36 @@ class Flatout2Protocol:
                 b"\x2e\x55\x19\xb4\xe1\x4f\x81\x4a"              # Standard packet end
             )
         }
+    
+    def get_discord_fields(self, server_info: dict) -> list:
+        """
+        Get additional Discord embed fields for Flatout2 servers.
+        
+        Args:
+            server_info: Server information dictionary from the protocol
+            
+        Returns:
+            List of dictionaries with 'name', 'value', and 'inline' keys
+        """
+        fields = []
+        
+        # Add game mode and car type
+        if 'game_mode' in server_info:
+            fields.append({
+                'name': '🎮 Spielmodus',
+                'value': server_info['game_mode'],
+                'inline': True
+            })
+            
+        if 'car_type' in server_info:
+            fields.append({
+                'name': '🚗 Fahrzeuge',
+                'value': server_info['car_type'],
+                'inline': True
+            })
+            
+        
+        return fields
     
     async def scan_servers(self, scan_ranges: List[str]) -> List[ServerResponse]:
         """
@@ -101,9 +133,11 @@ class Flatout2Protocol:
                                 'flags': server_status.info.get('flags', '0'),
                                 'status': server_status.info.get('status', '0'),
                                 'config': server_status.info.get('config', ''),
-                                'players': 0,  # Flatout2 doesn't provide player count in basic query
-                                'max_players': 0,  # Would need additional parsing
-                                'map': 'Unknown',  # Would need additional parsing
+                                'players': server_status.info.get('current_players', 0),
+                                'max_players': server_status.info.get('max_players', 0),
+                                'map': server_status.info.get('map', 'Unknown'),
+                                'game_mode': server_status.info.get('game_mode', 'Unknown'),
+                                'car_type': server_status.info.get('car_type', 'Unknown'),
                                 'game': 'Flatout 2'
                             }
                             
