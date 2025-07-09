@@ -8,6 +8,7 @@ from .renegadex import RenegadeXProtocol
 from .flatout2 import Flatout2Protocol
 from .ut3 import UT3Protocol
 from .warcraft3 import Warcraft3Protocol
+from .eldewrito import ElDewritoProtocol
 
 __all__ = [
     'ServerResponse',
@@ -16,5 +17,6 @@ __all__ = [
     'RenegadeXProtocol', 
     'Flatout2Protocol',
     'UT3Protocol',
-    'Warcraft3Protocol'
+    'Warcraft3Protocol',
+    'ElDewritoProtocol'
 ] 

@@ -21,6 +21,7 @@ games:
     - "source"        # Source Engine games
     - "renegadex"     # Renegade X
     - "warcraft3"     # Warcraft 3
+    - "eldewrito"     # ElDewrito
 
 discord:
   # Discord Webhook URL - Get this from your Discord server settings

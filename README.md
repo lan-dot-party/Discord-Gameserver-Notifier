@@ -29,6 +29,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 | Warcraft III | `warcraft3` |
 | Flatout 2 | `flatout2` |
 | Unreal Tournament 3 | `ut3` |
+| ElDewrito | `eldewrito` |
 
 ## Installation
 
@@ -36,7 +37,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 
 - Python 3.8 or higher
 - Network access for UDP broadcast queries
-- Discord webhook URL (optional, for notifications)
+- Discord webhook URL
 
 ### Installation Methods
 
@@ -168,6 +169,7 @@ games:
     - "warcraft3"         # Warcraft III
     - "flatout2"          # Flatout 2
     - "ut3"               # Unreal Tournament 3
+    - "eldewrito"         # ElDewrito
 
 discord:
   webhook_url: "https://discord.com/api/webhooks/..."

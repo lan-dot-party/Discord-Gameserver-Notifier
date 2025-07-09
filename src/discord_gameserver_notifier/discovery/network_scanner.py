@@ -16,7 +16,8 @@ from .protocols import (
     RenegadeXProtocol,
     Flatout2Protocol,
     UT3Protocol,
-    Warcraft3Protocol
+    Warcraft3Protocol,
+    ElDewritoProtocol
 )
 
 
@@ -39,7 +40,8 @@ class NetworkScanner:
             'renegadex': RenegadeXProtocol(self.timeout),
             'flatout2': Flatout2Protocol(self.timeout),
             'ut3': UT3Protocol(self.timeout),
-            'warcraft3': Warcraft3Protocol(timeout=self.timeout)
+            'warcraft3': Warcraft3Protocol(timeout=self.timeout),
+            'eldewrito': ElDewritoProtocol(self.timeout)
         }
         
         # Initialize the server info wrapper for standardization with protocols
