@@ -26,16 +26,17 @@ class ConfigManager:
         'discord': {
             'webhook_url': None,
             'channel_id': None,
-            'mentions': []
+            'mentions': [],
+            'game_mentions': {}
         },
         'database': {
-            'path': './gameservers.db',
+            'path': 'auto',  # Auto-detect based on environment
             'cleanup_after_fails': 5
         },
         'debugging': {
             'log_level': 'INFO',
             'log_to_file': True,
-            'log_file': './notifier.log'
+            'log_file': 'auto'  # Auto-detect based on environment
         }
     }
 
@@ -158,7 +159,10 @@ class ConfigManager:
         return paths
 
     def _apply_environment_overrides(self) -> None:
-        """Apply environment variable overrides for service deployment."""
+        """Apply environment variable overrides and auto-detect deployment environment."""
+        # Auto-detect deployment environment
+        self._auto_detect_deployment_paths()
+        
         # Override database path from environment
         db_path_env = os.environ.get('DGN_DATABASE_PATH')
         if db_path_env:
@@ -170,6 +174,69 @@ class ConfigManager:
         if log_file_env:
             self.config['debugging']['log_file'] = log_file_env
             self.logger.debug(f"Log file path overridden from environment: {log_file_env}")
+        
+        # Override Discord webhook URL from environment
+        webhook_url_env = os.environ.get('DGN_DISCORD_WEBHOOK_URL')
+        if webhook_url_env:
+            self.config['discord']['webhook_url'] = webhook_url_env
+            self.logger.debug("Discord webhook URL overridden from environment")
+        
+        # Override Discord channel ID from environment
+        channel_id_env = os.environ.get('DGN_DISCORD_CHANNEL_ID')
+        if channel_id_env:
+            self.config['discord']['channel_id'] = channel_id_env
+            self.logger.debug(f"Discord channel ID overridden from environment: {channel_id_env}")
+
+    def _auto_detect_deployment_paths(self) -> None:
+        """Auto-detect deployment environment and set appropriate paths."""
+        # Check if database path is set to "auto"
+        if self.config.get('database', {}).get('path') == 'auto':
+            if self._is_production_environment():
+                self.config['database']['path'] = '/var/lib/dgn/gameservers.db'
+                self.logger.debug("Auto-detected production environment - using /var/lib/dgn/gameservers.db")
+            else:
+                self.config['database']['path'] = './gameservers.db'
+                self.logger.debug("Auto-detected development environment - using ./gameservers.db")
+        
+        # Check if log file path is set to "auto"
+        if self.config.get('debugging', {}).get('log_file') == 'auto':
+            if self._is_production_environment():
+                self.config['debugging']['log_file'] = '/var/log/dgn/notifier.log'
+                self.logger.debug("Auto-detected production environment - using /var/log/dgn/notifier.log")
+            else:
+                self.config['debugging']['log_file'] = './notifier.log'
+                self.logger.debug("Auto-detected development environment - using ./notifier.log")
+
+    def _is_production_environment(self) -> bool:
+        """
+        Detect if we're running in a production environment.
+        
+        Returns:
+            bool: True if production environment is detected
+        """
+        # Check for systemd service indicators
+        if os.environ.get('INVOCATION_ID'):  # systemd sets this
+            return True
+        
+        # Check if we're running from the system-wide config location
+        if self.config_path == '/etc/dgn/config.yaml':
+            return True
+        
+        # Check if the systemd service directories exist
+        production_dirs = ['/var/lib/dgn', '/var/log/dgn', '/etc/dgn']
+        if all(os.path.exists(d) for d in production_dirs):
+            return True
+        
+        # Check if we're running as a system user (not root, not regular user)
+        try:
+            import pwd
+            current_user = pwd.getpwuid(os.getuid()).pw_name
+            if current_user == 'dgn':  # Service user
+                return True
+        except:
+            pass
+        
+        return False
 
     def load_config(self) -> None:
         """Load and validate the YAML configuration file."""
@@ -260,6 +327,15 @@ class ConfigManager:
         if channel_id and not str(channel_id).isdigit():
             raise ValueError("Discord channel ID must be a numeric string")
 
+        # Validate game_mentions
+        game_mentions = discord.get('game_mentions', {})
+        for game_name, mentions in game_mentions.items():
+            if not isinstance(mentions, list):
+                raise ValueError(f"game_mentions for '{game_name}' must be a list of mentions")
+            for mention in mentions:
+                if not isinstance(mention, str):
+                    raise ValueError(f"Each mention in game_mentions for '{game_name}' must be a string")
+
     def _validate_database_config(self) -> None:
         """Validate database configuration section."""
         database = self.config.get('database', {})
@@ -268,6 +344,7 @@ class ConfigManager:
         db_path = database.get('path', '')
         if not db_path:
             raise ValueError("Database path must be specified")
+        # "auto" is valid - it will be resolved later
         
         # Validate cleanup threshold
         cleanup_after = database.get('cleanup_after_fails', 5)

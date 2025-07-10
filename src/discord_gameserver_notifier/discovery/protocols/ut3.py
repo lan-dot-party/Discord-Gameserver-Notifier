@@ -23,6 +23,63 @@ class UT3Protocol:
             'game_id': 0x4D5707DB  # UT3-specific game ID
         }
     
+    def get_discord_fields(self, server_info: dict) -> list:
+        """
+        Get additional Discord embed fields for UT3 servers.
+        
+        Args:
+            server_info: Server information dictionary from the protocol
+            
+        Returns:
+            List of dictionaries with 'name', 'value', and 'inline' keys
+        """
+        fields = []
+        
+        # Add game type
+        if 'game_type' in server_info and server_info['game_type']:
+            fields.append({
+                'name': '🎮 Spielmodus',
+                'value': server_info['game_type'],
+                'inline': True
+            })
+        
+        # Add frag limit
+        if 'frag_limit' in server_info and server_info['frag_limit'] is not None:
+            fields.append({
+                'name': '🎯 Frag Limit',
+                'value': str(server_info['frag_limit']),
+                'inline': True
+            })
+        
+        # Add time limit
+        if 'time_limit' in server_info and server_info['time_limit'] is not None:
+            fields.append({
+                'name': '⏱️ Zeit Limit',
+                'value': f"{server_info['time_limit']} min",
+                'inline': True
+            })
+        
+        # Add bot skill (default to 'None' if not available)
+        bot_skill = server_info.get('bot_skill', 'None')
+        if bot_skill == 'None' or not bot_skill:
+            bot_skill = 'None'
+        fields.append({
+            'name': '🤖 Bot Schwierigkeit',
+            'value': bot_skill,
+            'inline': True
+        })
+        
+        # Add force respawn
+        if 'force_respawn' in server_info:
+            force_respawn_text = "✅ Aktiviert" if server_info['force_respawn'] else "❌ Deaktiviert"
+            fields.append({
+                'name': '💀 Force Respawn',
+                'value': force_respawn_text,
+                'inline': True
+            })
+        
+        return fields
+    
     async def scan_servers(self, scan_ranges: List[str]) -> List[ServerResponse]:
         """
         Scan for UT3 servers using broadcast queries.

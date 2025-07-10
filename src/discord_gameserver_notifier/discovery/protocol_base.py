@@ -19,3 +19,19 @@ class ProtocolBase:
     def allow_broadcast(self) -> bool:
         """Whether this protocol allows broadcast packets"""
         return self._allow_broadcast 
+    
+    def get_discord_fields(self, server_info: dict) -> list:
+        """
+        Get additional Discord embed fields for this protocol.
+        
+        Override this method in protocol implementations to provide
+        game-specific fields that should appear in Discord notifications.
+        
+        Args:
+            server_info: Server information dictionary from the protocol
+            
+        Returns:
+            List of dictionaries with 'name', 'value', and 'inline' keys
+            for Discord embed fields
+        """
+        return [] 

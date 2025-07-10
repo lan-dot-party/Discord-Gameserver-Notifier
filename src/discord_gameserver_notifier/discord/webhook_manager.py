@@ -19,19 +19,21 @@ class WebhookManager:
     Handles sending embeds for new server discoveries and server status updates.
     """
     
-    def __init__(self, webhook_url: str, channel_id: Optional[str] = None, mentions: Optional[list] = None):
+    def __init__(self, webhook_url: str, channel_id: Optional[str] = None, mentions: Optional[list] = None, game_mentions: Optional[dict] = None):
         """
         Initialize the WebhookManager.
         
         Args:
             webhook_url: Discord webhook URL
             channel_id: Optional Discord channel ID for reference
-            mentions: Optional list of mentions to include in messages
+            mentions: Optional list of global mentions to include in messages
+            game_mentions: Optional dictionary of game-specific mentions
         """
         # Automatically append ?wait=true to webhook URL for message ID retrieval
         self.webhook_url = self._ensure_wait_parameter(webhook_url)
         self.channel_id = channel_id
         self.mentions = mentions or []
+        self.game_mentions = game_mentions or {}
         self.logger = logging.getLogger("GameServerNotifier.WebhookManager")
         
         # Extract webhook ID and token for message deletion
@@ -105,6 +107,36 @@ class WebhookManager:
         
         return None, None
     
+    def _get_combined_mentions(self, game_type: str) -> list:
+        """
+        Get combined mentions for a specific game type.
+        Combines global mentions with game-specific mentions.
+        
+        Args:
+            game_type: The game type (e.g., 'source', 'renegadex', etc.)
+            
+        Returns:
+            List of combined mentions
+        """
+        combined_mentions = []
+        
+        # Add global mentions
+        combined_mentions.extend(self.mentions)
+        
+        # Add game-specific mentions
+        game_specific_mentions = self.game_mentions.get(game_type.lower(), [])
+        combined_mentions.extend(game_specific_mentions)
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_mentions = []
+        for mention in combined_mentions:
+            if mention not in seen:
+                seen.add(mention)
+                unique_mentions.append(mention)
+        
+        return unique_mentions
+    
     def send_new_server_notification(self, server_info: StandardizedServerInfo) -> Optional[str]:
         """
         Send a Discord notification for a newly discovered game server.
@@ -119,9 +151,12 @@ class WebhookManager:
             # Create the webhook
             webhook = DiscordWebhook(url=self.webhook_url)
             
-            # Add mentions if configured
-            if self.mentions:
-                mention_text = " ".join(self.mentions)
+            # Get combined mentions (global + game-specific)
+            combined_mentions = self._get_combined_mentions(server_info.game_type)
+            
+            # Add mentions if any are configured
+            if combined_mentions:
+                mention_text = " ".join(combined_mentions)
                 webhook.content = f"{mention_text} 🎉 **Neuer Gameserver im Netzwerk entdeckt!**"
             
             # Create embed for server information
@@ -317,6 +352,18 @@ class WebhookManager:
                 inline=True
             )
         
+        # Add protocol-specific Discord fields if available
+        if server_info.discord_fields:
+            for field in server_info.discord_fields:
+                try:
+                    embed.add_embed_field(
+                        name=field.get('name', 'Unknown Field'),
+                        value=field.get('value', 'N/A'),
+                        inline=field.get('inline', True)
+                    )
+                except Exception as e:
+                    self.logger.warning(f"Error adding Discord field: {e}")
+        
         # Add footer with additional information
         footer_text = f"Protokoll: {server_info.game_type.upper()}"
         if not is_offline:
@@ -379,5 +426,7 @@ class WebhookManager:
             'webhook_url_configured': bool(self.webhook_url),
             'channel_id': self.channel_id,
             'mentions_count': len(self.mentions),
-            'mentions': self.mentions
+            'mentions': self.mentions,
+            'game_mentions_count': len(self.game_mentions),
+            'game_mentions': self.game_mentions
         } 
