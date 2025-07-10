@@ -57,7 +57,8 @@ class GameServerNotifier:
                 self.webhook_manager = WebhookManager(
                     webhook_url=webhook_url,
                     channel_id=discord_config.get('channel_id'),
-                    mentions=discord_config.get('mentions', [])
+                    mentions=discord_config.get('mentions', []),
+                    game_mentions=discord_config.get('game_mentions', {})
                 )
                 
                 # Test webhook connection

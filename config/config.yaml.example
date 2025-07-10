@@ -32,11 +32,29 @@ discord:
   # Optional: Discord Channel ID for reference (not required for webhooks)
   channel_id: "1234567890"
   
-  # Optional: Mentions to include in new server notifications
+  # Optional: Global mentions to include in all new server notifications
   mentions:
     - "@everyone"     # Mention everyone
     # - "@here"       # Mention online users only
     # - "<@&ROLE_ID>" # Mention specific role (replace ROLE_ID with actual role ID)
+  
+  # Optional: Game-specific mentions (these will be added to global mentions)
+  game_mentions:
+    source:           # Source Engine games (Counter-Strike, Half-Life, etc.)
+      - "<@&SOURCE_ROLE_ID>"    # Mention Source Engine role
+      # - "@here"               # Additional mentions for Source games
+    renegadex:        # Renegade X
+      - "<@&RENEGADEX_ROLE_ID>" # Mention Renegade X role
+    warcraft3:        # Warcraft III
+      - "<@&WC3_ROLE_ID>"       # Mention Warcraft III role
+    ut3:              # Unreal Tournament 3
+      - "<@&UT3_ROLE_ID>"       # Mention UT3 role
+    flatout2:         # Flatout 2
+      - "<@&FLATOUT2_ROLE_ID>"  # Mention Flatout 2 role
+    eldewrito:        # ElDewrito
+      - "<@&ELDEWRITO_ROLE_ID>" # Mention ElDewrito role
+    # default:        # Default mentions for unknown games
+    #   - "<@&UNKNOWN_GAMES_ROLE_ID>"
 
 database:
   path: "./gameservers.db"

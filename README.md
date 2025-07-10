@@ -7,6 +7,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 - 🔍 **Automatic Network Discovery**: Finds game servers in local networks using broadcast queries and passive listening
 - 🎮 **Multi-Protocol Support**: Supports multiple game protocols with specialized discovery methods
 - 📊 **Discord Integration**: Automatic notifications for new servers and server status changes via webhooks
+- 🏷️ **Game-Specific Mentions**: Configure different Discord mentions for each game type (global + game-specific)
 - 💾 **Database Tracking**: Persistent storage and monitoring of discovered servers with SQLite
 - ⚡ **Real-time Updates**: Continuous monitoring of server status with configurable scan intervals
 - 🔧 **Configurable**: Flexible settings for network ranges, scan intervals, and cleanup thresholds
@@ -175,6 +176,21 @@ discord:
   webhook_url: "https://discord.com/api/webhooks/..."
   mentions:
     - "@everyone"         # Optional mentions
+  
+  # Optional: Game-specific mentions (added to global mentions)
+  game_mentions:
+    source:               # Source Engine games
+      - "<@&SOURCE_ROLE_ID>"
+    renegadex:            # Renegade X
+      - "<@&RENEGADEX_ROLE_ID>"
+    warcraft3:            # Warcraft III
+      - "<@&WC3_ROLE_ID>"
+    ut3:                  # Unreal Tournament 3
+      - "<@&UT3_ROLE_ID>"
+    flatout2:             # Flatout 2
+      - "<@&FLATOUT2_ROLE_ID>"
+    eldewrito:            # ElDewrito
+      - "<@&ELDEWRITO_ROLE_ID>"
 
 database:
   path: "./gameservers.db"
@@ -187,6 +203,40 @@ debugging:
   log_to_file: true
   log_file: "./notifier.log"
 ```
+
+### Game-Specific Mentions
+
+This feature allows you to mention different Discord roles or users for different game types:
+
+**How it works:**
+- **Global Mentions** (`mentions`): Used for all discovered servers, regardless of game type
+- **Game-Specific Mentions** (`game_mentions`): Used in addition to global mentions, but only for the corresponding game type
+- **Combined Mentions**: Both mention types are automatically combined
+
+**Example Scenario:**
+```yaml
+discord:
+  mentions:
+    - "@everyone"                    # Global for all games
+  game_mentions:
+    source:
+      - "<@&SOURCE_GAMERS_ROLE>"     # Additionally for Source Engine games
+    renegadex:
+      - "<@&RENEGADEX_FANS_ROLE>"    # Additionally for Renegade X
+```
+
+**Result:**
+- **Counter-Strike Server discovered**: `@everyone <@&SOURCE_GAMERS_ROLE> 🎉 New gameserver discovered in network!`
+- **Renegade X Server discovered**: `@everyone <@&RENEGADEX_FANS_ROLE> 🎉 New gameserver discovered in network!`
+- **Warcraft III Server discovered**: `@everyone 🎉 New gameserver discovered in network!` (only global mentions)
+
+**Supported Game Types:**
+- `source` - Source Engine games (Counter-Strike, Half-Life, etc.)
+- `renegadex` - Renegade X
+- `warcraft3` - Warcraft III
+- `ut3` - Unreal Tournament 3
+- `flatout2` - Flatout 2
+- `eldewrito` - ElDewrito
 
 ### Discord Setup
 
@@ -281,6 +331,7 @@ The application automatically manages a SQLite database:
 - **Server Details**: Name, map, players, IP, version, response time
 - **Status Updates**: New server notifications and offline alerts
 - **Message Management**: Automatic cleanup of outdated notifications
+- **Flexible Mentions**: Global and game-specific mention support
 
 ### Performance Features
 
@@ -314,4 +365,4 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 
 - [opengsq-python](https://github.com/opengsq/opengsq-python) for game server protocol implementations
 - Discord community for webhook API documentation
-- Game server communities for protocol specifications 
+- Game server communities for protocol specifications
