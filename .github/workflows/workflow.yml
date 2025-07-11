@@ -146,6 +146,13 @@ jobs:
             echo "Warning: config.yaml.service-example not found in wheel"
         fi
         
+        if [ -f "config/config.yaml.unified" ]; then
+            cp config/config.yaml.unified usr/lib/python3/dist-packages/config/
+            echo "Copied config.yaml.unified to package"
+        else
+            echo "Warning: config.yaml.unified not found in wheel"
+        fi
+        
         cd ..
         echo "Wheel contents extracted to: $(pwd)/wheel-contents"
         echo "Contents:"
@@ -326,6 +333,14 @@ jobs:
             echo "Copied config.yaml.service-example from source"
         else
             echo "Error: config.yaml.service-example not found in source"
+            exit 1
+        fi
+        
+        if [ -f "../config/config.yaml.unified" ]; then
+            cp ../config/config.yaml.unified .
+            echo "Copied config.yaml.unified from source"
+        else
+            echo "Error: config.yaml.unified not found in source"
             exit 1
         fi
         

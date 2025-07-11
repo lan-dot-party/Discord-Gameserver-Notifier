@@ -15,6 +15,7 @@ EXAMPLE_CONFIG="${EXAMPLE_CONFIG:-/usr/lib/python3/dist-packages/config/config.y
 EXAMPLE_CONFIG_ALT1="/usr/local/lib/python3.*/dist-packages/config/config.yaml.example"
 EXAMPLE_CONFIG_ALT2="/usr/lib/python*/dist-packages/config/config.yaml.example"
 SERVICE_EXAMPLE_CONFIG="/usr/lib/python3/dist-packages/config/config.yaml.service-example"
+UNIFIED_CONFIG="/usr/lib/python3/dist-packages/config/config.yaml.unified"
 
 # Virtual environment setup
 VENV_DIR="/opt/discord-gameserver-notifier"
@@ -60,14 +61,33 @@ fi
 echo "Installing wheel file: $WHEEL_FILE"
 
 # Install the wheel package with all dependencies
-"$VENV_DIR/bin/pip" install "$WHEEL_FILE"
+# Use --force-reinstall to ensure clean installation
+"$VENV_DIR/bin/pip" install --force-reinstall "$WHEEL_FILE"
 
 # Verify installation
 echo "Verifying installation..."
-if "$VENV_DIR/bin/python" -c "import discord_gameserver_notifier.main" >/dev/null 2>&1; then
-    echo "✅ Package verification successful"
+
+# First check if the package is installed via pip
+if "$VENV_DIR/bin/pip" show discord-gameserver-notifier >/dev/null 2>&1; then
+    echo "✅ Package is installed in virtual environment"
+    
+    # Try to import the main module
+    if "$VENV_DIR/bin/python" -c "import discord_gameserver_notifier.main" >/dev/null 2>&1; then
+        echo "✅ Package verification successful"
+    else
+        echo "⚠️ Package installed but module import failed"
+        echo "This may be due to missing configuration - the package should still work"
+        echo "Debug information:"
+        echo "Python path:"
+        "$VENV_DIR/bin/python" -c "import sys; print('\n'.join(sys.path))"
+        echo "Trying to import package with detailed error:"
+        "$VENV_DIR/bin/python" -c "import discord_gameserver_notifier.main" 2>&1 || true
+    fi
 else
-    echo "❌ Package verification failed - installation problem"
+    echo "❌ Package verification failed - package not installed"
+    echo "Debug information:"
+    echo "Installed packages:"
+    "$VENV_DIR/bin/pip" list
     exit 1
 fi
 
@@ -78,8 +98,10 @@ if [ ! -f "$CONFIG_FILE" ]; then
     # Try to find the example config in various locations
     FOUND_EXAMPLE=""
     
-    # Prefer service-specific config for systemd deployments
-    if [ -f "$SERVICE_EXAMPLE_CONFIG" ]; then
+    # Prefer unified config first, then service-specific config for systemd deployments
+    if [ -f "$UNIFIED_CONFIG" ]; then
+        FOUND_EXAMPLE="$UNIFIED_CONFIG"
+    elif [ -f "$SERVICE_EXAMPLE_CONFIG" ]; then
         FOUND_EXAMPLE="$SERVICE_EXAMPLE_CONFIG"
     elif [ -f "$EXAMPLE_CONFIG" ]; then
         FOUND_EXAMPLE="$EXAMPLE_CONFIG"

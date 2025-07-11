@@ -58,8 +58,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_flatout2_server(server_response)
         elif game_type == 'ut3':
             standardized_info = self._standardize_ut3_server(server_response)
-        elif game_type == 'eldewrito':
-            standardized_info = self._standardize_eldewrito_server(server_response)
+        # elif game_type == 'eldewrito':  # Commented out - protocol not yet merged in main opengsq-python repo
+        #     standardized_info = self._standardize_eldewrito_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -280,55 +280,56 @@ class ServerInfoWrapper:
             additional_info=additional_info
         )
     
-    def _standardize_eldewrito_server(self, server_response) -> StandardizedServerInfo:
-        """Standardize ElDewrito server information"""
-        info = server_response.server_info
-        
-        # Extract basic information
-        name = info.get('name', 'Unknown ElDewrito Server')
-        game = 'Halo Online (ElDewrito)'
-        map_name = info.get('map', 'Unknown Map')
-        players = info.get('num_players', 0)
-        max_players = info.get('max_players', 16)
-        version = info.get('eldewrito_version', 'Unknown')
-        
-        # ElDewrito doesn't provide password info in basic query
-        password_protected = False
-        
-        # Additional ElDewrito-specific information
-        additional_info = {
-            'game_version': info.get('game_version', 'Unknown'),
-            'eldewrito_version': info.get('eldewrito_version', 'Unknown'),
-            'status': info.get('status', 'Unknown'),
-            'host_player': info.get('host_player', ''),
-            'teams': info.get('teams', False),
-            'is_dedicated': info.get('is_dedicated', True),
-            'variant': info.get('variant', 'none'),
-            'variant_type': info.get('variant_type', 'none'),
-            'mod_count': info.get('mod_count', 0),
-            'mod_package_name': info.get('mod_package_name', ''),
-            'sprint_state': info.get('sprint_state', '2'),
-            'dual_wielding': info.get('dual_wielding', '1'),
-            'assassination_enabled': info.get('assassination_enabled', '0'),
-            'xnkid': info.get('xnkid', ''),
-            'xnaddr': info.get('xnaddr', ''),
-            'players': info.get('players', [])
-        }
-        
-        return StandardizedServerInfo(
-            name=name,
-            game=game,
-            map=map_name,
-            players=players,
-            max_players=max_players,
-            version=version,
-            password_protected=password_protected,
-            ip_address=server_response.ip_address,
-            port=server_response.port,
-            game_type=server_response.game_type,
-            response_time=server_response.response_time,
-            additional_info=additional_info
-        )
+    # def _standardize_eldewrito_server(self, server_response) -> StandardizedServerInfo:
+    #     """Standardize ElDewrito server information"""
+    #     info = server_response.server_info
+    #     
+    #     # Extract basic information
+    #     name = info.get('name', 'Unknown ElDewrito Server')
+    #     game = 'Halo Online (ElDewrito)'
+    #     map_name = info.get('map', 'Unknown Map')
+    #     players = info.get('num_players', 0)
+    #     max_players = info.get('max_players', 16)
+    #     version = info.get('eldewrito_version', 'Unknown')
+    #     
+    #     # ElDewrito doesn't provide password info in basic query
+    #     password_protected = False
+    #     
+    #     # Additional ElDewrito-specific information
+    #     additional_info = {
+    #         'game_version': info.get('game_version', 'Unknown'),
+    #         'eldewrito_version': info.get('eldewrito_version', 'Unknown'),
+    #         'status': info.get('status', 'Unknown'),
+    #         'host_player': info.get('host_player', ''),
+    #         'teams': info.get('teams', False),
+    #         'is_dedicated': info.get('is_dedicated', True),
+    #         'variant': info.get('variant', 'none'),
+    #         'variant_type': info.get('variant_type', 'none'),
+    #         'mod_count': info.get('mod_count', 0),
+    #         'mod_package_name': info.get('mod_package_name', ''),
+    #         'sprint_state': info.get('sprint_state', '2'),
+    #         'dual_wielding': info.get('dual_wielding', '1'),
+    #         'assassination_enabled': info.get('assassination_enabled', '0'),
+    #         'xnkid': info.get('xnkid', ''),
+    #         'xnaddr': info.get('xnaddr', ''),
+    #         'players': info.get('players', [])
+    #     }
+    #     
+    #     return StandardizedServerInfo(
+    #         name=name,
+    #         game=game,
+    #         map=map_name,
+    #         players=players,
+    #         max_players=max_players,
+    #         version=version,
+    #         password_protected=password_protected,
+    #         ip_address=server_response.ip_address,
+    #         port=server_response.port,
+    #         game_type=server_response.game_type,
+    #         response_time=server_response.response_time,
+    #         additional_info=additional_info
+    #     )
+    # Commented out - ElDewrito protocol not yet merged in main opengsq-python repo
     
     def _standardize_generic_server(self, server_response) -> StandardizedServerInfo:
         """Fallback standardization for unknown server types"""
