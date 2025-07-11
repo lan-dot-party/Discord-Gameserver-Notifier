@@ -58,6 +58,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_flatout2_server(server_response)
         elif game_type == 'ut3':
             standardized_info = self._standardize_ut3_server(server_response)
+        elif game_type == 'toxikk':
+            standardized_info = self._standardize_toxikk_server(server_response)
         # elif game_type == 'eldewrito':  # Commented out - protocol not yet merged in main opengsq-python repo
         #     standardized_info = self._standardize_eldewrito_server(server_response)
         else:
@@ -263,6 +265,53 @@ class ServerInfoWrapper:
             'force_respawn': info.get('force_respawn', False),
             'stats_enabled': info.get('stats_enabled', False),
             'lan_mode': info.get('lan_mode', True)
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_toxikk_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Toxikk server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', 'Unknown Toxikk Server')
+        game = info.get('game', 'Toxikk')
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', 0)
+        max_players = info.get('max_players', 0)
+        version = info.get('version', 'Toxikk')
+        
+        # Check if password protected
+        password_protected = info.get('password_protected', False)
+        
+        # Additional Toxikk-specific information
+        additional_info = {
+            'gamemode': info.get('gamemode', 'Unknown'),
+            'gametype': info.get('gametype', 'Unknown'),
+            'mutators': info.get('mutators', []),
+            'frag_limit': info.get('frag_limit'),
+            'time_limit': info.get('time_limit'),
+            'numbots': info.get('numbots', 0),
+            'bot_skill': info.get('bot_skill'),
+            'pure_server': info.get('pure_server', False),
+            'vs_bots': info.get('vs_bots', 'None'),
+            'force_respawn': info.get('force_respawn', False),
+            'stats_enabled': info.get('stats_enabled', False),
+            'lan_mode': info.get('lan_mode', True),
+            'password': info.get('password', 0)
         }
         
         return StandardizedServerInfo(

@@ -21,6 +21,7 @@ games:
     - "source"        # Source Engine games
     - "renegadex"     # Renegade X
     - "warcraft3"     # Warcraft 3
+    - "toxikk"        # Toxikk
     - "eldewrito"     # ElDewrito
 
 discord:
@@ -51,6 +52,8 @@ discord:
       - "<@&UT3_ROLE_ID>"       # Mention UT3 role
     flatout2:         # Flatout 2
       - "<@&FLATOUT2_ROLE_ID>"  # Mention Flatout 2 role
+    toxikk:           # Toxikk
+      - "<@&TOXIKK_ROLE_ID>"    # Mention Toxikk role
     eldewrito:        # ElDewrito
       - "<@&ELDEWRITO_ROLE_ID>" # Mention ElDewrito role
     # default:        # Default mentions for unknown games

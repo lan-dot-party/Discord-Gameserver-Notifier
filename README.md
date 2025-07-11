@@ -27,6 +27,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 |------|-------------|
 | Source Engine Games | `source` |
 | Renegade X | `renegadex` |
+| Toxikk | `toxikk` |
 | Warcraft III | `warcraft3` |
 | Flatout 2 | `flatout2` |
 | Unreal Tournament 3 | `ut3` |
@@ -170,6 +171,7 @@ games:
     - "warcraft3"         # Warcraft III
     - "flatout2"          # Flatout 2
     - "ut3"               # Unreal Tournament 3
+    - "toxikk"            # Toxikk
     - "eldewrito"         # ElDewrito
 
 discord:
@@ -189,6 +191,8 @@ discord:
       - "<@&UT3_ROLE_ID>"
     flatout2:             # Flatout 2
       - "<@&FLATOUT2_ROLE_ID>"
+    toxikk:               # Toxikk
+      - "<@&TOXIKK_ROLE_ID>"
     eldewrito:            # ElDewrito
       - "<@&ELDEWRITO_ROLE_ID>"
 
@@ -236,6 +240,7 @@ discord:
 - `warcraft3` - Warcraft III
 - `ut3` - Unreal Tournament 3
 - `flatout2` - Flatout 2
+- `toxikk` - Toxikk
 - `eldewrito` - ElDewrito
 
 ### Discord Setup
