@@ -14,8 +14,9 @@ source=("WHEEL_FILENAME_PLACEHOLDER"
         "discord-gameserver-notifier-exec"
         "discord-gameserver-notifier.install"
         "config.yaml.example"
-        "config.yaml.service-example")
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
+        "config.yaml.service-example"
+        "config.yaml.unified")
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 build() {
     # No build step needed for wheel installation
@@ -49,4 +50,6 @@ package() {
         "$pkgdir/usr/share/doc/$pkgname/config.yaml.example"
     install -Dm644 "$srcdir/config.yaml.service-example" \
         "$pkgdir/usr/share/doc/$pkgname/config.yaml.service-example"
+    install -Dm644 "$srcdir/config.yaml.unified" \
+        "$pkgdir/usr/share/doc/$pkgname/config.yaml.unified"
 } 
