@@ -173,6 +173,7 @@ games:
     - "ut3"               # Unreal Tournament 3
     - "toxikk"            # Toxikk
     - "eldewrito"         # ElDewrito
+    - "trackmania_nations"  # Trackmania Nations
 
 discord:
   webhook_url: "https://discord.com/api/webhooks/..."
@@ -195,6 +196,8 @@ discord:
       - "<@&TOXIKK_ROLE_ID>"
     eldewrito:            # ElDewrito
       - "<@&ELDEWRITO_ROLE_ID>"
+    trackmania_nations:  # Trackmania Nations
+      - "<@&TRACKMANIA_NATIONS_ROLE_ID>"
 
 database:
   path: "./gameservers.db"
