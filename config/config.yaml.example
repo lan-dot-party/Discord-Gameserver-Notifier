@@ -23,6 +23,8 @@ games:
     - "warcraft3"     # Warcraft 3
     - "toxikk"        # Toxikk
     - "eldewrito"     # ElDewrito
+    - "flatout2"      # Flatout 2
+    - "trackmania_nations"  # Trackmania Nations
 
 discord:
   # Discord Webhook URL - Get this from your Discord server settings
@@ -56,6 +58,8 @@ discord:
       - "<@&TOXIKK_ROLE_ID>"    # Mention Toxikk role
     eldewrito:        # ElDewrito
       - "<@&ELDEWRITO_ROLE_ID>" # Mention ElDewrito role
+    trackmania_nations: # Trackmania Nations
+      - "<@&TRACKMANIA_ROLE_ID>" # Mention Trackmania Nations role
     # default:        # Default mentions for unknown games
     #   - "<@&UNKNOWN_GAMES_ROLE_ID>"
 

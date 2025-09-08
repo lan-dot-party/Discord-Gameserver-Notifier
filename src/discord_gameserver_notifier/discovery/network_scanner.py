@@ -18,6 +18,7 @@ from .protocols import (
     UT3Protocol,
     Warcraft3Protocol,
     ToxikkProtocol,
+    TrackmaniaNationsProtocol,
     # ElDewritoProtocol  # Commented out - protocol not yet merged in main opengsq-python repo
 )
 
@@ -43,6 +44,7 @@ class NetworkScanner:
             'ut3': UT3Protocol(self.timeout),
             'warcraft3': Warcraft3Protocol(timeout=self.timeout),
             'toxikk': ToxikkProtocol(self.timeout),
+            'trackmania_nations': TrackmaniaNationsProtocol(self.timeout),
             # 'eldewrito': ElDewritoProtocol(self.timeout)  # Commented out - protocol not yet merged in main opengsq-python repo
         }
         

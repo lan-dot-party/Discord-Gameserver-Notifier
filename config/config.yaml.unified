@@ -56,6 +56,8 @@ discord:
       - "<@&FLATOUT2_ROLE_ID>"  # Mention Flatout 2 role
     eldewrito:        # ElDewrito
       - "<@&ELDEWRITO_ROLE_ID>" # Mention ElDewrito role
+    trackmania_nations: # Trackmania Nations
+      - "<@&TRACKMANIA_ROLE_ID>" # Mention Trackmania role
     # default:        # Default mentions for unknown games
     #   - "<@&UNKNOWN_GAMES_ROLE_ID>"
 
