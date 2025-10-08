@@ -60,6 +60,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_ut3_server(server_response)
         elif game_type == 'toxikk':
             standardized_info = self._standardize_toxikk_server(server_response)
+        elif game_type == 'aoe1':
+            standardized_info = self._standardize_aoe1_server(server_response)
         # elif game_type == 'eldewrito':  # Commented out - protocol not yet merged in main opengsq-python repo
         #     standardized_info = self._standardize_eldewrito_server(server_response)
         else:
@@ -379,6 +381,43 @@ class ServerInfoWrapper:
     #         additional_info=additional_info
     #     )
     # Commented out - ElDewrito protocol not yet merged in main opengsq-python repo
+    
+    def _standardize_aoe1_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Age of Empires 1 server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', 'Unknown AoE1 Server')
+        game = 'Age of Empires 1'
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', 0)
+        max_players = info.get('max_players', 8)
+        version = info.get('game_version', '1.0c')
+        
+        # AoE1 doesn't provide password info in DirectPlay query
+        password_protected = False
+        
+        # Additional AoE1-specific information
+        additional_info = {
+            'game_mode': info.get('game_mode', 'Random Map'),
+            'protocol': 'DirectPlay',
+            'raw_data': info.get('raw', {})
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
     
     def _standardize_generic_server(self, server_response) -> StandardizedServerInfo:
         """Fallback standardization for unknown server types"""

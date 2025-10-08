@@ -10,6 +10,7 @@ from .ut3 import UT3Protocol
 from .warcraft3 import Warcraft3Protocol
 from .toxikk import ToxikkProtocol
 from .trackmania_nations import TrackmaniaNationsProtocol
+from .aoe1 import AoE1Protocol
 # from .eldewrito import ElDewritoProtocol  # Commented out - protocol not yet merged in main opengsq-python repo
 
 __all__ = [
@@ -22,5 +23,6 @@ __all__ = [
     'Warcraft3Protocol',
     'ToxikkProtocol',
     'TrackmaniaNationsProtocol',
+    'AoE1Protocol',
     # 'ElDewritoProtocol'  # Commented out - protocol not yet merged in main opengsq-python repo
 ] 
