@@ -32,6 +32,9 @@ A Python-based tool for automatic detection of game servers in local networks wi
 | Flatout 2 | `flatout2` |
 | Unreal Tournament 3 | `ut3` |
 | ElDewrito | `eldewrito` |
+| Trackmania Nations | `trackmania_nations` |
+| Age of Empires 1 | `aoe1` |
+| Age of Empires 2 (Legacy) | `aoe2` |
 
 ## Installation
 
