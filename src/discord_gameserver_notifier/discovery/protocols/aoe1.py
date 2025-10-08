@@ -16,14 +16,20 @@ class AoE1Protocol(ProtocolBase):
     """Age of Empires 1 DirectPlay protocol handler for broadcast discovery"""
     
     def __init__(self, timeout: float = 5.0):
-        # AoE1 uses DirectPlay UDP port 47624 by default
-        super().__init__("255.255.255.255", 47624, timeout)
+        # AoE1 uses DirectPlay UDP port - get from opengsq-python constants
+        from opengsq.protocols.directplay import DirectPlay
+        from opengsq.protocols.aoe1 import AoE1 as OpenGSQAoE1
+        
+        # Broadcast address will be calculated dynamically per network range in scan_servers()
+        super().__init__("0.0.0.0", DirectPlay.DIRECTPLAY_UDP_PORT, timeout)
         self._allow_broadcast = True
         self.timeout = timeout
         self.logger = logging.getLogger(__name__)
+        
+        # Use constants from opengsq-python instead of hardcoding
         self.protocol_config = {
-            'port': 47624,  # DirectPlay UDP port
-            'query_data': bytes.fromhex("3400b0fa020008fc000000000000000000000000706c617902000e0082e92234891ad111b09300a024c747760000000001000000")
+            'port': DirectPlay.DIRECTPLAY_UDP_PORT,  # 47624 - DirectPlay UDP port
+            'query_data': OpenGSQAoE1.AOE1_UDP_PAYLOAD  # Use payload from opengsq-python
         }
     
     def get_discord_fields(self, server_info: dict) -> list:
