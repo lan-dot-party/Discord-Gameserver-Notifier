@@ -62,6 +62,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_toxikk_server(server_response)
         elif game_type == 'aoe1':
             standardized_info = self._standardize_aoe1_server(server_response)
+        elif game_type == 'aoe2':
+            standardized_info = self._standardize_aoe2_server(server_response)
         # elif game_type == 'eldewrito':  # Commented out - protocol not yet merged in main opengsq-python repo
         #     standardized_info = self._standardize_eldewrito_server(server_response)
         else:
@@ -400,6 +402,44 @@ class ServerInfoWrapper:
         # Additional AoE1-specific information
         additional_info = {
             'game_mode': info.get('game_mode', 'Random Map'),
+            'protocol': 'DirectPlay',
+            'raw_data': info.get('raw', {})
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_aoe2_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Age of Empires 2 server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', 'Unknown AoE2 Server')
+        game = 'Age of Empires 2'
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', 0)
+        max_players = info.get('max_players', 8)
+        version = info.get('game_version', '2.0a')
+        
+        # AoE2 doesn't provide password info in DirectPlay query
+        password_protected = False
+        
+        # Additional AoE2-specific information
+        additional_info = {
+            'game_mode': info.get('game_mode', 'Random Map'),
+            'civilizations': info.get('civilizations', []),
             'protocol': 'DirectPlay',
             'raw_data': info.get('raw', {})
         }

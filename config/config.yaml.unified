@@ -23,7 +23,10 @@ games:
     - "renegadex"     # Renegade X
     - "warcraft3"     # Warcraft 3
     - "toxikk"        # Toxikk
-    - "eldewrito"     # ElDewrito
+    - "eldewrito"     # ElDewrito#
+    - "trackmania_nations"  # Trackmania Nations
+    - "aoe1"
+    - "aoe2"
 
 discord:
   # Discord Webhook URL - Get this from your Discord server settings

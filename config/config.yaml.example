@@ -25,6 +25,8 @@ games:
     - "eldewrito"     # ElDewrito
     - "flatout2"      # Flatout 2
     - "trackmania_nations"  # Trackmania Nations
+    - "aoe1"
+    - "aoe2"
 
 discord:
   # Discord Webhook URL - Get this from your Discord server settings

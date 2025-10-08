@@ -24,7 +24,9 @@ games:
     - "warcraft3"     # Warcraft 3
     - "toxikk"        # Toxikk
     - "eldewrito"     # ElDewrito
-
+    - "trackmania_nations"  # Trackmania Nations
+    - "aoe1"
+    - "aoe2"
 discord:
   # Discord Webhook URL - Get this from your Discord server settings
   # Server Settings -> Integrations -> Webhooks -> Create Webhook
