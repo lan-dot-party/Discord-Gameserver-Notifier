@@ -22,6 +22,7 @@ from .protocols import (
     AoE1Protocol,
     AoE2Protocol,
     AVP2Protocol,
+    Battlefield2Protocol,
     # ElDewritoProtocol  # Commented out - protocol not yet merged in main opengsq-python repo
 )
 
@@ -51,6 +52,7 @@ class NetworkScanner:
             'aoe1': AoE1Protocol(self.timeout),
             'aoe2': AoE2Protocol(self.timeout),
             'avp2': AVP2Protocol(self.timeout),
+            'battlefield2': Battlefield2Protocol(self.timeout),
             # 'eldewrito': ElDewritoProtocol(self.timeout)  # Commented out - protocol not yet merged in main opengsq-python repo
         }
         

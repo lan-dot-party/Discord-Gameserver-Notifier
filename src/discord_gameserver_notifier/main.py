@@ -390,6 +390,12 @@ class GameServerNotifier:
                                 f"Flags={server.server_info.get('flags', '0')}, "
                                 f"Status={server.server_info.get('status', '0')}, "
                                 f"Timestamp={server.server_info.get('timestamp', '0')}")
+            elif server.game_type == 'battlefield2':
+                self.logger.debug(f"Battlefield2 server details: Name='{server.server_info.get('hostname', 'Unknown')}', "
+                                f"Map='{server.server_info.get('mapname', 'Unknown')}', "
+                                f"Players={server.server_info.get('numplayers', 0)}/{server.server_info.get('maxplayers', 0)}, "
+                                f"Mod='{server.server_info.get('gamename', 'battlefield2')}', "
+                                f"Version='{server.server_info.get('gamever', 'Unknown')}')")
 
     async def _on_server_lost(self, server: ServerResponse) -> None:
         """

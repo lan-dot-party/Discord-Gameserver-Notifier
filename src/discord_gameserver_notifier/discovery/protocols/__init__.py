@@ -13,6 +13,7 @@ from .trackmania_nations import TrackmaniaNationsProtocol
 from .aoe1 import AoE1Protocol
 from .aoe2 import AoE2Protocol
 from .avp2 import AVP2Protocol
+from .battlefield2 import Battlefield2Protocol
 # from .eldewrito import ElDewritoProtocol  # Commented out - protocol not yet merged in main opengsq-python repo
 
 __all__ = [
@@ -28,5 +29,6 @@ __all__ = [
     'AoE1Protocol',
     'AoE2Protocol',
     'AVP2Protocol',
+    'Battlefield2Protocol',
     # 'ElDewritoProtocol'  # Commented out - protocol not yet merged in main opengsq-python repo
 ] 

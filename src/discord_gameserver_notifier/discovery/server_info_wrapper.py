@@ -66,6 +66,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_aoe2_server(server_response)
         elif game_type == 'avp2':
             standardized_info = self._standardize_avp2_server(server_response)
+        elif game_type == 'battlefield2':
+            standardized_info = self._standardize_battlefield2_server(server_response)
         # elif game_type == 'eldewrito':  # Commented out - protocol not yet merged in main opengsq-python repo
         #     standardized_info = self._standardize_eldewrito_server(server_response)
         else:
@@ -502,6 +504,77 @@ class ServerInfoWrapper:
                 'respawn': info.get('respawn', '100'),
                 'hit_location': info.get('hitloc', '1') == '1'
             }
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_battlefield2_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Battlefield 2 server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Battlefield 2 Server')
+        game = 'Battlefield 2'
+        map_name = info.get('mapname', 'Unknown Map')
+        
+        # Parse player counts - BF2 returns strings
+        try:
+            players = int(info.get('numplayers', 0))
+        except (ValueError, TypeError):
+            players = 0
+            
+        try:
+            max_players = int(info.get('maxplayers', 0))
+        except (ValueError, TypeError):
+            max_players = 0
+        
+        # Get version information
+        version = info.get('gamever', 'Unknown')
+        
+        # Check if password protected
+        password_protected = info.get('password', '0') == '1'
+        
+        # Additional BF2-specific information
+        additional_info = {
+            'gamename': info.get('gamename', 'battlefield2'),
+            'dedicated': info.get('dedicated', '0') == '1',
+            'ranked': info.get('ranked', '0') == '1',
+            'punkbuster': info.get('punkbuster', '0') == '1',
+            'team_1': info.get('team_1', ''),
+            'team_2': info.get('team_2', ''),
+            'score_1': info.get('score_1', '0'),
+            'score_2': info.get('score_2', '0'),
+            'timelimit': info.get('timelimit', '0'),
+            'roundtime': info.get('roundtime', '0'),
+            'bf2_cc': info.get('bf2_cc', '0') == '1',
+            'bf2_ranked': info.get('bf2_ranked', '0') == '1',
+            'bf2_pure': info.get('bf2_pure', '0') == '1',
+            'bf2_mapsize': info.get('bf2_mapsize', ''),
+            'bf2_globalunlocks': info.get('bf2_globalunlocks', '0') == '1',
+            'bf2_fps': info.get('bf2_fps', ''),
+            'bf2_autobalanced': info.get('bf2_autobalanced', '0') == '1',
+            'bf2_friendlyfire': info.get('bf2_friendlyfire', '0') == '1',
+            'bf2_tkmode': info.get('bf2_tkmode', ''),
+            'bf2_startdelay': info.get('bf2_startdelay', ''),
+            'bf2_spawntime': info.get('bf2_spawntime', ''),
+            'bf2_sponsortext': info.get('bf2_sponsortext', ''),
+            'bf2_sponsorlogo_url': info.get('bf2_sponsorlogo_url', ''),
+            'bf2_communitylogo_url': info.get('bf2_communitylogo_url', ''),
+            'players_list': info.get('players_list', []),
+            'teams_list': info.get('teams_list', [])
         }
         
         return StandardizedServerInfo(
