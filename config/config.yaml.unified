@@ -1,6 +1,5 @@
-# Unified configuration for Discord Gameserver Notifier
-# Works for both development and production deployments
-# Environment variables override config values where specified
+# Example configuration file for Discord Gameserver Notifier
+# Rename to config.yaml and adjust values as needed
 
 network:
   scan_ranges:
@@ -23,19 +22,20 @@ games:
     - "renegadex"     # Renegade X
     - "warcraft3"     # Warcraft 3
     - "toxikk"        # Toxikk
-    - "eldewrito"     # ElDewrito#
+    - "eldewrito"     # ElDewrito
+    - "flatout2"      # Flatout 2
     - "trackmania_nations"  # Trackmania Nations
     - "aoe1"
     - "aoe2"
+    - "avp2"          # Alien vs Predator 2
 
 discord:
   # Discord Webhook URL - Get this from your Discord server settings
   # Server Settings -> Integrations -> Webhooks -> Create Webhook
-  # Environment variable: DGN_DISCORD_WEBHOOK_URL
-  webhook_url: "REPLACE_WITH_YOUR_DISCORD_WEBHOOK_URL"
+  # Example: "https://discord.com/api/webhooks/1234567890123456789/AbCdEfGhIjKlMnOpQrStUvWxYz1234567890AbCdEfGhIjKlMnOpQrStUvWxYz"
+  webhook_url: "https://discord.com/api/webhooks/..."
   
   # Optional: Discord Channel ID for reference (not required for webhooks)
-  # Environment variable: DGN_DISCORD_CHANNEL_ID
   channel_id: "1234567890"
   
   # Optional: Global mentions to include in all new server notifications
@@ -57,19 +57,19 @@ discord:
       - "<@&UT3_ROLE_ID>"       # Mention UT3 role
     flatout2:         # Flatout 2
       - "<@&FLATOUT2_ROLE_ID>"  # Mention Flatout 2 role
+    toxikk:           # Toxikk
+      - "<@&TOXIKK_ROLE_ID>"    # Mention Toxikk role
     eldewrito:        # ElDewrito
       - "<@&ELDEWRITO_ROLE_ID>" # Mention ElDewrito role
     trackmania_nations: # Trackmania Nations
-      - "<@&TRACKMANIA_ROLE_ID>" # Mention Trackmania role
+      - "<@&TRACKMANIA_ROLE_ID>" # Mention Trackmania Nations role
+    avp2:             # Alien vs Predator 2
+      - "<@&AVP2_ROLE_ID>"      # Mention AVP2 role
     # default:        # Default mentions for unknown games
     #   - "<@&UNKNOWN_GAMES_ROLE_ID>"
 
 database:
-  # Default paths:
-  # - Development: "./gameservers.db"
-  # - Production: "/var/lib/dgn/gameservers.db"
-  # Override with environment variable: DGN_DATABASE_PATH
-  path: "auto"  # Auto-detect based on deployment environment
+  path: "./gameservers.db"
   cleanup_after_fails: 3   # Mark server inactive after X failed attempts
   inactive_minutes: 3      # Minutes of inactivity before cleanup (perfect for LAN parties)
   cleanup_interval: 60     # Cleanup interval in seconds (1 minute for responsive cleanup)
@@ -77,8 +77,4 @@ database:
 debugging:
   log_level: "INFO"   # DEBUG, INFO, WARNING, ERROR
   log_to_file: true
-  # Default paths:
-  # - Development: "./notifier.log"
-  # - Production: "/var/log/dgn/notifier.log"
-  # Override with environment variable: DGN_LOG_FILE
-  log_file: "auto"  # Auto-detect based on deployment environment 
+  log_file: "./notifier.log" 

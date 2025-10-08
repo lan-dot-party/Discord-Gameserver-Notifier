@@ -1,11 +1,10 @@
-# Service configuration file for Discord Gameserver Notifier
-# This is optimized for systemd service deployment
-# Copy to /etc/dgn/config.yaml and adjust values as needed
+# Example configuration file for Discord Gameserver Notifier
+# Rename to config.yaml and adjust values as needed
 
 network:
   scan_ranges:
     - "192.168.1.0/24"
-    # - "10.0.0.0/24"
+    - "10.0.0.0/24"
   scan_interval: 300  # seconds
   timeout: 5  # seconds for server responses
   
@@ -24,14 +23,17 @@ games:
     - "warcraft3"     # Warcraft 3
     - "toxikk"        # Toxikk
     - "eldewrito"     # ElDewrito
+    - "flatout2"      # Flatout 2
     - "trackmania_nations"  # Trackmania Nations
     - "aoe1"
     - "aoe2"
+    - "avp2"          # Alien vs Predator 2
+
 discord:
   # Discord Webhook URL - Get this from your Discord server settings
   # Server Settings -> Integrations -> Webhooks -> Create Webhook
   # Example: "https://discord.com/api/webhooks/1234567890123456789/AbCdEfGhIjKlMnOpQrStUvWxYz1234567890AbCdEfGhIjKlMnOpQrStUvWxYz"
-  webhook_url: "REPLACE_WITH_YOUR_DISCORD_WEBHOOK_URL"
+  webhook_url: "https://discord.com/api/webhooks/..."
   
   # Optional: Discord Channel ID for reference (not required for webhooks)
   channel_id: "1234567890"
@@ -55,10 +57,14 @@ discord:
       - "<@&UT3_ROLE_ID>"       # Mention UT3 role
     flatout2:         # Flatout 2
       - "<@&FLATOUT2_ROLE_ID>"  # Mention Flatout 2 role
+    toxikk:           # Toxikk
+      - "<@&TOXIKK_ROLE_ID>"    # Mention Toxikk role
     eldewrito:        # ElDewrito
       - "<@&ELDEWRITO_ROLE_ID>" # Mention ElDewrito role
     trackmania_nations: # Trackmania Nations
-      - "<@&TRACKMANIA_ROLE_ID>" # Mention Trackmania role
+      - "<@&TRACKMANIA_ROLE_ID>" # Mention Trackmania Nations role
+    avp2:             # Alien vs Predator 2
+      - "<@&AVP2_ROLE_ID>"      # Mention AVP2 role
     # default:        # Default mentions for unknown games
     #   - "<@&UNKNOWN_GAMES_ROLE_ID>"
 

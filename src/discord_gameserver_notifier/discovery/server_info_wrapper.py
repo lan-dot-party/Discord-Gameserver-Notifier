@@ -64,6 +64,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_aoe1_server(server_response)
         elif game_type == 'aoe2':
             standardized_info = self._standardize_aoe2_server(server_response)
+        elif game_type == 'avp2':
+            standardized_info = self._standardize_avp2_server(server_response)
         # elif game_type == 'eldewrito':  # Commented out - protocol not yet merged in main opengsq-python repo
         #     standardized_info = self._standardize_eldewrito_server(server_response)
         else:
@@ -442,6 +444,64 @@ class ServerInfoWrapper:
             'civilizations': info.get('civilizations', []),
             'protocol': 'DirectPlay',
             'raw_data': info.get('raw', {})
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_avp2_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize AVP2 (Alien vs Predator 2) server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown AVP2 Server')
+        game = info.get('game', 'Alien vs Predator 2')
+        map_name = info.get('mapname', 'Unknown Map')
+        
+        # Parse player counts
+        players = int(info.get('numplayers', 0))
+        max_players = int(info.get('maxplayers', 0))
+        
+        # Get version information
+        version = info.get('gamever', 'Unknown')
+        if 'mspatch' in info:
+            version += f" (MSPatch {info['mspatch']})"
+        
+        # Check if password protected (lock field)
+        password_protected = info.get('lock', '0') == '1'
+        
+        # Additional AVP2-specific information
+        additional_info = {
+            'gametype': info.get('gametype', 'Unknown'),
+            'gamemode': info.get('gamemode', 'Unknown'),
+            'dedicated': info.get('ded', '0') == '1',
+            'website': info.get('website', ''),
+            'bandwidth': info.get('bandwidth', ''),
+            'race_limits': {
+                'aliens': info.get('maxa', '0'),
+                'marines': info.get('maxm', '0'),
+                'predators': info.get('maxp', '0'),
+                'corporate': info.get('maxc', '0')
+            },
+            'game_settings': {
+                'friendly_fire': info.get('ff', '0') == '1',
+                'speed': info.get('speed', '100'),
+                'damage': info.get('damage', '100'),
+                'respawn': info.get('respawn', '100'),
+                'hit_location': info.get('hitloc', '1') == '1'
+            }
         }
         
         return StandardizedServerInfo(
