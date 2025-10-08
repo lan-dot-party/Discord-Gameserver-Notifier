@@ -187,13 +187,6 @@ class TrackmaniaNationsProtocol(ProtocolBase):
         try:
             network = ipaddress.ip_network(scan_range, strict=False)
             
-            # Limit the scan to reasonable subnet sizes to avoid overwhelming the network
-            if network.num_addresses > 256:
-                self.logger.warning("Large network range %s (%d addresses), limiting scan to first 256 addresses", scan_range, network.num_addresses)
-                # Convert to /24 if larger
-                if network.version == 4:
-                    network = ipaddress.IPv4Network(f"{network.network_address}/24", strict=False)
-            
             # Create tasks for concurrent scanning with proper IP tracking
             all_hosts = list(network.hosts())
             batch_size = 50  # Increased concurrent connections for faster scanning
