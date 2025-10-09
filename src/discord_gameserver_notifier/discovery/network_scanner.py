@@ -24,6 +24,7 @@ from .protocols import (
     AVP2Protocol,
     Battlefield2Protocol,
     CoD4Protocol,
+    CoD1Protocol,
     ElDewritoProtocol 
 )
 
@@ -55,6 +56,7 @@ class NetworkScanner:
             'avp2': AVP2Protocol(self.timeout),
             'battlefield2': Battlefield2Protocol(self.timeout),
             'cod4': CoD4Protocol(self.timeout),
+            'cod1': CoD1Protocol(self.timeout),
             'eldewrito': ElDewritoProtocol(self.timeout)  # Commented out - protocol not yet merged in main opengsq-python repo
         }
         

@@ -29,6 +29,7 @@ games:
     - "aoe2"
     - "avp2"          # Alien vs Predator 2
     - "cod4"          # Call of Duty 4
+    - "cod1"          # Call of Duty 1
 
 discord:
   # Discord Webhook URL - Get this from your Discord server settings
