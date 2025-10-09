@@ -28,6 +28,7 @@ games:
     - "aoe1"
     - "aoe2"
     - "avp2"          # Alien vs Predator 2
+    - "cod4"          # Call of Duty 4
 
 discord:
   # Discord Webhook URL - Get this from your Discord server settings
@@ -65,6 +66,8 @@ discord:
       - "<@&TRACKMANIA_ROLE_ID>" # Mention Trackmania Nations role
     avp2:             # Alien vs Predator 2
       - "<@&AVP2_ROLE_ID>"      # Mention AVP2 role
+    cod4:             # Call of Duty 4
+      - "<@&COD4_ROLE_ID>"      # Mention CoD4 role
     # default:        # Default mentions for unknown games
     #   - "<@&UNKNOWN_GAMES_ROLE_ID>"
 

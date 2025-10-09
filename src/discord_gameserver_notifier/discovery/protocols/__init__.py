@@ -14,8 +14,8 @@ from .aoe1 import AoE1Protocol
 from .aoe2 import AoE2Protocol
 from .avp2 import AVP2Protocol
 from .battlefield2 import Battlefield2Protocol
-# from .eldewrito import ElDewritoProtocol  # Commented out - protocol not yet merged in main opengsq-python repo
-
+from .cod4 import CoD4Protocol
+from .eldewrito import ElDewritoProtocol  
 __all__ = [
     'ServerResponse',
     'BroadcastResponseProtocol',
@@ -30,5 +30,6 @@ __all__ = [
     'AoE2Protocol',
     'AVP2Protocol',
     'Battlefield2Protocol',
-    # 'ElDewritoProtocol'  # Commented out - protocol not yet merged in main opengsq-python repo
+    'CoD4Protocol',
+    'ElDewritoProtocol' 
 ] 

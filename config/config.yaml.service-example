@@ -28,6 +28,7 @@ games:
     - "aoe1"
     - "aoe2"
     - "avp2"          # Alien vs Predator 2
+    - "cod4"          # Call of Duty 4
 
 discord:
   # Discord Webhook URL - Get this from your Discord server settings
@@ -65,13 +66,13 @@ discord:
       - "<@&TRACKMANIA_ROLE_ID>" # Mention Trackmania Nations role
     avp2:             # Alien vs Predator 2
       - "<@&AVP2_ROLE_ID>"      # Mention AVP2 role
+    cod4:             # Call of Duty 4
+      - "<@&COD4_ROLE_ID>"      # Mention CoD4 role
     # default:        # Default mentions for unknown games
     #   - "<@&UNKNOWN_GAMES_ROLE_ID>"
 
 database:
-  # Service deployment: Database stored in service working directory
-  # This path will be overridden by DGN_DATABASE_PATH environment variable
-  path: "/var/lib/dgn/gameservers.db"
+  path: "./gameservers.db"
   cleanup_after_fails: 3   # Mark server inactive after X failed attempts
   inactive_minutes: 3      # Minutes of inactivity before cleanup (perfect for LAN parties)
   cleanup_interval: 60     # Cleanup interval in seconds (1 minute for responsive cleanup)
@@ -79,6 +80,4 @@ database:
 debugging:
   log_level: "INFO"   # DEBUG, INFO, WARNING, ERROR
   log_to_file: true
-  # Service deployment: Log stored in service log directory
-  # This path will be overridden by DGN_LOG_FILE environment variable
-  log_file: "/var/log/dgn/notifier.log" 
+  log_file: "./notifier.log" 

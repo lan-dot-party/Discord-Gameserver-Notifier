@@ -23,7 +23,8 @@ from .protocols import (
     AoE2Protocol,
     AVP2Protocol,
     Battlefield2Protocol,
-    # ElDewritoProtocol  # Commented out - protocol not yet merged in main opengsq-python repo
+    CoD4Protocol,
+    ElDewritoProtocol 
 )
 
 
@@ -53,7 +54,8 @@ class NetworkScanner:
             'aoe2': AoE2Protocol(self.timeout),
             'avp2': AVP2Protocol(self.timeout),
             'battlefield2': Battlefield2Protocol(self.timeout),
-            # 'eldewrito': ElDewritoProtocol(self.timeout)  # Commented out - protocol not yet merged in main opengsq-python repo
+            'cod4': CoD4Protocol(self.timeout),
+            'eldewrito': ElDewritoProtocol(self.timeout)  # Commented out - protocol not yet merged in main opengsq-python repo
         }
         
         # Initialize the server info wrapper for standardization with protocols
