@@ -191,23 +191,24 @@ class CnCGeneralsProtocol(ProtocolBase):
     
     def _is_valid_cnc_generals_packet(self, data: bytes) -> bool:
         """
-        Check if the received packet is a valid CnC Generals Zero Hour broadcast.
+        Check if the received packet is a valid CnC Generals Zero Hour server broadcast.
         
-        Based on analysis of multiple servers:
-        - Server type 1: ...000d0df200510120... or ...00010df200510120...
-        - Server type 2: ...000d0df200670120... or ...00010df200670120...
+        Based on analysis of multiple servers and clients:
+        - Server broadcasts: ...000d0df200XX0120... or ...00010df200XX0120...
+        - Client disconnect: ...00070df200XX0120... (must be filtered out!)
         
-        Common characteristics:
-        - Minimum size: ~80 bytes (typical size is 477 bytes)
-        - Contains the sequence 0df200 at position 6-9 (game identifier)
-        - Fourth byte varies by server: 0x51 or 0x67 (possibly game mode/version)
-        - Has variable headers in first 6 bytes
+        Packet structure:
+        - Position 0-3: Variable session/packet ID
+        - Position 4-5: Packet type (000d=broadcast part 1, 0001=broadcast part 2, 0007=client)
+        - Position 6-8: Game identifier (0df200 for CnC Generals)
+        - Position 9: Game variant (0x51 or 0x67 - possibly game mode/version)
+        - Position 10-11: Always 0120
         
         Args:
             data: The received packet data
             
         Returns:
-            True if the packet appears to be a valid CnC Generals broadcast
+            True if the packet appears to be a valid CnC Generals server broadcast
         """
         min_size = self.protocol_config['min_packet_size']
         
@@ -218,29 +219,57 @@ class CnCGeneralsProtocol(ProtocolBase):
             )
             return False
         
-        # Check for the common sequence at position 6-9 (0df200)
-        # This is the game identifier that appears in all CnC Generals broadcasts
-        if len(data) >= 9:
-            game_identifier = data[6:9]
-            expected_identifier = b'\x0d\xf2\x00'
-            
-            if game_identifier == expected_identifier:
-                # The fourth byte (position 9) can vary (0x51, 0x67, etc.)
-                # This might indicate different game modes or versions
-                variant_byte = data[9] if len(data) > 9 else 0x00
-                
-                self.logger.debug(
-                    f"CnC Generals packet validation passed: {len(data)} bytes, "
-                    f"signature: {data[6:10].hex() if len(data) >= 10 else data[6:9].hex()}, "
-                    f"variant: 0x{variant_byte:02x}"
-                )
-                return True
-            else:
-                self.logger.debug(
-                    f"CnC Generals packet signature mismatch: "
-                    f"expected {expected_identifier.hex()}XX, got {game_identifier.hex()}"
-                )
-                return False
+        # Need at least 12 bytes to validate full structure
+        if len(data) < 12:
+            return False
         
-        return False
+        # Check packet type at position 4-5 (must be 000d or 0001 for servers)
+        packet_type = data[4:6]
+        valid_packet_types = [b'\x00\x0d', b'\x00\x01']  # Server broadcast types
+        invalid_packet_types = [b'\x00\x07']  # Client disconnect packet
+        
+        if packet_type in invalid_packet_types:
+            self.logger.debug(
+                f"CnC Generals packet rejected: client packet type {packet_type.hex()}"
+            )
+            return False
+        
+        if packet_type not in valid_packet_types:
+            self.logger.debug(
+                f"CnC Generals packet rejected: unknown packet type {packet_type.hex()}"
+            )
+            return False
+        
+        # Check for the game identifier at position 6-9 (0df200)
+        game_identifier = data[6:9]
+        expected_identifier = b'\x0d\xf2\x00'
+        
+        if game_identifier != expected_identifier:
+            self.logger.debug(
+                f"CnC Generals packet signature mismatch: "
+                f"expected {expected_identifier.hex()}XX, got {game_identifier.hex()}"
+            )
+            return False
+        
+        # Check for the constant sequence at position 10-11 (0120)
+        constant_seq = data[10:12]
+        expected_constant = b'\x01\x20'
+        
+        if constant_seq != expected_constant:
+            self.logger.debug(
+                f"CnC Generals packet rejected: invalid constant sequence "
+                f"(expected {expected_constant.hex()}, got {constant_seq.hex()})"
+            )
+            return False
+        
+        # All checks passed - this is a valid server broadcast
+        variant_byte = data[9]
+        packet_type_str = "Part 1" if packet_type == b'\x00\x0d' else "Part 2"
+        
+        self.logger.debug(
+            f"CnC Generals SERVER packet validated: {len(data)} bytes, "
+            f"type: {packet_type.hex()} ({packet_type_str}), "
+            f"variant: 0x{variant_byte:02x}"
+        )
+        return True
 
