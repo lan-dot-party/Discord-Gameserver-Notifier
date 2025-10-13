@@ -16,7 +16,8 @@ from .avp2 import AVP2Protocol
 from .battlefield2 import Battlefield2Protocol
 from .cod4 import CoD4Protocol
 from .cod1 import CoD1Protocol
-from .eldewrito import ElDewritoProtocol  
+from .eldewrito import ElDewritoProtocol
+from .cnc_generals import CnCGeneralsProtocol
 __all__ = [
     'ServerResponse',
     'BroadcastResponseProtocol',
@@ -33,5 +34,6 @@ __all__ = [
     'Battlefield2Protocol',
     'CoD4Protocol',
     'CoD1Protocol',
-    'ElDewritoProtocol' 
+    'ElDewritoProtocol',
+    'CnCGeneralsProtocol'
 ] 

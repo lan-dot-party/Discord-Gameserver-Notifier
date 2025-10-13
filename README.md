@@ -35,6 +35,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 | Trackmania Nations | `trackmania_nations` |
 | Age of Empires 1 | `aoe1` |
 | Age of Empires 2 (Legacy) | `aoe2` |
+| Command & Conquer Generals Zero Hour | `cnc_generals` |
 
 ## Installation
 

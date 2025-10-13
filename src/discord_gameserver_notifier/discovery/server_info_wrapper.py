@@ -74,6 +74,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_cod1_server(server_response)
         elif game_type == 'eldewrito':  # Commented out - protocol not yet merged in main opengsq-python repo
             standardized_info = self._standardize_eldewrito_server(server_response)
+        elif game_type == 'cnc_generals':
+            standardized_info = self._standardize_cnc_generals_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -723,6 +725,43 @@ class ServerInfoWrapper:
             'protocol': additional_info_nested.get('protocol', 'Unknown'),
             'shortversion': additional_info_nested.get('shortversion', 'Unknown'),
             'sv_maxPing': additional_info_nested.get('sv_maxPing', 'Unknown')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_cnc_generals_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Command & Conquer Generals Zero Hour server information"""
+        info = server_response.server_info
+        
+        # Extract basic information - CnC Generals has minimal info from broadcast
+        name = info.get('name', 'Command & Conquer Generals Zero Hour Server')
+        game = info.get('game', 'Command & Conquer Generals Zero Hour')
+        map_name = info.get('map', 'Unknown')
+        players = info.get('players', 0)
+        max_players = info.get('max_players', 0)
+        version = 'Zero Hour'
+        
+        # CnC Generals broadcast doesn't provide password info
+        password_protected = False
+        
+        # Additional CnC Generals-specific information
+        additional_info = {
+            'packets_received': info.get('packets_received', 0),
+            'protocol': 'CnC Generals Broadcast',
+            'note': 'Minimal server information - broadcast detection only'
         }
         
         return StandardizedServerInfo(

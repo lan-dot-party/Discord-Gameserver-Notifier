@@ -25,7 +25,8 @@ from .protocols import (
     Battlefield2Protocol,
     CoD4Protocol,
     CoD1Protocol,
-    ElDewritoProtocol 
+    ElDewritoProtocol,
+    CnCGeneralsProtocol
 )
 
 
@@ -57,7 +58,8 @@ class NetworkScanner:
             'battlefield2': Battlefield2Protocol(self.timeout),
             'cod4': CoD4Protocol(self.timeout),
             'cod1': CoD1Protocol(self.timeout),
-            'eldewrito': ElDewritoProtocol(self.timeout)  # Commented out - protocol not yet merged in main opengsq-python repo
+            'eldewrito': ElDewritoProtocol(self.timeout),
+            'cnc_generals': CnCGeneralsProtocol(timeout=11.0)  # CnC Generals requires 11 seconds to detect 2 broadcasts
         }
         
         # Initialize the server info wrapper for standardization with protocols
