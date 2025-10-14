@@ -15,6 +15,7 @@ from .aoe2 import AoE2Protocol
 from .avp2 import AVP2Protocol
 from .battlefield2 import Battlefield2Protocol
 from .cod4 import CoD4Protocol
+from .cod5 import CoD5Protocol
 from .cod1 import CoD1Protocol
 from .eldewrito import ElDewritoProtocol
 from .cnc_generals import CnCGeneralsProtocol
@@ -33,6 +34,7 @@ __all__ = [
     'AVP2Protocol',
     'Battlefield2Protocol',
     'CoD4Protocol',
+    'CoD5Protocol',
     'CoD1Protocol',
     'ElDewritoProtocol',
     'CnCGeneralsProtocol'

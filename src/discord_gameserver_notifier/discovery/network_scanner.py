@@ -24,6 +24,7 @@ from .protocols import (
     AVP2Protocol,
     Battlefield2Protocol,
     CoD4Protocol,
+    CoD5Protocol,
     CoD1Protocol,
     ElDewritoProtocol,
     CnCGeneralsProtocol
@@ -57,6 +58,7 @@ class NetworkScanner:
             'avp2': AVP2Protocol(self.timeout),
             'battlefield2': Battlefield2Protocol(self.timeout),
             'cod4': CoD4Protocol(self.timeout),
+            'cod5': CoD5Protocol(self.timeout),
             'cod1': CoD1Protocol(self.timeout),
             'eldewrito': ElDewritoProtocol(self.timeout),
             'cnc_generals': CnCGeneralsProtocol(timeout=11.0)  # CnC Generals requires 11 seconds to detect 2 broadcasts

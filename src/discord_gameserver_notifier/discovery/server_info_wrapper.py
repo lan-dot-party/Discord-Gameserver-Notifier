@@ -70,6 +70,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_battlefield2_server(server_response)
         elif game_type == 'cod4':
             standardized_info = self._standardize_cod4_server(server_response)
+        elif game_type == 'cod5':
+            standardized_info = self._standardize_cod5_server(server_response)
         elif game_type == 'cod1':
             standardized_info = self._standardize_cod1_server(server_response)
         elif game_type == 'eldewrito':  # Commented out - protocol not yet merged in main opengsq-python repo
@@ -681,6 +683,50 @@ class ServerInfoWrapper:
             'build': additional_info_nested.get('build', 'Unknown'),
             'protocol': additional_info_nested.get('protocol', 'Unknown'),
             'sv_maxPing': additional_info_nested.get('sv_maxPing', 'Unknown')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_cod5_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Call of Duty 5: World at War server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown CoD5 Server')
+        game = 'Call of Duty 5: World at War'
+        map_name = info.get('map_name', 'Unknown Map')
+        players = info.get('current_players', 0)
+        max_players = info.get('max_players', 0)
+        
+        # Get additional CoD5 info from the nested additional_info
+        additional_info_nested = info.get('additional_info', {})
+        version = additional_info_nested.get('shortversion', 'Unknown')
+        
+        # Check if password protected
+        password_protected = additional_info_nested.get('pswrd', '0') == '1'
+        
+        # Additional CoD5-specific information
+        additional_info = {
+            'gametype': additional_info_nested.get('gametype', 'unknown'),
+            'mod': additional_info_nested.get('mod', '0'),
+            'voice': additional_info_nested.get('voice', '0') == '1',
+            'pure': additional_info_nested.get('pure', '0') == '1',
+            'punkbuster': additional_info_nested.get('pb', '0') == '1',
+            'hardware': additional_info_nested.get('hw', 'Unknown'),
+            'protocol': additional_info_nested.get('protocol', 'Unknown')
         }
         
         return StandardizedServerInfo(
