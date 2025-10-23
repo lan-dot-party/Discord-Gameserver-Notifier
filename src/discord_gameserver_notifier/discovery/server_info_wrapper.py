@@ -80,6 +80,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_cnc_generals_server(server_response)
         elif game_type == 'fear2':
             standardized_info = self._standardize_fear2_server(server_response)
+        elif game_type == 'halo1':
+            standardized_info = self._standardize_halo1_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -857,6 +859,62 @@ class ServerInfoWrapper:
             'lanonly': info.get('lanonly', '0') == '1',
             'sessionstarted': info.get('sessionstarted', '0') == '1',
             'gamename': info.get('gamename', '')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_halo1_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Halo 1 (Combat Evolved) server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Halo 1 Server')
+        game = 'Halo 1 (Combat Evolved)'
+        map_name = info.get('mapname', 'Unknown Map')
+        
+        # Parse player counts - Halo1 uses GameSpy2 protocol with string values
+        try:
+            players = int(info.get('numplayers', 0))
+        except (ValueError, TypeError):
+            players = 0
+            
+        try:
+            max_players = int(info.get('maxplayers', 0))
+        except (ValueError, TypeError):
+            max_players = 0
+        
+        # Get version information
+        version = info.get('gamever', 'Unknown')
+        
+        # Check if password protected
+        password_protected = info.get('password', '0') == '1'
+        
+        # Additional Halo1-specific information
+        additional_info = {
+            'gametype': info.get('gametype', 'Unknown'),
+            'gamevariant': info.get('gamevariant', ''),
+            'gamemode': info.get('gamemode', 'Unknown'),
+            'dedicated': info.get('dedicated', '0') == '1',
+            'teamplay': info.get('teamplay', '0') == '1',
+            'fraglimit': info.get('fraglimit', '0'),
+            'game_classic': info.get('game_classic', '0') == '1',
+            'player_flags': info.get('player_flags', ''),
+            'game_flags': info.get('game_flags', ''),
+            'players_list': info.get('players_list', []),
+            'teams_list': info.get('teams_list', [])
         }
         
         return StandardizedServerInfo(

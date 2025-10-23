@@ -36,6 +36,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 | Age of Empires 1 | `aoe1` |
 | Age of Empires 2 (Legacy) | `aoe2` |
 | Command & Conquer Generals Zero Hour | `cnc_generals` |
+| Halo 1 (Combat Evolved) | `halo1` |
 
 ## Installation
 
@@ -178,6 +179,7 @@ games:
     - "toxikk"            # Toxikk
     - "eldewrito"         # ElDewrito
     - "trackmania_nations"  # Trackmania Nations
+    - "halo1"             # Halo 1 (Combat Evolved)
 
 discord:
   webhook_url: "https://discord.com/api/webhooks/..."

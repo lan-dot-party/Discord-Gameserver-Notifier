@@ -20,6 +20,7 @@ from .cod1 import CoD1Protocol
 from .eldewrito import ElDewritoProtocol
 from .cnc_generals import CnCGeneralsProtocol
 from .fear2 import Fear2Protocol
+from .halo1 import Halo1Protocol
 __all__ = [
     'ServerResponse',
     'BroadcastResponseProtocol',
@@ -39,5 +40,6 @@ __all__ = [
     'CoD1Protocol',
     'ElDewritoProtocol',
     'CnCGeneralsProtocol',
-    'Fear2Protocol'
+    'Fear2Protocol',
+    'Halo1Protocol'
 ] 

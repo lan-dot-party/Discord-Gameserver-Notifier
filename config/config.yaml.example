@@ -31,6 +31,7 @@ games:
     - "cod4"          # Call of Duty 4
     - "cod1"          # Call of Duty 1
     - "cnc_generals"  # Command & Conquer Generals Zero Hour
+    - "halo1"         # Halo 1 (Combat Evolved)
 
 discord:
   # Discord Webhook URL - Get this from your Discord server settings
@@ -72,6 +73,8 @@ discord:
       - "<@&COD4_ROLE_ID>"      # Mention CoD4 role
     cnc_generals:     # Command & Conquer Generals Zero Hour
       - "<@&CNC_GENERALS_ROLE_ID>" # Mention CnC Generals role
+    halo1:            # Halo 1 (Combat Evolved)
+      - "<@&HALO1_ROLE_ID>"      # Mention Halo 1 role
     # default:        # Default mentions for unknown games
     #   - "<@&UNKNOWN_GAMES_ROLE_ID>"
 
