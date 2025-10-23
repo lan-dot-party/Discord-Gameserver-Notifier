@@ -244,11 +244,6 @@ class AVP2Protocol(ProtocolBase):
                     if marker.lower() in response_str.lower():
                         self.logger.debug(f"Valid AVP2 response detected with marker: {marker}")
                         return True
-                        
-                # Also check for common GameSpy1 structure with hostname
-                if 'hostname\\' in response_str and 'gamename\\' in response_str:
-                    self.logger.debug("Valid GameSpy1 response structure detected")
-                    return True
             
             return False
             
