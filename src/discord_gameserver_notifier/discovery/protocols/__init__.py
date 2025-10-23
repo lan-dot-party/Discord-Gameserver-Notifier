@@ -19,6 +19,7 @@ from .cod5 import CoD5Protocol
 from .cod1 import CoD1Protocol
 from .eldewrito import ElDewritoProtocol
 from .cnc_generals import CnCGeneralsProtocol
+from .fear2 import Fear2Protocol
 __all__ = [
     'ServerResponse',
     'BroadcastResponseProtocol',
@@ -37,5 +38,6 @@ __all__ = [
     'CoD5Protocol',
     'CoD1Protocol',
     'ElDewritoProtocol',
-    'CnCGeneralsProtocol'
+    'CnCGeneralsProtocol',
+    'Fear2Protocol'
 ] 
