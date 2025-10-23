@@ -78,6 +78,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_eldewrito_server(server_response)
         elif game_type == 'cnc_generals':
             standardized_info = self._standardize_cnc_generals_server(server_response)
+        elif game_type == 'fear2':
+            standardized_info = self._standardize_fear2_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -808,6 +810,53 @@ class ServerInfoWrapper:
             'packets_received': info.get('packets_received', 0),
             'protocol': 'CnC Generals Broadcast',
             'note': 'Minimal server information - broadcast detection only'
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_fear2_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize F.E.A.R. 2: Project Origin server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown F.E.A.R. 2 Server')
+        game = info.get('game', 'F.E.A.R. 2: Project Origin')
+        map_name = info.get('mapname', 'Unknown Map')
+        
+        # Parse player counts
+        players = int(info.get('numplayers', 0))
+        max_players = int(info.get('maxplayers', 0))
+        
+        # Get version information
+        version = info.get('gamever', 'Unknown')
+        
+        # Check if password protected
+        password_protected = info.get('requirespassword', '0') == '1'
+        
+        # Additional F.E.A.R. 2-specific information
+        additional_info = {
+            'gametype': info.get('gametype', 'Unknown'),
+            'gamemode': info.get('gamemode', 'Unknown'),
+            'gameid': info.get('gameid', ''),
+            'worldindex': info.get('worldindex', '0'),
+            'contentpackageindex': info.get('contentpackageindex', '0'),
+            'ranked': info.get('ranked', '0') == '1',
+            'lanonly': info.get('lanonly', '0') == '1',
+            'sessionstarted': info.get('sessionstarted', '0') == '1',
+            'gamename': info.get('gamename', '')
         }
         
         return StandardizedServerInfo(

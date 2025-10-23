@@ -27,7 +27,8 @@ from .protocols import (
     CoD5Protocol,
     CoD1Protocol,
     ElDewritoProtocol,
-    CnCGeneralsProtocol
+    CnCGeneralsProtocol,
+    Fear2Protocol
 )
 
 
@@ -61,7 +62,8 @@ class NetworkScanner:
             'cod5': CoD5Protocol(self.timeout),
             'cod1': CoD1Protocol(self.timeout),
             'eldewrito': ElDewritoProtocol(self.timeout),
-            'cnc_generals': CnCGeneralsProtocol(timeout=11.0)  # CnC Generals requires 11 seconds to detect 2 broadcasts
+            'cnc_generals': CnCGeneralsProtocol(timeout=11.0),  # CnC Generals requires 11 seconds to detect 2 broadcasts
+            'fear2': Fear2Protocol(self.timeout)
         }
         
         # Initialize the server info wrapper for standardization with protocols
