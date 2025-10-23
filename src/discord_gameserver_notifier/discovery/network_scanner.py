@@ -29,7 +29,8 @@ from .protocols import (
     ElDewritoProtocol,
     CnCGeneralsProtocol,
     Fear2Protocol,
-    Halo1Protocol
+    Halo1Protocol,
+    Quake3Protocol
 )
 
 
@@ -65,7 +66,8 @@ class NetworkScanner:
             'eldewrito': ElDewritoProtocol(self.timeout),
             'cnc_generals': CnCGeneralsProtocol(timeout=11.0),  # CnC Generals requires 11 seconds to detect 2 broadcasts
             'fear2': Fear2Protocol(self.timeout),
-            'halo1': Halo1Protocol(self.timeout)
+            'halo1': Halo1Protocol(self.timeout),
+            'quake3': Quake3Protocol(self.timeout)
         }
         
         # Initialize the server info wrapper for standardization with protocols

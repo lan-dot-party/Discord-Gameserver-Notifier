@@ -82,6 +82,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_fear2_server(server_response)
         elif game_type == 'halo1':
             standardized_info = self._standardize_halo1_server(server_response)
+        elif game_type == 'quake3':
+            standardized_info = self._standardize_quake3_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -915,6 +917,50 @@ class ServerInfoWrapper:
             'game_flags': info.get('game_flags', ''),
             'players_list': info.get('players_list', []),
             'teams_list': info.get('teams_list', [])
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_quake3_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Quake 3 Arena server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Quake 3 Server')
+        game = 'Quake 3 Arena'
+        map_name = info.get('map_name', 'Unknown Map')
+        players = info.get('current_players', 0)
+        max_players = info.get('max_players', 0)
+        
+        # Get additional Quake 3 info from the nested additional_info
+        additional_info_nested = info.get('additional_info', {})
+        version = additional_info_nested.get('protocol', 'Unknown')
+        
+        # Check if password protected
+        password_protected = additional_info_nested.get('g_needpass', '0') == '1'
+        
+        # Additional Quake 3-specific information
+        additional_info = {
+            'gametype': additional_info_nested.get('gametype', 'unknown'),
+            'protocol': additional_info_nested.get('protocol', 'Unknown'),
+            'gamename': additional_info_nested.get('gamename', 'Quake3Arena'),
+            'pure': additional_info_nested.get('pure', '0') == '1',
+            'voip': additional_info_nested.get('voip', 'none'),
+            'g_humanplayers': additional_info_nested.get('g_humanplayers', '0'),
+            'sv_maxclients': additional_info_nested.get('sv_maxclients', '0')
         }
         
         return StandardizedServerInfo(

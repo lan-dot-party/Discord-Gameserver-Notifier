@@ -21,6 +21,7 @@ from .eldewrito import ElDewritoProtocol
 from .cnc_generals import CnCGeneralsProtocol
 from .fear2 import Fear2Protocol
 from .halo1 import Halo1Protocol
+from .quake3 import Quake3Protocol
 __all__ = [
     'ServerResponse',
     'BroadcastResponseProtocol',
@@ -41,5 +42,6 @@ __all__ = [
     'ElDewritoProtocol',
     'CnCGeneralsProtocol',
     'Fear2Protocol',
-    'Halo1Protocol'
+    'Halo1Protocol',
+    'Quake3Protocol'
 ] 
