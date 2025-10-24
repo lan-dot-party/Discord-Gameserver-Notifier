@@ -37,6 +37,8 @@ A Python-based tool for automatic detection of game servers in local networks wi
 | Age of Empires 2 (Legacy) | `aoe2` |
 | Command & Conquer Generals Zero Hour | `cnc_generals` |
 | Halo 1 (Combat Evolved) | `halo1` |
+| Serious Sam Classic: The First Encounter | `ssc_tfe` |
+| Serious Sam Classic: The Second Encounter | `ssc_tse` |
 
 ## Installation
 

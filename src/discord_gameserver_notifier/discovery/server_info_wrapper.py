@@ -84,6 +84,10 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_halo1_server(server_response)
         elif game_type == 'quake3':
             standardized_info = self._standardize_quake3_server(server_response)
+        elif game_type == 'ssc_tfe':
+            standardized_info = self._standardize_ssc_tfe_server(server_response)
+        elif game_type == 'ssc_tse':
+            standardized_info = self._standardize_ssc_tse_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -961,6 +965,96 @@ class ServerInfoWrapper:
             'voip': additional_info_nested.get('voip', 'none'),
             'g_humanplayers': additional_info_nested.get('g_humanplayers', '0'),
             'sv_maxclients': additional_info_nested.get('sv_maxclients', '0')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_ssc_tfe_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Serious Sam Classic: The First Encounter server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Server')
+        game = 'Serious Sam: The First Encounter'
+        map_name = info.get('mapname', 'Unknown Map')
+        players = info.get('numplayers', 0)
+        max_players = info.get('maxplayers', 0)
+        version = info.get('gamever', 'Unknown')
+        
+        # Check if password protected
+        password_protected = info.get('password', '0') == '1'
+        
+        # Additional SSC TFE-specific information
+        additional_info = {
+            'gamename': info.get('gamename', 'serioussam'),
+            'location': info.get('location', 'Unknown'),
+            'gametype': info.get('gametype', 'Unknown'),
+            'activemod': info.get('activemod', ''),
+            'gamemode': info.get('gamemode', 'unknown'),
+            'difficulty': info.get('difficulty', 'Normal'),
+            'friendlyfire': info.get('friendlyfire', '0'),
+            'weaponsstay': info.get('weaponsstay', '0'),
+            'ammostays': info.get('ammostays', '0'),
+            'infiniteammo': info.get('infiniteammo', '0'),
+            'hostport': info.get('hostport', str(server_response.port))
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_ssc_tse_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Serious Sam Classic: The Second Encounter server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Server')
+        game = 'Serious Sam: The Second Encounter'
+        map_name = info.get('mapname', 'Unknown Map')
+        players = info.get('numplayers', 0)
+        max_players = info.get('maxplayers', 0)
+        version = info.get('gamever', 'Unknown')
+        
+        # Check if password protected
+        password_protected = info.get('password', '0') == '1'
+        
+        # Additional SSC TSE-specific information
+        additional_info = {
+            'gamename': info.get('gamename', 'serioussamse'),
+            'location': info.get('location', 'Unknown'),
+            'gametype': info.get('gametype', 'Unknown'),
+            'activemod': info.get('activemod', ''),
+            'gamemode': info.get('gamemode', 'unknown'),
+            'difficulty': info.get('difficulty', 'Normal'),
+            'friendlyfire': info.get('friendlyfire', '0'),
+            'weaponsstay': info.get('weaponsstay', '0'),
+            'ammostays': info.get('ammostays', '0'),
+            'infiniteammo': info.get('infiniteammo', '0'),
+            'hostport': info.get('hostport', str(server_response.port))
         }
         
         return StandardizedServerInfo(

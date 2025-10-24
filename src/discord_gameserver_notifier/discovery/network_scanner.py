@@ -30,7 +30,9 @@ from .protocols import (
     CnCGeneralsProtocol,
     Fear2Protocol,
     Halo1Protocol,
-    Quake3Protocol
+    Quake3Protocol,
+    SSCTFEProtocol,
+    SSCTSEProtocol
 )
 
 
@@ -67,7 +69,9 @@ class NetworkScanner:
             'cnc_generals': CnCGeneralsProtocol(timeout=11.0),  # CnC Generals requires 11 seconds to detect 2 broadcasts
             'fear2': Fear2Protocol(self.timeout),
             'halo1': Halo1Protocol(self.timeout),
-            'quake3': Quake3Protocol(self.timeout)
+            'quake3': Quake3Protocol(self.timeout),
+            'ssc_tfe': SSCTFEProtocol(self.timeout),  # Serious Sam Classic: The First Encounter
+            'ssc_tse': SSCTSEProtocol(self.timeout)   # Serious Sam Classic: The Second Encounter
         }
         
         # Initialize the server info wrapper for standardization with protocols

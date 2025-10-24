@@ -22,6 +22,7 @@ from .cnc_generals import CnCGeneralsProtocol
 from .fear2 import Fear2Protocol
 from .halo1 import Halo1Protocol
 from .quake3 import Quake3Protocol
+from .ssc import SSCProtocol, SSCTFEProtocol, SSCTSEProtocol
 __all__ = [
     'ServerResponse',
     'BroadcastResponseProtocol',
@@ -43,5 +44,8 @@ __all__ = [
     'CnCGeneralsProtocol',
     'Fear2Protocol',
     'Halo1Protocol',
-    'Quake3Protocol'
+    'Quake3Protocol',
+    'SSCProtocol',
+    'SSCTFEProtocol',
+    'SSCTSEProtocol'
 ] 
