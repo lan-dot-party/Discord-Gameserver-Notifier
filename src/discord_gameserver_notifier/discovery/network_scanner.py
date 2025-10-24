@@ -32,7 +32,9 @@ from .protocols import (
     Halo1Protocol,
     Quake3Protocol,
     SSCTFEProtocol,
-    SSCTSEProtocol
+    SSCTSEProtocol,
+    StrongholdCrusaderProtocol,
+    StrongholdCEProtocol
 )
 
 
@@ -71,7 +73,9 @@ class NetworkScanner:
             'halo1': Halo1Protocol(self.timeout),
             'quake3': Quake3Protocol(self.timeout),
             'ssc_tfe': SSCTFEProtocol(self.timeout),  # Serious Sam Classic: The First Encounter
-            'ssc_tse': SSCTSEProtocol(self.timeout)   # Serious Sam Classic: The Second Encounter
+            'ssc_tse': SSCTSEProtocol(self.timeout),   # Serious Sam Classic: The Second Encounter
+            'stronghold_crusader': StrongholdCrusaderProtocol(self.timeout),  # Stronghold Crusader
+            'stronghold_ce': StrongholdCEProtocol(self.timeout)  # Stronghold Crusader Extreme
         }
         
         # Initialize the server info wrapper for standardization with protocols

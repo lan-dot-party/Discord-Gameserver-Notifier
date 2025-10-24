@@ -23,6 +23,8 @@ from .fear2 import Fear2Protocol
 from .halo1 import Halo1Protocol
 from .quake3 import Quake3Protocol
 from .ssc import SSCProtocol, SSCTFEProtocol, SSCTSEProtocol
+from .stronghold_crusader import StrongholdCrusaderProtocol
+from .stronghold_ce import StrongholdCEProtocol
 __all__ = [
     'ServerResponse',
     'BroadcastResponseProtocol',
@@ -47,5 +49,7 @@ __all__ = [
     'Quake3Protocol',
     'SSCProtocol',
     'SSCTFEProtocol',
-    'SSCTSEProtocol'
+    'SSCTSEProtocol',
+    'StrongholdCrusaderProtocol',
+    'StrongholdCEProtocol'
 ] 

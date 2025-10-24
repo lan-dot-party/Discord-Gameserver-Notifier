@@ -88,6 +88,10 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_ssc_tfe_server(server_response)
         elif game_type == 'ssc_tse':
             standardized_info = self._standardize_ssc_tse_server(server_response)
+        elif game_type == 'stronghold_crusader':
+            standardized_info = self._standardize_stronghold_crusader_server(server_response)
+        elif game_type == 'stronghold_ce':
+            standardized_info = self._standardize_stronghold_ce_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -592,6 +596,82 @@ class ServerInfoWrapper:
             'bf2_communitylogo_url': info.get('bf2_communitylogo_url', ''),
             'players_list': info.get('players_list', []),
             'teams_list': info.get('teams_list', [])
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_stronghold_crusader_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Stronghold Crusader DirectPlay server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', f'Stronghold Crusader Server {server_response.ip_address}')
+        game = 'Stronghold Crusader'
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', info.get('num_players', 0))
+        max_players = info.get('max_players', 8)  # Stronghold Crusader default max
+        version = info.get('game_version', info.get('version', '1.41'))
+        
+        # DirectPlay servers typically don't expose password info easily
+        password_protected = info.get('passworded', info.get('password_protected', False))
+        
+        # Additional Stronghold Crusader-specific information
+        additional_info = {
+            'game_type': info.get('game_type', 'Stronghold Crusader'),
+            'tcp_port': 2301,  # Stronghold Crusader uses TCP port 2301
+            'protocol': 'DirectPlay',
+            'raw': info.get('raw', {})
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_stronghold_ce_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Stronghold Crusader Extreme DirectPlay server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', f'Stronghold CE Server {server_response.ip_address}')
+        game = 'Stronghold Crusader Extreme'
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', info.get('num_players', 0))
+        max_players = info.get('max_players', 8)  # Stronghold CE default max
+        version = info.get('game_version', info.get('version', '1.4.1'))
+        
+        # DirectPlay servers typically don't expose password info easily
+        password_protected = info.get('passworded', info.get('password_protected', False))
+        
+        # Additional Stronghold Crusader Extreme-specific information
+        additional_info = {
+            'game_type': info.get('game_type', 'Stronghold Crusader Extreme'),
+            'tcp_port': 2300,  # Stronghold CE uses standard TCP port 2300
+            'protocol': 'DirectPlay',
+            'raw': info.get('raw', {})
         }
         
         return StandardizedServerInfo(
