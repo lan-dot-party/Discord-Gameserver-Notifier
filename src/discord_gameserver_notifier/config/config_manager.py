@@ -33,6 +33,11 @@ class ConfigManager:
             'path': 'auto',  # Auto-detect based on environment
             'cleanup_after_fails': 5
         },
+        'api': {
+            'enabled': False,
+            'host': '0.0.0.0',
+            'port': 8080
+        },
         'debugging': {
             'log_level': 'INFO',
             'log_to_file': True,
@@ -287,6 +292,7 @@ class ConfigManager:
         self._validate_network_config()
         self._validate_discord_config()
         self._validate_database_config()
+        self._validate_api_config()
         self._validate_debugging_config()
 
     def _validate_network_config(self) -> None:
@@ -350,6 +356,25 @@ class ConfigManager:
         cleanup_after = database.get('cleanup_after_fails', 5)
         if not isinstance(cleanup_after, int) or cleanup_after < 1:
             raise ValueError("cleanup_after_fails must be a positive integer")
+
+    def _validate_api_config(self) -> None:
+        """Validate API configuration section."""
+        api = self.config.get('api', {})
+        
+        # Validate enabled flag
+        enabled = api.get('enabled', False)
+        if not isinstance(enabled, bool):
+            raise ValueError("api.enabled must be a boolean value")
+        
+        # Validate host
+        host = api.get('host', '0.0.0.0')
+        if not isinstance(host, str) or not host:
+            raise ValueError("api.host must be a non-empty string")
+        
+        # Validate port
+        port = api.get('port', 8080)
+        if not isinstance(port, int) or port < 1 or port > 65535:
+            raise ValueError("api.port must be an integer between 1 and 65535")
 
     def _validate_debugging_config(self) -> None:
         """Validate debugging configuration section."""

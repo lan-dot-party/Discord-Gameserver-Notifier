@@ -23,6 +23,7 @@ from discord_gameserver_notifier.discovery.network_scanner import DiscoveryEngin
 from discord_gameserver_notifier.discovery.server_info_wrapper import ServerInfoWrapper, StandardizedServerInfo
 from discord_gameserver_notifier.database.database_manager import DatabaseManager
 from discord_gameserver_notifier.discord.webhook_manager import WebhookManager
+from discord_gameserver_notifier.api import APIServer
 
 class GameServerNotifier:
     """Main application class for the Discord Gameserver Notifier."""
@@ -98,6 +99,27 @@ class GameServerNotifier:
             
         self.server_wrapper = ServerInfoWrapper(protocols=protocols)
         
+        # Initialize API server if enabled
+        api_config = self.config_manager.config.get('api', {})
+        if api_config.get('enabled', False):
+            try:
+                db_path = self.config_manager.config.get('database', {}).get('path', './gameservers.db')
+                api_host = api_config.get('host', '0.0.0.0')
+                api_port = api_config.get('port', 8080)
+                
+                self.api_server = APIServer(
+                    db_path=db_path,
+                    host=api_host,
+                    port=api_port
+                )
+                self.logger.info(f"API server initialized - will listen on {api_host}:{api_port}")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize API server: {e}", exc_info=True)
+                self.api_server = None
+        else:
+            self.logger.info("API server disabled in configuration")
+            self.api_server = None
+        
         # Setup signal handlers
         for sig in (signal.SIGTERM, signal.SIGINT):
             signal.signal(sig, self._signal_handler)
@@ -144,6 +166,14 @@ class GameServerNotifier:
                 self.logger.error(f"Failed to start discovery engine: {e}", exc_info=True)
         else:
             self.logger.warning("Discovery engine not available - skipping network scanning")
+        
+        # Start the API server if enabled
+        if self.api_server:
+            try:
+                await self.api_server.start()
+                self.logger.info("API server started successfully")
+            except Exception as e:
+                self.logger.error(f"Failed to start API server: {e}", exc_info=True)
         
         # Periodic cleanup interval (configurable for responsive cleanup)
         cleanup_config = self.config_manager.config.get('database', {})
@@ -194,6 +224,14 @@ class GameServerNotifier:
         self.logger.info("Shutting down...")
         
         try:
+            # Stop the API server
+            if self.api_server:
+                try:
+                    await self.api_server.stop()
+                    self.logger.info("API server stopped successfully")
+                except Exception as e:
+                    self.logger.error(f"Error stopping API server: {e}", exc_info=True)
+            
             # Stop the discovery engine
             if self.discovery_engine:
                 try:
