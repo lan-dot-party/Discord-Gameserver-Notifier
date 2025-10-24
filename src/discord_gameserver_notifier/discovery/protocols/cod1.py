@@ -5,6 +5,7 @@ Call of Duty 1 protocol implementation for game server discovery.
 import asyncio
 import ipaddress
 import logging
+import socket
 from typing import List, Dict, Any, Optional, Tuple
 
 from opengsq.protocols.cod1 import CoD1
@@ -174,11 +175,18 @@ class CoD1Protocol(ProtocolBase):
         validated_servers = []
         all_responses = []
         
-        # Create single UDP socket for both queries
+        # Create UDP socket with SO_REUSEADDR to prevent "Address already in use" errors
+        # when multiple CoD scans run in sequence
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('0.0.0.0', 28960))  # CoD1 requires source port 28960
+        sock.setblocking(False)
+        
+        # Create datagram endpoint with the prepared socket
         transport, protocol = await asyncio.get_event_loop().create_datagram_endpoint(
             lambda: BroadcastResponseProtocol(all_responses),
-            local_addr=('0.0.0.0', 28960),  # CoD1 requires source port 28960
-            allow_broadcast=True
+            sock=sock
         )
         
         try:

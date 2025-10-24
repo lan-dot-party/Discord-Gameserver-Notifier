@@ -25,20 +25,29 @@ A Python-based tool for automatic detection of game servers in local networks wi
 
 | Game | Config Code |
 |------|-------------|
-| Source Engine Games | `source` |
-| Renegade X | `renegadex` |
-| Toxikk | `toxikk` |
-| Warcraft III | `warcraft3` |
-| Flatout 2 | `flatout2` |
-| Unreal Tournament 3 | `ut3` |
-| ElDewrito | `eldewrito` |
-| Trackmania Nations | `trackmania_nations` |
 | Age of Empires 1 | `aoe1` |
-| Age of Empires 2 (Legacy) | `aoe2` |
+| Age of Empires 2 | `aoe2` |
+| Alien vs Predator 2 | `avp2` |
+| Battlefield 2 | `battlefield2` |
+| Call of Duty 1 | `cod1` |
+| Call of Duty 4 | `cod4` |
+| Call of Duty 5 | `cod5` |
 | Command & Conquer Generals Zero Hour | `cnc_generals` |
+| ElDewrito | `eldewrito` |
+| F.E.A.R. 2 | `fear2` |
+| Flatout 2 | `flatout2` |
 | Halo 1 (Combat Evolved) | `halo1` |
+| Quake 3 | `quake3` |
+| Renegade X | `renegadex` |
 | Serious Sam Classic: The First Encounter | `ssc_tfe` |
 | Serious Sam Classic: The Second Encounter | `ssc_tse` |
+| Source Engine Games | `source` |
+| Stronghold Crusader | `stronghold_crusader` |
+| Stronghold Crusader Extreme | `stronghold_ce` |
+| Toxikk | `toxikk` |
+| Trackmania Nations | `trackmania_nations` |
+| Unreal Tournament 3 | `ut3` |
+| Warcraft III | `warcraft3` |
 
 ## Installation
 
@@ -173,15 +182,29 @@ network:
 
 games:
   enabled:
-    - "source"            # Source Engine games
-    - "renegadex"         # Renegade X
-    - "warcraft3"         # Warcraft III
-    - "flatout2"          # Flatout 2
-    - "ut3"               # Unreal Tournament 3
-    - "toxikk"            # Toxikk
+    - "aoe1"              # Age of Empires 1
+    - "aoe2"              # Age of Empires 2
+    - "avp2"              # Alien vs Predator 2
+    - "battlefield2"      # Battlefield 2
+    - "cod1"              # Call of Duty 1
+    - "cod4"              # Call of Duty 4
+    - "cod5"              # Call of Duty 5
+    - "cnc_generals"      # Command & Conquer Generals Zero Hour
     - "eldewrito"         # ElDewrito
-    - "trackmania_nations"  # Trackmania Nations
+    - "fear2"             # F.E.A.R. 2
+    - "flatout2"          # Flatout 2
     - "halo1"             # Halo 1 (Combat Evolved)
+    - "quake3"            # Quake 3
+    - "renegadex"         # Renegade X
+    - "source"            # Source Engine games
+    - "ssc_tfe"           # Serious Sam Classic: The First Encounter
+    - "ssc_tse"           # Serious Sam Classic: The Second Encounter
+    - "stronghold_crusader"  # Stronghold Crusader
+    - "stronghold_ce"     # Stronghold Crusader Extreme
+    - "toxikk"            # Toxikk
+    - "trackmania_nations"  # Trackmania Nations
+    - "ut3"               # Unreal Tournament 3
+    - "warcraft3"         # Warcraft III
 
 discord:
   webhook_url: "https://discord.com/api/webhooks/..."
@@ -190,22 +213,52 @@ discord:
   
   # Optional: Game-specific mentions (added to global mentions)
   game_mentions:
-    source:               # Source Engine games
-      - "<@&SOURCE_ROLE_ID>"
-    renegadex:            # Renegade X
-      - "<@&RENEGADEX_ROLE_ID>"
-    warcraft3:            # Warcraft III
-      - "<@&WC3_ROLE_ID>"
-    ut3:                  # Unreal Tournament 3
-      - "<@&UT3_ROLE_ID>"
-    flatout2:             # Flatout 2
-      - "<@&FLATOUT2_ROLE_ID>"
-    toxikk:               # Toxikk
-      - "<@&TOXIKK_ROLE_ID>"
+    aoe1:                 # Age of Empires 1
+      - "<@&AOE1_ROLE_ID>"
+    aoe2:                 # Age of Empires 2
+      - "<@&AOE2_ROLE_ID>"
+    avp2:                 # Alien vs Predator 2
+      - "<@&AVP2_ROLE_ID>"
+    battlefield2:         # Battlefield 2
+      - "<@&BATTLEFIELD2_ROLE_ID>"
+    cod1:                 # Call of Duty 1
+      - "<@&COD1_ROLE_ID>"
+    cod4:                 # Call of Duty 4
+      - "<@&COD4_ROLE_ID>"
+    cod5:                 # Call of Duty 5
+      - "<@&COD5_ROLE_ID>"
+    cnc_generals:         # Command & Conquer Generals Zero Hour
+      - "<@&CNC_GENERALS_ROLE_ID>"
     eldewrito:            # ElDewrito
       - "<@&ELDEWRITO_ROLE_ID>"
-    trackmania_nations:  # Trackmania Nations
+    fear2:                # F.E.A.R. 2
+      - "<@&FEAR2_ROLE_ID>"
+    flatout2:             # Flatout 2
+      - "<@&FLATOUT2_ROLE_ID>"
+    halo1:                # Halo 1 (Combat Evolved)
+      - "<@&HALO1_ROLE_ID>"
+    quake3:               # Quake 3
+      - "<@&QUAKE3_ROLE_ID>"
+    renegadex:            # Renegade X
+      - "<@&RENEGADEX_ROLE_ID>"
+    source:               # Source Engine games
+      - "<@&SOURCE_ROLE_ID>"
+    ssc_tfe:              # Serious Sam Classic: The First Encounter
+      - "<@&SSC_TFE_ROLE_ID>"
+    ssc_tse:              # Serious Sam Classic: The Second Encounter
+      - "<@&SSC_TSE_ROLE_ID>"
+    stronghold_crusader:  # Stronghold Crusader
+      - "<@&STRONGHOLD_CRUSADER_ROLE_ID>"
+    stronghold_ce:        # Stronghold Crusader Extreme
+      - "<@&STRONGHOLD_CE_ROLE_ID>"
+    toxikk:               # Toxikk
+      - "<@&TOXIKK_ROLE_ID>"
+    trackmania_nations:   # Trackmania Nations
       - "<@&TRACKMANIA_NATIONS_ROLE_ID>"
+    ut3:                  # Unreal Tournament 3
+      - "<@&UT3_ROLE_ID>"
+    warcraft3:            # Warcraft III
+      - "<@&WC3_ROLE_ID>"
 
 database:
   path: "./gameservers.db"
@@ -234,6 +287,8 @@ discord:
   mentions:
     - "@everyone"                    # Global for all games
   game_mentions:
+    battlefield2:
+      - "<@&BATTLEFIELD2_FANS_ROLE>" # Additionally for Battlefield 2
     source:
       - "<@&SOURCE_GAMERS_ROLE>"     # Additionally for Source Engine games
     renegadex:
@@ -241,18 +296,35 @@ discord:
 ```
 
 **Result:**
+- **Battlefield 2 Server discovered**: `@everyone <@&BATTLEFIELD2_FANS_ROLE> 🎉 New gameserver discovered in network!`
 - **Counter-Strike Server discovered**: `@everyone <@&SOURCE_GAMERS_ROLE> 🎉 New gameserver discovered in network!`
 - **Renegade X Server discovered**: `@everyone <@&RENEGADEX_FANS_ROLE> 🎉 New gameserver discovered in network!`
 - **Warcraft III Server discovered**: `@everyone 🎉 New gameserver discovered in network!` (only global mentions)
 
 **Supported Game Types:**
-- `source` - Source Engine games (Counter-Strike, Half-Life, etc.)
-- `renegadex` - Renegade X
-- `warcraft3` - Warcraft III
-- `ut3` - Unreal Tournament 3
-- `flatout2` - Flatout 2
-- `toxikk` - Toxikk
+- `aoe1` - Age of Empires 1
+- `aoe2` - Age of Empires 2
+- `avp2` - Alien vs Predator 2
+- `battlefield2` - Battlefield 2
+- `cod1` - Call of Duty 1
+- `cod4` - Call of Duty 4
+- `cod5` - Call of Duty 5
+- `cnc_generals` - Command & Conquer Generals Zero Hour
 - `eldewrito` - ElDewrito
+- `fear2` - F.E.A.R. 2
+- `flatout2` - Flatout 2
+- `halo1` - Halo 1 (Combat Evolved)
+- `quake3` - Quake 3
+- `renegadex` - Renegade X
+- `source` - Source Engine games (Counter-Strike, Half-Life, etc.)
+- `ssc_tfe` - Serious Sam Classic: The First Encounter
+- `ssc_tse` - Serious Sam Classic: The Second Encounter
+- `stronghold_crusader` - Stronghold Crusader
+- `stronghold_ce` - Stronghold Crusader Extreme
+- `toxikk` - Toxikk
+- `trackmania_nations` - Trackmania Nations
+- `ut3` - Unreal Tournament 3
+- `warcraft3` - Warcraft III
 
 ### Discord Setup
 
@@ -317,7 +389,7 @@ The application provides comprehensive logging:
 INFO - Starting main application loop...
 INFO - Discovery engine started successfully
 INFO - NetworkScanner initialized with 2 scan ranges
-INFO - Enabled games: source, renegadex, warcraft3, flatout2, ut3
+INFO - Enabled games: aoe1, aoe2, battlefield2, source, renegadex, warcraft3, flatout2, ut3
 INFO - Found 3 source servers
 INFO - Discovered source server: Counter-Strike 1.6 Server
 INFO - Server details: 192.168.1.100:27015

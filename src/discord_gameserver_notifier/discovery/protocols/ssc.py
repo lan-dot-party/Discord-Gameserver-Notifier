@@ -6,6 +6,7 @@ Supports both The First Encounter (TFE) and The Second Encounter (TSE).
 import asyncio
 import ipaddress
 import logging
+import socket
 from typing import List, Dict, Any, Optional, Tuple
 
 from opengsq.protocols.ssc import SSC
@@ -215,11 +216,18 @@ class SSCProtocol(ProtocolBase):
         try:
             loop = asyncio.get_running_loop()
             
-            # Create UDP socket for broadcast with specific source port for SSC
+            # Create UDP socket with SO_REUSEADDR to prevent "Address already in use" errors
+            # when both SSC TFE and TSE scans run in sequence
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind(('0.0.0.0', listen_port))  # Listen on port 57500
+            sock.setblocking(False)
+            
+            # Create datagram endpoint with the prepared socket
             transport, protocol = await loop.create_datagram_endpoint(
                 lambda: BroadcastResponseProtocol(responses),
-                local_addr=('0.0.0.0', listen_port),  # Listen on port 57500
-                allow_broadcast=True
+                sock=sock
             )
             
             try:
@@ -234,9 +242,6 @@ class SSCProtocol(ProtocolBase):
                 
         except Exception as e:
             self.logger.error(f"Error sending SSC broadcast query: {e}")
-            # If port 57500 is already in use, log a specific message
-            if "Address already in use" in str(e):
-                self.logger.warning(f"Port {listen_port} is already in use. This may happen if multiple SSC scans run simultaneously.")
         
         return responses
     
