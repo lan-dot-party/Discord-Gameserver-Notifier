@@ -20,6 +20,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 - 🔄 **Graceful Shutdown**: Proper cleanup and database maintenance on application exit
 - 🎨 **Rich Discord Embeds**: Game-specific colors, emojis, and formatted server information
 - 📊 **Database Statistics**: Real-time monitoring of active/inactive servers and cleanup operations
+- 🌐 **REST API**: Optional HTTP API for read-only access to discovered servers (integrations, websites, monitoring)
 
 ## Supported Games
 
@@ -33,7 +34,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 | Call of Duty 4 | `cod4` |
 | Call of Duty 5 | `cod5` |
 | Command & Conquer Generals Zero Hour | `cnc_generals` |
-| ElDewrito | `eldewrito` |
+| ElDewrito (Halo Online) | `eldewrito` |
 | F.E.A.R. 2 | `fear2` |
 | Flatout 2 | `flatout2` |
 | Halo 1 (Combat Evolved) | `halo1` |
@@ -266,6 +267,11 @@ database:
   inactive_minutes: 3     # Minutes before cleanup
   cleanup_interval: 60    # Cleanup every minute
 
+api:
+  enabled: true           # Enable/disable API
+  host: "0.0.0.0"        # Bind address (0.0.0.0 = all interfaces)
+  port: 8080             # API port
+
 debugging:
   log_level: "INFO"       # DEBUG, INFO, WARNING, ERROR
   log_to_file: true
@@ -350,6 +356,62 @@ network:
 
 See `docs/NETWORK_FILTERING.md` for more information.
 
+### REST API Configuration
+
+The Discord Gameserver Notifier includes an optional HTTP REST API for read-only access to discovered servers:
+
+```yaml
+api:
+  enabled: true           # Enable/disable API
+  host: "0.0.0.0"        # Bind address (0.0.0.0 = all interfaces, 127.0.0.1 = localhost only)
+  port: 8080             # API port
+```
+
+**Features:**
+- **Read-Only Access**: Safe, no data modification possible
+- **JSON Format**: Standard REST API with JSON responses
+- **Active Servers Only**: Automatically filters inactive servers
+- **Thread-Safe**: Multiple concurrent requests supported
+- **Asynchronous**: Non-blocking operation with aiohttp
+
+**Available Endpoints:**
+- `GET /` - API information and version
+- `GET /health` - Health check endpoint
+- `GET /servers` - List all active game servers
+
+**Use Cases:**
+- Display servers on your LAN party website
+- Create Discord bots with server status
+- Monitor server utilization with Grafana/Prometheus
+- Build mobile apps for your gaming community
+
+**Quick Example:**
+```bash
+# Get all active servers
+curl http://localhost:8080/servers
+
+# Response example
+{
+  "success": true,
+  "count": 2,
+  "servers": [
+    {
+      "ip_address": "192.168.1.100",
+      "port": 27015,
+      "name": "My CS Server",
+      "game": "Counter-Strike: Global Offensive",
+      "map_name": "de_dust2",
+      "players": 12,
+      "max_players": 16
+    }
+  ]
+}
+```
+
+**Security Note:** The API is designed for local network use. If exposing to the internet, use a reverse proxy with authentication (nginx, Caddy, Traefik).
+
+See [API.md](API.md) for complete documentation, examples, and troubleshooting.
+
 ## Usage
 
 ### Running the Application
@@ -427,6 +489,25 @@ The application automatically manages a SQLite database:
 - **Connection Pooling**: Efficient database connections
 - **Response Caching**: Optimized server queries
 - **Graceful Error Handling**: Robust error recovery
+
+### REST API Integration
+
+The application provides an optional HTTP REST API for external integrations:
+
+- **Read-Only Access**: Safe database access without write permissions
+- **JSON Responses**: Standard REST API format for easy integration
+- **Health Monitoring**: Dedicated health check endpoint for monitoring tools
+- **Concurrent Access**: Multiple simultaneous requests supported
+- **Active Filtering**: Only active servers are exposed via API
+
+**Integration Examples:**
+- Web dashboards displaying live server status
+- Discord bots querying server information
+- Monitoring systems (Grafana, Prometheus)
+- Mobile applications for LAN parties
+- Custom tools and scripts
+
+See [API.md](API.md) for complete API documentation.
 
 ### Debug Mode
 
