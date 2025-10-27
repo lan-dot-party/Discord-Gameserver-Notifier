@@ -250,29 +250,54 @@ class DiscoveryEngine:
                 
                 first_run = False
                 
-                # Perform scan
-                current_servers = await self.scan_once()
-                
-                # Track server changes
+                # Track all servers found in this scan cycle
                 current_server_keys = set()
+                all_current_servers = []
                 
-                for server in current_servers:
-                    server_key = f"{server.ip_address}:{server.port}"
-                    current_server_keys.add(server_key)
-                    
-                    if server_key not in self.known_servers:
-                        # New server discovered
-                        self.known_servers[server_key] = server
-                        if self.on_discovered:
-                            try:
-                                await self.on_discovered(server)
-                            except Exception as e:
-                                self.logger.error(f"Error in on_discovered callback: {e}")
-                    else:
-                        # Update existing server info
-                        self.known_servers[server_key] = server
+                # Scan each game type individually and process discoveries immediately
+                for game_type in self.scanner.enabled_games:
+                    if not self.is_running:  # Check if we should stop
+                        break
+                        
+                    if game_type in self.scanner.protocols:
+                        self.logger.debug(f"Scanning for {game_type} servers")
+                        
+                        # Scan this specific game type
+                        try:
+                            game_servers = await self.scanner._scan_game_type(game_type)
+                            all_current_servers.extend(game_servers)
+                            
+                            # Process each discovered server immediately
+                            for server in game_servers:
+                                server_key = f"{server.ip_address}:{server.port}"
+                                current_server_keys.add(server_key)
+                                
+                                is_new_server = server_key not in self.known_servers
+                                
+                                # Update or add server to known_servers
+                                self.known_servers[server_key] = server
+                                
+                                if is_new_server:
+                                    # New server discovered - send notification immediately
+                                    self.logger.info(f"Found new {game_type} server: {server.ip_address}:{server.port}")
+                                else:
+                                    # Existing server still responding - update last_seen
+                                    self.logger.debug(f"Server still active: {server.ip_address}:{server.port}")
+                                
+                                # Always call on_discovered callback to update last_seen in database
+                                if self.on_discovered:
+                                    try:
+                                        await self.on_discovered(server)
+                                    except Exception as e:
+                                        self.logger.error(f"Error in on_discovered callback: {e}")
+                            
+                            if game_servers:
+                                self.logger.info(f"Found {len(game_servers)} {game_type} servers")
+                        
+                        except Exception as e:
+                            self.logger.error(f"Error scanning for {game_type} servers: {e}")
                 
-                # Check for lost servers
+                # Check for lost servers after all games have been scanned
                 lost_servers = []
                 for server_key in list(self.known_servers.keys()):
                     if server_key not in current_server_keys:
@@ -287,7 +312,7 @@ class DiscoveryEngine:
                 # Call scan complete callback
                 if self.on_scan_complete:
                     try:
-                        await self.on_scan_complete(current_servers, lost_servers)
+                        await self.on_scan_complete(all_current_servers, lost_servers)
                     except Exception as e:
                         self.logger.error(f"Error in on_scan_complete callback: {e}")
                 
