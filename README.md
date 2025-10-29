@@ -20,17 +20,35 @@ A Python-based tool for automatic detection of game servers in local networks wi
 - 🔄 **Graceful Shutdown**: Proper cleanup and database maintenance on application exit
 - 🎨 **Rich Discord Embeds**: Game-specific colors, emojis, and formatted server information
 - 📊 **Database Statistics**: Real-time monitoring of active/inactive servers and cleanup operations
+- 🌐 **REST API**: Optional HTTP API for read-only access to discovered servers (integrations, websites, monitoring)
 
 ## Supported Games
 
 | Game | Config Code |
 |------|-------------|
-| Source Engine Games | `source` |
-| Renegade X | `renegadex` |
-| Warcraft III | `warcraft3` |
+| Age of Empires 1 | `aoe1` |
+| Age of Empires 2 | `aoe2` |
+| Alien vs Predator 2 | `avp2` |
+| Battlefield 2 | `battlefield2` |
+| Call of Duty 1 | `cod1` |
+| Call of Duty 4 | `cod4` |
+| Call of Duty 5 | `cod5` |
+| Command & Conquer Generals Zero Hour | `cnc_generals` |
+| ElDewrito (Halo Online) | `eldewrito` |
+| F.E.A.R. 2 | `fear2` |
 | Flatout 2 | `flatout2` |
+| Halo 1 (Combat Evolved) | `halo1` |
+| Quake 3 | `quake3` |
+| Renegade X | `renegadex` |
+| Serious Sam Classic: The First Encounter | `ssc_tfe` |
+| Serious Sam Classic: The Second Encounter | `ssc_tse` |
+| Source Engine Games | `source` |
+| Stronghold Crusader | `stronghold_crusader` |
+| Stronghold Crusader Extreme | `stronghold_ce` |
+| Toxikk | `toxikk` |
+| Trackmania Nations | `trackmania_nations` |
 | Unreal Tournament 3 | `ut3` |
-| ElDewrito | `eldewrito` |
+| Warcraft III | `warcraft3` |
 
 ## Installation
 
@@ -165,12 +183,29 @@ network:
 
 games:
   enabled:
-    - "source"            # Source Engine games
-    - "renegadex"         # Renegade X
-    - "warcraft3"         # Warcraft III
-    - "flatout2"          # Flatout 2
-    - "ut3"               # Unreal Tournament 3
+    - "aoe1"              # Age of Empires 1
+    - "aoe2"              # Age of Empires 2
+    - "avp2"              # Alien vs Predator 2
+    - "battlefield2"      # Battlefield 2
+    - "cod1"              # Call of Duty 1
+    - "cod4"              # Call of Duty 4
+    - "cod5"              # Call of Duty 5
+    - "cnc_generals"      # Command & Conquer Generals Zero Hour
     - "eldewrito"         # ElDewrito
+    - "fear2"             # F.E.A.R. 2
+    - "flatout2"          # Flatout 2
+    - "halo1"             # Halo 1 (Combat Evolved)
+    - "quake3"            # Quake 3
+    - "renegadex"         # Renegade X
+    - "source"            # Source Engine games
+    - "ssc_tfe"           # Serious Sam Classic: The First Encounter
+    - "ssc_tse"           # Serious Sam Classic: The Second Encounter
+    - "stronghold_crusader"  # Stronghold Crusader
+    - "stronghold_ce"     # Stronghold Crusader Extreme
+    - "toxikk"            # Toxikk
+    - "trackmania_nations"  # Trackmania Nations
+    - "ut3"               # Unreal Tournament 3
+    - "warcraft3"         # Warcraft III
 
 discord:
   webhook_url: "https://discord.com/api/webhooks/..."
@@ -179,24 +214,63 @@ discord:
   
   # Optional: Game-specific mentions (added to global mentions)
   game_mentions:
-    source:               # Source Engine games
-      - "<@&SOURCE_ROLE_ID>"
-    renegadex:            # Renegade X
-      - "<@&RENEGADEX_ROLE_ID>"
-    warcraft3:            # Warcraft III
-      - "<@&WC3_ROLE_ID>"
-    ut3:                  # Unreal Tournament 3
-      - "<@&UT3_ROLE_ID>"
-    flatout2:             # Flatout 2
-      - "<@&FLATOUT2_ROLE_ID>"
+    aoe1:                 # Age of Empires 1
+      - "<@&AOE1_ROLE_ID>"
+    aoe2:                 # Age of Empires 2
+      - "<@&AOE2_ROLE_ID>"
+    avp2:                 # Alien vs Predator 2
+      - "<@&AVP2_ROLE_ID>"
+    battlefield2:         # Battlefield 2
+      - "<@&BATTLEFIELD2_ROLE_ID>"
+    cod1:                 # Call of Duty 1
+      - "<@&COD1_ROLE_ID>"
+    cod4:                 # Call of Duty 4
+      - "<@&COD4_ROLE_ID>"
+    cod5:                 # Call of Duty 5
+      - "<@&COD5_ROLE_ID>"
+    cnc_generals:         # Command & Conquer Generals Zero Hour
+      - "<@&CNC_GENERALS_ROLE_ID>"
     eldewrito:            # ElDewrito
       - "<@&ELDEWRITO_ROLE_ID>"
+    fear2:                # F.E.A.R. 2
+      - "<@&FEAR2_ROLE_ID>"
+    flatout2:             # Flatout 2
+      - "<@&FLATOUT2_ROLE_ID>"
+    halo1:                # Halo 1 (Combat Evolved)
+      - "<@&HALO1_ROLE_ID>"
+    quake3:               # Quake 3
+      - "<@&QUAKE3_ROLE_ID>"
+    renegadex:            # Renegade X
+      - "<@&RENEGADEX_ROLE_ID>"
+    source:               # Source Engine games
+      - "<@&SOURCE_ROLE_ID>"
+    ssc_tfe:              # Serious Sam Classic: The First Encounter
+      - "<@&SSC_TFE_ROLE_ID>"
+    ssc_tse:              # Serious Sam Classic: The Second Encounter
+      - "<@&SSC_TSE_ROLE_ID>"
+    stronghold_crusader:  # Stronghold Crusader
+      - "<@&STRONGHOLD_CRUSADER_ROLE_ID>"
+    stronghold_ce:        # Stronghold Crusader Extreme
+      - "<@&STRONGHOLD_CE_ROLE_ID>"
+    toxikk:               # Toxikk
+      - "<@&TOXIKK_ROLE_ID>"
+    trackmania_nations:   # Trackmania Nations
+      - "<@&TRACKMANIA_NATIONS_ROLE_ID>"
+    ut3:                  # Unreal Tournament 3
+      - "<@&UT3_ROLE_ID>"
+    warcraft3:            # Warcraft III
+      - "<@&WC3_ROLE_ID>"
 
 database:
   path: "./gameservers.db"
   cleanup_after_fails: 3  # Mark inactive after 3 failed attempts
   inactive_minutes: 3     # Minutes before cleanup
   cleanup_interval: 60    # Cleanup every minute
+
+api:
+  enabled: true           # Enable/disable API
+  host: "0.0.0.0"        # Bind address (0.0.0.0 = all interfaces)
+  port: 8080             # API port
 
 debugging:
   log_level: "INFO"       # DEBUG, INFO, WARNING, ERROR
@@ -219,6 +293,8 @@ discord:
   mentions:
     - "@everyone"                    # Global for all games
   game_mentions:
+    battlefield2:
+      - "<@&BATTLEFIELD2_FANS_ROLE>" # Additionally for Battlefield 2
     source:
       - "<@&SOURCE_GAMERS_ROLE>"     # Additionally for Source Engine games
     renegadex:
@@ -226,17 +302,35 @@ discord:
 ```
 
 **Result:**
+- **Battlefield 2 Server discovered**: `@everyone <@&BATTLEFIELD2_FANS_ROLE> 🎉 New gameserver discovered in network!`
 - **Counter-Strike Server discovered**: `@everyone <@&SOURCE_GAMERS_ROLE> 🎉 New gameserver discovered in network!`
 - **Renegade X Server discovered**: `@everyone <@&RENEGADEX_FANS_ROLE> 🎉 New gameserver discovered in network!`
 - **Warcraft III Server discovered**: `@everyone 🎉 New gameserver discovered in network!` (only global mentions)
 
 **Supported Game Types:**
-- `source` - Source Engine games (Counter-Strike, Half-Life, etc.)
-- `renegadex` - Renegade X
-- `warcraft3` - Warcraft III
-- `ut3` - Unreal Tournament 3
-- `flatout2` - Flatout 2
+- `aoe1` - Age of Empires 1
+- `aoe2` - Age of Empires 2
+- `avp2` - Alien vs Predator 2
+- `battlefield2` - Battlefield 2
+- `cod1` - Call of Duty 1
+- `cod4` - Call of Duty 4
+- `cod5` - Call of Duty 5
+- `cnc_generals` - Command & Conquer Generals Zero Hour
 - `eldewrito` - ElDewrito
+- `fear2` - F.E.A.R. 2
+- `flatout2` - Flatout 2
+- `halo1` - Halo 1 (Combat Evolved)
+- `quake3` - Quake 3
+- `renegadex` - Renegade X
+- `source` - Source Engine games (Counter-Strike, Half-Life, etc.)
+- `ssc_tfe` - Serious Sam Classic: The First Encounter
+- `ssc_tse` - Serious Sam Classic: The Second Encounter
+- `stronghold_crusader` - Stronghold Crusader
+- `stronghold_ce` - Stronghold Crusader Extreme
+- `toxikk` - Toxikk
+- `trackmania_nations` - Trackmania Nations
+- `ut3` - Unreal Tournament 3
+- `warcraft3` - Warcraft III
 
 ### Discord Setup
 
@@ -261,6 +355,62 @@ network:
 ```
 
 See `docs/NETWORK_FILTERING.md` for more information.
+
+### REST API Configuration
+
+The Discord Gameserver Notifier includes an optional HTTP REST API for read-only access to discovered servers:
+
+```yaml
+api:
+  enabled: true           # Enable/disable API
+  host: "0.0.0.0"        # Bind address (0.0.0.0 = all interfaces, 127.0.0.1 = localhost only)
+  port: 8080             # API port
+```
+
+**Features:**
+- **Read-Only Access**: Safe, no data modification possible
+- **JSON Format**: Standard REST API with JSON responses
+- **Active Servers Only**: Automatically filters inactive servers
+- **Thread-Safe**: Multiple concurrent requests supported
+- **Asynchronous**: Non-blocking operation with aiohttp
+
+**Available Endpoints:**
+- `GET /` - API information and version
+- `GET /health` - Health check endpoint
+- `GET /servers` - List all active game servers
+
+**Use Cases:**
+- Display servers on your LAN party website
+- Create Discord bots with server status
+- Monitor server utilization with Grafana/Prometheus
+- Build mobile apps for your gaming community
+
+**Quick Example:**
+```bash
+# Get all active servers
+curl http://localhost:8080/servers
+
+# Response example
+{
+  "success": true,
+  "count": 2,
+  "servers": [
+    {
+      "ip_address": "192.168.1.100",
+      "port": 27015,
+      "name": "My CS Server",
+      "game": "Counter-Strike: Global Offensive",
+      "map_name": "de_dust2",
+      "players": 12,
+      "max_players": 16
+    }
+  ]
+}
+```
+
+**Security Note:** The API is designed for local network use. If exposing to the internet, use a reverse proxy with authentication (nginx, Caddy, Traefik).
+
+See [API.md](API.md) for complete documentation, examples, and troubleshooting.
 
 ## Usage
 
@@ -301,7 +451,7 @@ The application provides comprehensive logging:
 INFO - Starting main application loop...
 INFO - Discovery engine started successfully
 INFO - NetworkScanner initialized with 2 scan ranges
-INFO - Enabled games: source, renegadex, warcraft3, flatout2, ut3
+INFO - Enabled games: aoe1, aoe2, battlefield2, source, renegadex, warcraft3, flatout2, ut3
 INFO - Found 3 source servers
 INFO - Discovered source server: Counter-Strike 1.6 Server
 INFO - Server details: 192.168.1.100:27015
@@ -339,6 +489,25 @@ The application automatically manages a SQLite database:
 - **Connection Pooling**: Efficient database connections
 - **Response Caching**: Optimized server queries
 - **Graceful Error Handling**: Robust error recovery
+
+### REST API Integration
+
+The application provides an optional HTTP REST API for external integrations:
+
+- **Read-Only Access**: Safe database access without write permissions
+- **JSON Responses**: Standard REST API format for easy integration
+- **Health Monitoring**: Dedicated health check endpoint for monitoring tools
+- **Concurrent Access**: Multiple simultaneous requests supported
+- **Active Filtering**: Only active servers are exposed via API
+
+**Integration Examples:**
+- Web dashboards displaying live server status
+- Discord bots querying server information
+- Monitoring systems (Grafana, Prometheus)
+- Mobile applications for LAN parties
+- Custom tools and scripts
+
+See [API.md](API.md) for complete API documentation.
 
 ### Debug Mode
 

@@ -21,7 +21,21 @@ games:
     - "source"        # Source Engine games
     - "renegadex"     # Renegade X
     - "warcraft3"     # Warcraft 3
+    - "toxikk"        # Toxikk
     - "eldewrito"     # ElDewrito
+    - "flatout2"      # Flatout 2
+    - "trackmania_nations"  # Trackmania Nations
+    - "aoe1"          # Age of Ampires 1
+    - "aoe2"          # Age of Ampires 2
+    - "avp2"          # Alien vs Predator 2
+    - "cod4"          # Call of Duty 4
+    - "cod1"          # Call of Duty 1
+    - "cnc_generals"  # Command & Conquer Generals Zero Hour
+    - "halo1"         # Halo 1 (Combat Evolved)
+    - "ssc_tfe"       # Serious Sam Classic: The First Encounter
+    - "ssc_tse"       # Serious Sam Classic: The Second Encounter
+    - "stronghold_crusader"  # Stronghold Crusader
+    - "stronghold_ce"        # Stronghold Crusader Extreme
 
 discord:
   # Discord Webhook URL - Get this from your Discord server settings
@@ -51,8 +65,24 @@ discord:
       - "<@&UT3_ROLE_ID>"       # Mention UT3 role
     flatout2:         # Flatout 2
       - "<@&FLATOUT2_ROLE_ID>"  # Mention Flatout 2 role
+    toxikk:           # Toxikk
+      - "<@&TOXIKK_ROLE_ID>"    # Mention Toxikk role
     eldewrito:        # ElDewrito
       - "<@&ELDEWRITO_ROLE_ID>" # Mention ElDewrito role
+    trackmania_nations: # Trackmania Nations
+      - "<@&TRACKMANIA_ROLE_ID>" # Mention Trackmania Nations role
+    avp2:             # Alien vs Predator 2
+      - "<@&AVP2_ROLE_ID>"      # Mention AVP2 role
+    cod4:             # Call of Duty 4
+      - "<@&COD4_ROLE_ID>"      # Mention CoD4 role
+    cnc_generals:     # Command & Conquer Generals Zero Hour
+      - "<@&CNC_GENERALS_ROLE_ID>" # Mention CnC Generals role
+    halo1:            # Halo 1 (Combat Evolved)
+      - "<@&HALO1_ROLE_ID>"      # Mention Halo 1 role
+    ssc_tfe:          # Serious Sam Classic: The First Encounter
+      - "<@&SSC_TFE_ROLE_ID>"    # Mention SSC TFE role
+    ssc_tse:          # Serious Sam Classic: The Second Encounter
+      - "<@&SSC_TSE_ROLE_ID>"    # Mention SSC TSE role
     # default:        # Default mentions for unknown games
     #   - "<@&UNKNOWN_GAMES_ROLE_ID>"
 
@@ -61,6 +91,11 @@ database:
   cleanup_after_fails: 3   # Mark server inactive after X failed attempts
   inactive_minutes: 3      # Minutes of inactivity before cleanup (perfect for LAN parties)
   cleanup_interval: 60     # Cleanup interval in seconds (1 minute for responsive cleanup)
+
+api:
+  enabled: false           # Enable/disable the HTTP API server (set to true to enable)
+  host: "0.0.0.0"         # Host to bind to (0.0.0.0 = all interfaces, 127.0.0.1 = localhost only)
+  port: 8080              # Port to listen on
 
 debugging:
   log_level: "INFO"   # DEBUG, INFO, WARNING, ERROR

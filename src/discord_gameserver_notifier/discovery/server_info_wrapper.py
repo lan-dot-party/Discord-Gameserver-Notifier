@@ -58,8 +58,40 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_flatout2_server(server_response)
         elif game_type == 'ut3':
             standardized_info = self._standardize_ut3_server(server_response)
-        # elif game_type == 'eldewrito':  # Commented out - protocol not yet merged in main opengsq-python repo
-        #     standardized_info = self._standardize_eldewrito_server(server_response)
+        elif game_type == 'toxikk':
+            standardized_info = self._standardize_toxikk_server(server_response)
+        elif game_type == 'aoe1':
+            standardized_info = self._standardize_aoe1_server(server_response)
+        elif game_type == 'aoe2':
+            standardized_info = self._standardize_aoe2_server(server_response)
+        elif game_type == 'avp2':
+            standardized_info = self._standardize_avp2_server(server_response)
+        elif game_type == 'battlefield2':
+            standardized_info = self._standardize_battlefield2_server(server_response)
+        elif game_type == 'cod4':
+            standardized_info = self._standardize_cod4_server(server_response)
+        elif game_type == 'cod5':
+            standardized_info = self._standardize_cod5_server(server_response)
+        elif game_type == 'cod1':
+            standardized_info = self._standardize_cod1_server(server_response)
+        elif game_type == 'eldewrito':  # Commented out - protocol not yet merged in main opengsq-python repo
+            standardized_info = self._standardize_eldewrito_server(server_response)
+        elif game_type == 'cnc_generals':
+            standardized_info = self._standardize_cnc_generals_server(server_response)
+        elif game_type == 'fear2':
+            standardized_info = self._standardize_fear2_server(server_response)
+        elif game_type == 'halo1':
+            standardized_info = self._standardize_halo1_server(server_response)
+        elif game_type == 'quake3':
+            standardized_info = self._standardize_quake3_server(server_response)
+        elif game_type == 'ssc_tfe':
+            standardized_info = self._standardize_ssc_tfe_server(server_response)
+        elif game_type == 'ssc_tse':
+            standardized_info = self._standardize_ssc_tse_server(server_response)
+        elif game_type == 'stronghold_crusader':
+            standardized_info = self._standardize_stronghold_crusader_server(server_response)
+        elif game_type == 'stronghold_ce':
+            standardized_info = self._standardize_stronghold_ce_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -280,56 +312,382 @@ class ServerInfoWrapper:
             additional_info=additional_info
         )
     
-    # def _standardize_eldewrito_server(self, server_response) -> StandardizedServerInfo:
-    #     """Standardize ElDewrito server information"""
-    #     info = server_response.server_info
-    #     
-    #     # Extract basic information
-    #     name = info.get('name', 'Unknown ElDewrito Server')
-    #     game = 'Halo Online (ElDewrito)'
-    #     map_name = info.get('map', 'Unknown Map')
-    #     players = info.get('num_players', 0)
-    #     max_players = info.get('max_players', 16)
-    #     version = info.get('eldewrito_version', 'Unknown')
-    #     
-    #     # ElDewrito doesn't provide password info in basic query
-    #     password_protected = False
-    #     
-    #     # Additional ElDewrito-specific information
-    #     additional_info = {
-    #         'game_version': info.get('game_version', 'Unknown'),
-    #         'eldewrito_version': info.get('eldewrito_version', 'Unknown'),
-    #         'status': info.get('status', 'Unknown'),
-    #         'host_player': info.get('host_player', ''),
-    #         'teams': info.get('teams', False),
-    #         'is_dedicated': info.get('is_dedicated', True),
-    #         'variant': info.get('variant', 'none'),
-    #         'variant_type': info.get('variant_type', 'none'),
-    #         'mod_count': info.get('mod_count', 0),
-    #         'mod_package_name': info.get('mod_package_name', ''),
-    #         'sprint_state': info.get('sprint_state', '2'),
-    #         'dual_wielding': info.get('dual_wielding', '1'),
-    #         'assassination_enabled': info.get('assassination_enabled', '0'),
-    #         'xnkid': info.get('xnkid', ''),
-    #         'xnaddr': info.get('xnaddr', ''),
-    #         'players': info.get('players', [])
-    #     }
-    #     
-    #     return StandardizedServerInfo(
-    #         name=name,
-    #         game=game,
-    #         map=map_name,
-    #         players=players,
-    #         max_players=max_players,
-    #         version=version,
-    #         password_protected=password_protected,
-    #         ip_address=server_response.ip_address,
-    #         port=server_response.port,
-    #         game_type=server_response.game_type,
-    #         response_time=server_response.response_time,
-    #         additional_info=additional_info
-    #     )
-    # Commented out - ElDewrito protocol not yet merged in main opengsq-python repo
+    def _standardize_toxikk_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Toxikk server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', 'Unknown Toxikk Server')
+        game = info.get('game', 'Toxikk')
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', 0)
+        max_players = info.get('max_players', 0)
+        version = info.get('version', 'Toxikk')
+        
+        # Check if password protected
+        password_protected = info.get('password_protected', False)
+        
+        # Additional Toxikk-specific information
+        additional_info = {
+            'gamemode': info.get('gamemode', 'Unknown'),
+            'gametype': info.get('gametype', 'Unknown'),
+            'mutators': info.get('mutators', []),
+            'frag_limit': info.get('frag_limit'),
+            'time_limit': info.get('time_limit'),
+            'numbots': info.get('numbots', 0),
+            'bot_skill': info.get('bot_skill'),
+            'pure_server': info.get('pure_server', False),
+            'vs_bots': info.get('vs_bots', 'None'),
+            'force_respawn': info.get('force_respawn', False),
+            'stats_enabled': info.get('stats_enabled', False),
+            'lan_mode': info.get('lan_mode', True),
+            'password': info.get('password', 0)
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_eldewrito_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize ElDewrito server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', 'Unknown ElDewrito Server')
+        game = 'Halo Online (ElDewrito)'
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('num_players', 0)
+        max_players = info.get('max_players', 16)
+        version = info.get('eldewrito_version', 'Unknown')
+        
+        # ElDewrito doesn't provide password info in basic query
+        password_protected = False
+        
+        # Additional ElDewrito-specific information
+        additional_info = {
+            'game_version': info.get('game_version', 'Unknown'),
+            'eldewrito_version': info.get('eldewrito_version', 'Unknown'),
+            'status': info.get('status', 'Unknown'),
+            'host_player': info.get('host_player', ''),
+            'teams': info.get('teams', False),
+            'is_dedicated': info.get('is_dedicated', True),
+            'variant': info.get('variant', 'none'),
+            'variant_type': info.get('variant_type', 'none'),
+            'mod_count': info.get('mod_count', 0),
+            'mod_package_name': info.get('mod_package_name', ''),
+            'sprint_state': info.get('sprint_state', '2'),
+            'dual_wielding': info.get('dual_wielding', '1'),
+            'assassination_enabled': info.get('assassination_enabled', '0'),
+            'xnkid': info.get('xnkid', ''),
+            'xnaddr': info.get('xnaddr', ''),
+            'players': info.get('players', [])
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_aoe1_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Age of Empires 1 server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', 'Unknown AoE1 Server')
+        game = 'Age of Empires 1'
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', 0)
+        max_players = info.get('max_players', 8)
+        version = info.get('game_version', '1.0c')
+        
+        # AoE1 doesn't provide password info in DirectPlay query
+        password_protected = False
+        
+        # Additional AoE1-specific information
+        additional_info = {
+            'game_mode': info.get('game_mode', 'Random Map'),
+            'protocol': 'DirectPlay',
+            'raw_data': info.get('raw', {})
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_aoe2_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Age of Empires 2 server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', 'Unknown AoE2 Server')
+        game = 'Age of Empires 2'
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', 0)
+        max_players = info.get('max_players', 8)
+        version = info.get('game_version', '2.0a')
+        
+        # AoE2 doesn't provide password info in DirectPlay query
+        password_protected = False
+        
+        # Additional AoE2-specific information
+        additional_info = {
+            'game_mode': info.get('game_mode', 'Random Map'),
+            'civilizations': info.get('civilizations', []),
+            'protocol': 'DirectPlay',
+            'raw_data': info.get('raw', {})
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_avp2_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize AVP2 (Alien vs Predator 2) server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown AVP2 Server')
+        game = info.get('game', 'Alien vs Predator 2')
+        map_name = info.get('mapname', 'Unknown Map')
+        
+        # Parse player counts
+        players = int(info.get('numplayers', 0))
+        max_players = int(info.get('maxplayers', 0))
+        
+        # Get version information
+        version = info.get('gamever', 'Unknown')
+        if 'mspatch' in info:
+            version += f" (MSPatch {info['mspatch']})"
+        
+        # Check if password protected (lock field)
+        password_protected = info.get('lock', '0') == '1'
+        
+        # Additional AVP2-specific information
+        additional_info = {
+            'gametype': info.get('gametype', 'Unknown'),
+            'gamemode': info.get('gamemode', 'Unknown'),
+            'dedicated': info.get('ded', '0') == '1',
+            'website': info.get('website', ''),
+            'bandwidth': info.get('bandwidth', ''),
+            'race_limits': {
+                'aliens': info.get('maxa', '0'),
+                'marines': info.get('maxm', '0'),
+                'predators': info.get('maxp', '0'),
+                'corporate': info.get('maxc', '0')
+            },
+            'game_settings': {
+                'friendly_fire': info.get('ff', '0') == '1',
+                'speed': info.get('speed', '100'),
+                'damage': info.get('damage', '100'),
+                'respawn': info.get('respawn', '100'),
+                'hit_location': info.get('hitloc', '1') == '1'
+            }
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_battlefield2_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Battlefield 2 server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Battlefield 2 Server')
+        game = 'Battlefield 2'
+        map_name = info.get('mapname', 'Unknown Map')
+        
+        # Parse player counts - BF2 returns strings
+        try:
+            players = int(info.get('numplayers', 0))
+        except (ValueError, TypeError):
+            players = 0
+            
+        try:
+            max_players = int(info.get('maxplayers', 0))
+        except (ValueError, TypeError):
+            max_players = 0
+        
+        # Get version information
+        version = info.get('gamever', 'Unknown')
+        
+        # Check if password protected
+        password_protected = info.get('password', '0') == '1'
+        
+        # Additional BF2-specific information
+        additional_info = {
+            'gamename': info.get('gamename', 'battlefield2'),
+            'dedicated': info.get('dedicated', '0') == '1',
+            'ranked': info.get('ranked', '0') == '1',
+            'punkbuster': info.get('punkbuster', '0') == '1',
+            'team_1': info.get('team_1', ''),
+            'team_2': info.get('team_2', ''),
+            'score_1': info.get('score_1', '0'),
+            'score_2': info.get('score_2', '0'),
+            'timelimit': info.get('timelimit', '0'),
+            'roundtime': info.get('roundtime', '0'),
+            'bf2_cc': info.get('bf2_cc', '0') == '1',
+            'bf2_ranked': info.get('bf2_ranked', '0') == '1',
+            'bf2_pure': info.get('bf2_pure', '0') == '1',
+            'bf2_mapsize': info.get('bf2_mapsize', ''),
+            'bf2_globalunlocks': info.get('bf2_globalunlocks', '0') == '1',
+            'bf2_fps': info.get('bf2_fps', ''),
+            'bf2_autobalanced': info.get('bf2_autobalanced', '0') == '1',
+            'bf2_friendlyfire': info.get('bf2_friendlyfire', '0') == '1',
+            'bf2_tkmode': info.get('bf2_tkmode', ''),
+            'bf2_startdelay': info.get('bf2_startdelay', ''),
+            'bf2_spawntime': info.get('bf2_spawntime', ''),
+            'bf2_sponsortext': info.get('bf2_sponsortext', ''),
+            'bf2_sponsorlogo_url': info.get('bf2_sponsorlogo_url', ''),
+            'bf2_communitylogo_url': info.get('bf2_communitylogo_url', ''),
+            'players_list': info.get('players_list', []),
+            'teams_list': info.get('teams_list', [])
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_stronghold_crusader_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Stronghold Crusader DirectPlay server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', f'Stronghold Crusader Server {server_response.ip_address}')
+        game = 'Stronghold Crusader'
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', info.get('num_players', 0))
+        max_players = info.get('max_players', 8)  # Stronghold Crusader default max
+        version = info.get('game_version', info.get('version', '1.41'))
+        
+        # DirectPlay servers typically don't expose password info easily
+        password_protected = info.get('passworded', info.get('password_protected', False))
+        
+        # Additional Stronghold Crusader-specific information
+        additional_info = {
+            'game_type': info.get('game_type', 'Stronghold Crusader'),
+            'tcp_port': 2301,  # Stronghold Crusader uses TCP port 2301
+            'protocol': 'DirectPlay',
+            'raw': info.get('raw', {})
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_stronghold_ce_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Stronghold Crusader Extreme DirectPlay server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', f'Stronghold CE Server {server_response.ip_address}')
+        game = 'Stronghold Crusader Extreme'
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', info.get('num_players', 0))
+        max_players = info.get('max_players', 8)  # Stronghold CE default max
+        version = info.get('game_version', info.get('version', '1.4.1'))
+        
+        # DirectPlay servers typically don't expose password info easily
+        password_protected = info.get('passworded', info.get('password_protected', False))
+        
+        # Additional Stronghold Crusader Extreme-specific information
+        additional_info = {
+            'game_type': info.get('game_type', 'Stronghold Crusader Extreme'),
+            'tcp_port': 2300,  # Stronghold CE uses standard TCP port 2300
+            'protocol': 'DirectPlay',
+            'raw': info.get('raw', {})
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
     
     def _standardize_generic_server(self, server_response) -> StandardizedServerInfo:
         """Fallback standardization for unknown server types"""
@@ -385,6 +743,414 @@ class ServerInfoWrapper:
             summary += f"\n⏱️ Response: {server_info.response_time:.2f}s"
         
         return summary
+    
+    def _standardize_cod4_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Call of Duty 4 server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown CoD4 Server')
+        game = 'Call of Duty 4'
+        map_name = info.get('map_name', 'Unknown Map')
+        players = info.get('current_players', 0)
+        max_players = info.get('max_players', 0)
+        
+        # Get additional CoD4 info from the nested additional_info
+        additional_info_nested = info.get('additional_info', {})
+        version = additional_info_nested.get('shortversion', 'Unknown')
+        
+        # Check if password protected
+        password_protected = additional_info_nested.get('pswrd', '0') == '1'
+        
+        # Additional CoD4-specific information
+        additional_info = {
+            'gametype': additional_info_nested.get('gametype', 'unknown'),
+            'hardcore': additional_info_nested.get('hc', '0') == '1',
+            'friendly_fire': additional_info_nested.get('ff', '0') == '1',
+            'mod': additional_info_nested.get('mod', '0'),
+            'voice': additional_info_nested.get('voice', '0') == '1',
+            'pure': additional_info_nested.get('pure', '0') == '1',
+            'build': additional_info_nested.get('build', 'Unknown'),
+            'protocol': additional_info_nested.get('protocol', 'Unknown'),
+            'sv_maxPing': additional_info_nested.get('sv_maxPing', 'Unknown')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_cod5_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Call of Duty 5: World at War server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown CoD5 Server')
+        game = 'Call of Duty 5: World at War'
+        map_name = info.get('map_name', 'Unknown Map')
+        players = info.get('current_players', 0)
+        max_players = info.get('max_players', 0)
+        
+        # Get additional CoD5 info from the nested additional_info
+        additional_info_nested = info.get('additional_info', {})
+        version = additional_info_nested.get('shortversion', 'Unknown')
+        
+        # Check if password protected
+        password_protected = additional_info_nested.get('pswrd', '0') == '1'
+        
+        # Additional CoD5-specific information
+        additional_info = {
+            'gametype': additional_info_nested.get('gametype', 'unknown'),
+            'mod': additional_info_nested.get('mod', '0'),
+            'voice': additional_info_nested.get('voice', '0') == '1',
+            'pure': additional_info_nested.get('pure', '0') == '1',
+            'punkbuster': additional_info_nested.get('pb', '0') == '1',
+            'hardware': additional_info_nested.get('hw', 'Unknown'),
+            'protocol': additional_info_nested.get('protocol', 'Unknown')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_cod1_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Call of Duty 1 server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown CoD1 Server')
+        game = 'Call of Duty'
+        map_name = info.get('map_name', 'Unknown Map')
+        players = info.get('current_players', 0)
+        max_players = info.get('max_players', 0)
+        
+        # Get additional CoD1 info from the nested additional_info
+        additional_info_nested = info.get('additional_info', {})
+        version = additional_info_nested.get('shortversion', 'Unknown')
+        
+        # Check if password protected (CoD1 doesn't have pswrd field typically)
+        password_protected = False
+        
+        # Additional CoD1-specific information
+        additional_info = {
+            'gametype': additional_info_nested.get('gametype', 'unknown'),
+            'mod': additional_info_nested.get('mod', '0'),
+            'pure': additional_info_nested.get('pure', '0') == '1',
+            'hw': additional_info_nested.get('hw', 'Unknown'),
+            'protocol': additional_info_nested.get('protocol', 'Unknown'),
+            'shortversion': additional_info_nested.get('shortversion', 'Unknown'),
+            'sv_maxPing': additional_info_nested.get('sv_maxPing', 'Unknown')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_cnc_generals_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Command & Conquer Generals Zero Hour server information"""
+        info = server_response.server_info
+        
+        # Extract basic information - CnC Generals has minimal info from broadcast
+        name = info.get('name', 'Command & Conquer Generals Zero Hour Server')
+        game = info.get('game', 'Command & Conquer Generals Zero Hour')
+        map_name = info.get('map', 'Unknown')
+        players = info.get('players', 0)
+        max_players = info.get('max_players', 0)
+        version = 'Zero Hour'
+        
+        # CnC Generals broadcast doesn't provide password info
+        password_protected = False
+        
+        # Additional CnC Generals-specific information
+        additional_info = {
+            'packets_received': info.get('packets_received', 0),
+            'protocol': 'CnC Generals Broadcast',
+            'note': 'Minimal server information - broadcast detection only'
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_fear2_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize F.E.A.R. 2: Project Origin server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown F.E.A.R. 2 Server')
+        game = info.get('game', 'F.E.A.R. 2: Project Origin')
+        map_name = info.get('mapname', 'Unknown Map')
+        
+        # Parse player counts
+        players = int(info.get('numplayers', 0))
+        max_players = int(info.get('maxplayers', 0))
+        
+        # Get version information
+        version = info.get('gamever', 'Unknown')
+        
+        # Check if password protected
+        password_protected = info.get('requirespassword', '0') == '1'
+        
+        # Additional F.E.A.R. 2-specific information
+        additional_info = {
+            'gametype': info.get('gametype', 'Unknown'),
+            'gamemode': info.get('gamemode', 'Unknown'),
+            'gameid': info.get('gameid', ''),
+            'worldindex': info.get('worldindex', '0'),
+            'contentpackageindex': info.get('contentpackageindex', '0'),
+            'ranked': info.get('ranked', '0') == '1',
+            'lanonly': info.get('lanonly', '0') == '1',
+            'sessionstarted': info.get('sessionstarted', '0') == '1',
+            'gamename': info.get('gamename', '')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_halo1_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Halo 1 (Combat Evolved) server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Halo 1 Server')
+        game = 'Halo 1 (Combat Evolved)'
+        map_name = info.get('mapname', 'Unknown Map')
+        
+        # Parse player counts - Halo1 uses GameSpy2 protocol with string values
+        try:
+            players = int(info.get('numplayers', 0))
+        except (ValueError, TypeError):
+            players = 0
+            
+        try:
+            max_players = int(info.get('maxplayers', 0))
+        except (ValueError, TypeError):
+            max_players = 0
+        
+        # Get version information
+        version = info.get('gamever', 'Unknown')
+        
+        # Check if password protected
+        password_protected = info.get('password', '0') == '1'
+        
+        # Additional Halo1-specific information
+        additional_info = {
+            'gametype': info.get('gametype', 'Unknown'),
+            'gamevariant': info.get('gamevariant', ''),
+            'gamemode': info.get('gamemode', 'Unknown'),
+            'dedicated': info.get('dedicated', '0') == '1',
+            'teamplay': info.get('teamplay', '0') == '1',
+            'fraglimit': info.get('fraglimit', '0'),
+            'game_classic': info.get('game_classic', '0') == '1',
+            'player_flags': info.get('player_flags', ''),
+            'game_flags': info.get('game_flags', ''),
+            'players_list': info.get('players_list', []),
+            'teams_list': info.get('teams_list', [])
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_quake3_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Quake 3 Arena server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Quake 3 Server')
+        game = 'Quake 3 Arena'
+        map_name = info.get('map_name', 'Unknown Map')
+        players = info.get('current_players', 0)
+        max_players = info.get('max_players', 0)
+        
+        # Get additional Quake 3 info from the nested additional_info
+        additional_info_nested = info.get('additional_info', {})
+        version = additional_info_nested.get('protocol', 'Unknown')
+        
+        # Check if password protected
+        password_protected = additional_info_nested.get('g_needpass', '0') == '1'
+        
+        # Additional Quake 3-specific information
+        additional_info = {
+            'gametype': additional_info_nested.get('gametype', 'unknown'),
+            'protocol': additional_info_nested.get('protocol', 'Unknown'),
+            'gamename': additional_info_nested.get('gamename', 'Quake3Arena'),
+            'pure': additional_info_nested.get('pure', '0') == '1',
+            'voip': additional_info_nested.get('voip', 'none'),
+            'g_humanplayers': additional_info_nested.get('g_humanplayers', '0'),
+            'sv_maxclients': additional_info_nested.get('sv_maxclients', '0')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_ssc_tfe_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Serious Sam Classic: The First Encounter server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Server')
+        game = 'Serious Sam: The First Encounter'
+        map_name = info.get('mapname', 'Unknown Map')
+        players = info.get('numplayers', 0)
+        max_players = info.get('maxplayers', 0)
+        version = info.get('gamever', 'Unknown')
+        
+        # Check if password protected
+        password_protected = info.get('password', '0') == '1'
+        
+        # Additional SSC TFE-specific information
+        additional_info = {
+            'gamename': info.get('gamename', 'serioussam'),
+            'location': info.get('location', 'Unknown'),
+            'gametype': info.get('gametype', 'Unknown'),
+            'activemod': info.get('activemod', ''),
+            'gamemode': info.get('gamemode', 'unknown'),
+            'difficulty': info.get('difficulty', 'Normal'),
+            'friendlyfire': info.get('friendlyfire', '0'),
+            'weaponsstay': info.get('weaponsstay', '0'),
+            'ammostays': info.get('ammostays', '0'),
+            'infiniteammo': info.get('infiniteammo', '0'),
+            'hostport': info.get('hostport', str(server_response.port))
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_ssc_tse_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Serious Sam Classic: The Second Encounter server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Server')
+        game = 'Serious Sam: The Second Encounter'
+        map_name = info.get('mapname', 'Unknown Map')
+        players = info.get('numplayers', 0)
+        max_players = info.get('maxplayers', 0)
+        version = info.get('gamever', 'Unknown')
+        
+        # Check if password protected
+        password_protected = info.get('password', '0') == '1'
+        
+        # Additional SSC TSE-specific information
+        additional_info = {
+            'gamename': info.get('gamename', 'serioussamse'),
+            'location': info.get('location', 'Unknown'),
+            'gametype': info.get('gametype', 'Unknown'),
+            'activemod': info.get('activemod', ''),
+            'gamemode': info.get('gamemode', 'unknown'),
+            'difficulty': info.get('difficulty', 'Normal'),
+            'friendlyfire': info.get('friendlyfire', '0'),
+            'weaponsstay': info.get('weaponsstay', '0'),
+            'ammostays': info.get('ammostays', '0'),
+            'infiniteammo': info.get('infiniteammo', '0'),
+            'hostport': info.get('hostport', str(server_response.port))
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
     
     def to_dict(self, server_info: StandardizedServerInfo) -> Dict[str, Any]:
         """

@@ -17,7 +17,24 @@ from .protocols import (
     Flatout2Protocol,
     UT3Protocol,
     Warcraft3Protocol,
-    # ElDewritoProtocol  # Commented out - protocol not yet merged in main opengsq-python repo
+    ToxikkProtocol,
+    TrackmaniaNationsProtocol,
+    AoE1Protocol,
+    AoE2Protocol,
+    AVP2Protocol,
+    Battlefield2Protocol,
+    CoD4Protocol,
+    CoD5Protocol,
+    CoD1Protocol,
+    ElDewritoProtocol,
+    CnCGeneralsProtocol,
+    Fear2Protocol,
+    Halo1Protocol,
+    Quake3Protocol,
+    SSCTFEProtocol,
+    SSCTSEProtocol,
+    StrongholdCrusaderProtocol,
+    StrongholdCEProtocol
 )
 
 
@@ -41,7 +58,24 @@ class NetworkScanner:
             'flatout2': Flatout2Protocol(self.timeout),
             'ut3': UT3Protocol(self.timeout),
             'warcraft3': Warcraft3Protocol(timeout=self.timeout),
-            # 'eldewrito': ElDewritoProtocol(self.timeout)  # Commented out - protocol not yet merged in main opengsq-python repo
+            'toxikk': ToxikkProtocol(self.timeout),
+            'trackmania_nations': TrackmaniaNationsProtocol(self.timeout),
+            'aoe1': AoE1Protocol(self.timeout),
+            'aoe2': AoE2Protocol(self.timeout),
+            'avp2': AVP2Protocol(self.timeout),
+            'battlefield2': Battlefield2Protocol(self.timeout),
+            'cod4': CoD4Protocol(self.timeout),
+            'cod5': CoD5Protocol(self.timeout),
+            'cod1': CoD1Protocol(self.timeout),
+            'eldewrito': ElDewritoProtocol(self.timeout),
+            'cnc_generals': CnCGeneralsProtocol(timeout=11.0),  # CnC Generals requires 11 seconds to detect 2 broadcasts
+            'fear2': Fear2Protocol(self.timeout),
+            'halo1': Halo1Protocol(self.timeout),
+            'quake3': Quake3Protocol(self.timeout),
+            'ssc_tfe': SSCTFEProtocol(self.timeout),  # Serious Sam Classic: The First Encounter
+            'ssc_tse': SSCTSEProtocol(self.timeout),   # Serious Sam Classic: The Second Encounter
+            'stronghold_crusader': StrongholdCrusaderProtocol(self.timeout),  # Stronghold Crusader
+            'stronghold_ce': StrongholdCEProtocol(self.timeout)  # Stronghold Crusader Extreme
         }
         
         # Initialize the server info wrapper for standardization with protocols
@@ -216,29 +250,54 @@ class DiscoveryEngine:
                 
                 first_run = False
                 
-                # Perform scan
-                current_servers = await self.scan_once()
-                
-                # Track server changes
+                # Track all servers found in this scan cycle
                 current_server_keys = set()
+                all_current_servers = []
                 
-                for server in current_servers:
-                    server_key = f"{server.ip_address}:{server.port}"
-                    current_server_keys.add(server_key)
-                    
-                    if server_key not in self.known_servers:
-                        # New server discovered
-                        self.known_servers[server_key] = server
-                        if self.on_discovered:
-                            try:
-                                await self.on_discovered(server)
-                            except Exception as e:
-                                self.logger.error(f"Error in on_discovered callback: {e}")
-                    else:
-                        # Update existing server info
-                        self.known_servers[server_key] = server
+                # Scan each game type individually and process discoveries immediately
+                for game_type in self.scanner.enabled_games:
+                    if not self.is_running:  # Check if we should stop
+                        break
+                        
+                    if game_type in self.scanner.protocols:
+                        self.logger.debug(f"Scanning for {game_type} servers")
+                        
+                        # Scan this specific game type
+                        try:
+                            game_servers = await self.scanner._scan_game_type(game_type)
+                            all_current_servers.extend(game_servers)
+                            
+                            # Process each discovered server immediately
+                            for server in game_servers:
+                                server_key = f"{server.ip_address}:{server.port}"
+                                current_server_keys.add(server_key)
+                                
+                                is_new_server = server_key not in self.known_servers
+                                
+                                # Update or add server to known_servers
+                                self.known_servers[server_key] = server
+                                
+                                if is_new_server:
+                                    # New server discovered - send notification immediately
+                                    self.logger.info(f"Found new {game_type} server: {server.ip_address}:{server.port}")
+                                else:
+                                    # Existing server still responding - update last_seen
+                                    self.logger.debug(f"Server still active: {server.ip_address}:{server.port}")
+                                
+                                # Always call on_discovered callback to update last_seen in database
+                                if self.on_discovered:
+                                    try:
+                                        await self.on_discovered(server)
+                                    except Exception as e:
+                                        self.logger.error(f"Error in on_discovered callback: {e}")
+                            
+                            if game_servers:
+                                self.logger.info(f"Found {len(game_servers)} {game_type} servers")
+                        
+                        except Exception as e:
+                            self.logger.error(f"Error scanning for {game_type} servers: {e}")
                 
-                # Check for lost servers
+                # Check for lost servers after all games have been scanned
                 lost_servers = []
                 for server_key in list(self.known_servers.keys()):
                     if server_key not in current_server_keys:
@@ -253,7 +312,7 @@ class DiscoveryEngine:
                 # Call scan complete callback
                 if self.on_scan_complete:
                     try:
-                        await self.on_scan_complete(current_servers, lost_servers)
+                        await self.on_scan_complete(all_current_servers, lost_servers)
                     except Exception as e:
                         self.logger.error(f"Error in on_scan_complete callback: {e}")
                 
