@@ -37,8 +37,7 @@ class SourceProtocol(ProtocolBase):
         self.timeout = timeout
         self.logger = logging.getLogger(__name__)
 
-        # Alle Ports, die per Broadcast gescannt werden sollen
-        # (aus deinem Screenshot)
+        # All ports to be scanned
         self.scan_ports: List[int] = [
             27215,
             4242,
@@ -56,7 +55,7 @@ class SourceProtocol(ProtocolBase):
             27015,
         ]
 
-        # Fallback-Konfiguration (erstes Element der Liste)
+        # Fallback configuration (first item in the list)
         self.protocol_config = {
             'port': self.scan_ports[0],
             'query_data': b'\xFF\xFF\xFF\xFF\x54Source Engine Query\x00'
@@ -179,7 +178,7 @@ class SourceProtocol(ProtocolBase):
         """
         servers: List[ServerResponse] = []
 
-        # Alle Ports, die wir scannen wollen
+        # All ports we want to scan
         ports_to_scan = self.scan_ports or [self.protocol_config['port']]
         
         # For each network range, send broadcast queries
@@ -188,7 +187,7 @@ class SourceProtocol(ProtocolBase):
                 network = ipaddress.ip_network(network_range, strict=False)
                 broadcast_addr = str(network.broadcast_address)
                 
-                # Für jeden Port einen Broadcast schicken
+                # Send a broadcast for each port
                 for port in ports_to_scan:
                     self.logger.debug(f"Broadcasting Source query to {broadcast_addr}:{port}")
                     
