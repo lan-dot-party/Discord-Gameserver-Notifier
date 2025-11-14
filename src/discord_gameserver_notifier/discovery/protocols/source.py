@@ -36,8 +36,28 @@ class SourceProtocol(ProtocolBase):
         self._allow_broadcast = True
         self.timeout = timeout
         self.logger = logging.getLogger(__name__)
+
+        # All ports to be scanned
+        self.scan_ports: List[int] = [
+            27215,
+            4242,
+            26905,
+            27020,
+            26904,
+            27019,
+            26903,
+            27018,
+            26902,
+            27017,
+            26901,
+            27016,
+            26900,
+            27015,
+        ]
+
+        # Fallback configuration (first item in the list)
         self.protocol_config = {
-            'port': 27015,
+            'port': self.scan_ports[0],
             'query_data': b'\xFF\xFF\xFF\xFF\x54Source Engine Query\x00'
         }
     
@@ -156,11 +176,10 @@ class SourceProtocol(ProtocolBase):
         Returns:
             List of ServerResponse objects for Source servers
         """
-        servers = []
-        port = self.protocol_config['port']
-        
-        # Create broadcast protocol instance
-        broadcast_protocol = BroadcastProtocol('source', port, self.timeout)
+        servers: List[ServerResponse] = []
+
+        # All ports we want to scan
+        ports_to_scan = self.scan_ports or [self.protocol_config['port']]
         
         # For each network range, send broadcast queries
         for network_range in scan_ranges:
@@ -168,35 +187,46 @@ class SourceProtocol(ProtocolBase):
                 network = ipaddress.ip_network(network_range, strict=False)
                 broadcast_addr = str(network.broadcast_address)
                 
-                self.logger.debug(f"Broadcasting Source query to {broadcast_addr}:{port}")
-                
-                # Send broadcast query and collect initial responses
-                responses = await self._send_broadcast_query(
-                    broadcast_addr, port, self.protocol_config['query_data']
-                )
-                
-                # Process responses and query each responding server directly
-                for response_data, sender_addr in responses:
-                    try:
-                        # Use opengsq-python library to get complete server info
-                        server_info_dict = await self._query_source_server_via_opengsq(
-                            sender_addr[0], sender_addr[1]
-                        )
-                        
-                        if server_info_dict:
-                            server_response = ServerResponse(
-                                ip_address=sender_addr[0],
-                                port=sender_addr[1],
-                                game_type='source',
-                                server_info=server_info_dict,
-                                response_time=0.0
+                # Send a broadcast for each port
+                for port in ports_to_scan:
+                    self.logger.debug(f"Broadcasting Source query to {broadcast_addr}:{port}")
+                    
+                    # Send broadcast query and collect initial responses
+                    responses = await self._send_broadcast_query(
+                        broadcast_addr, port, self.protocol_config['query_data']
+                    )
+                    
+                    # Process responses and query each responding server directly
+                    for response_data, sender_addr in responses:
+                        try:
+                            # Use opengsq-python library to get complete server info
+                            server_info_dict = await self._query_source_server_via_opengsq(
+                                sender_addr[0], sender_addr[1]
                             )
-                            servers.append(server_response)
-                            self.logger.debug(f"Discovered Source server: {sender_addr[0]}:{sender_addr[1]}")
-                            self.logger.debug(f"Source server details: Name='{server_info_dict.get('name', 'Unknown')}', Map='{server_info_dict.get('map', 'Unknown')}', Players={server_info_dict.get('players', 0)}/{server_info_dict.get('max_players', 0)}, Game={server_info_dict.get('game', 'Unknown')}")
-                        
-                    except Exception as e:
-                        self.logger.debug(f"Failed to process response from {sender_addr}: {e}")
+                            
+                            if server_info_dict:
+                                server_response = ServerResponse(
+                                    ip_address=sender_addr[0],
+                                    port=sender_addr[1],
+                                    game_type='source',
+                                    server_info=server_info_dict,
+                                    response_time=0.0
+                                )
+                                servers.append(server_response)
+                                self.logger.debug(
+                                    f"Discovered Source server: {sender_addr[0]}:{sender_addr[1]}"
+                                )
+                                self.logger.debug(
+                                    "Source server details: "
+                                    f"Name='{server_info_dict.get('name', 'Unknown')}', "
+                                    f"Map='{server_info_dict.get('map', 'Unknown')}', "
+                                    f"Players={server_info_dict.get('players', 0)}/"
+                                    f"{server_info_dict.get('max_players', 0)}, "
+                                    f"Game={server_info_dict.get('game', 'Unknown')}"
+                                )
+                            
+                        except Exception as e:
+                            self.logger.debug(f"Failed to process response from {sender_addr}: {e}")
                         
             except Exception as e:
                 self.logger.error(f"Error broadcasting to network {network_range}: {e}")
