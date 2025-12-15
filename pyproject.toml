@@ -11,7 +11,15 @@ dependencies = [
     "opengsq>=3.5.0",
     "aiohttp>=3.8.0"
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.10.0",
+    "pytest-cov>=4.0.0",
+]
 authors = [
   {name = "Stephan Schaffner", email = "gamie@lan.party"},
 ]
@@ -46,3 +54,34 @@ artifacts = [
 "config/config.yaml.example" = "config/config.yaml.example"
 "config/config.yaml.service-example" = "config/config.yaml.service-example"
 "config/config.yaml.unified" = "config/config.yaml.unified"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+python_classes = ["Test*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "-W", "ignore::DeprecationWarning",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["src/discord_gameserver_notifier"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
