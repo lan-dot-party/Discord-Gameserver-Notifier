@@ -25,6 +25,7 @@ from .quake3 import Quake3Protocol
 from .ssc import SSCProtocol, SSCTFEProtocol, SSCTSEProtocol
 from .stronghold_crusader import StrongholdCrusaderProtocol
 from .stronghold_ce import StrongholdCEProtocol
+
 __all__ = [
     'ServerResponse',
     'BroadcastResponseProtocol',

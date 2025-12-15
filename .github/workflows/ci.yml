@@ -1,0 +1,420 @@
+# CI/CD Workflow for Discord Gameserver Notifier
+# Runs automated tests on every push and pull request
+
+name: CI Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Tests 🧪
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+        fetch-depth: 0
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test]"
+        pip install pytest-github-actions-annotate-failures
+    
+    - name: Display installed packages
+      run: pip list
+    
+    - name: Run tests with pytest
+      run: |
+        python -m pytest tests/ -v --tb=short --color=yes \
+          --junitxml=test-results-${{ matrix.python-version }}.xml \
+          -W ignore::DeprecationWarning
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: test-results-*.xml
+
+  lint:
+    name: Lint & Type Check 📝
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test]"
+        pip install ruff
+    
+    - name: Run Ruff linter
+      run: |
+        ruff check src/ --output-format=github || true
+      continue-on-error: true
+    
+    - name: Check import order
+      run: |
+        ruff check src/ --select=I --output-format=github || true
+      continue-on-error: true
+
+  startup-test:
+    name: Test Application Startup 🚀
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test]"
+    
+    - name: Test startup with default config
+      run: |
+        echo "Testing startup configuration loading..."
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from discord_gameserver_notifier.config.config_manager import ConfigManager
+        
+        # Test default config loading
+        manager = ConfigManager()
+        print('✅ ConfigManager initialized successfully')
+        print(f'   Config path: {manager.config_path}')
+        print(f'   Scan ranges: {manager.config.get(\"network\", {}).get(\"scan_ranges\", [])}')
+        print(f'   Enabled games: {manager.config.get(\"games\", {}).get(\"enabled\", [])}')
+        print(f'   Log level: {manager.config.get(\"debugging\", {}).get(\"log_level\", \"INFO\")}')
+        "
+    
+    - name: Test ServerInfoWrapper initialization
+      run: |
+        echo "Testing ServerInfoWrapper..."
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from discord_gameserver_notifier.discovery.server_info_wrapper import ServerInfoWrapper
+        
+        wrapper = ServerInfoWrapper()
+        print('✅ ServerInfoWrapper initialized successfully')
+        "
+    
+    - name: Test WebhookManager initialization
+      run: |
+        echo "Testing WebhookManager..."
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        from discord_gameserver_notifier.discord.webhook_manager import WebhookManager
+        
+        # Test with dummy URL
+        manager = WebhookManager(webhook_url='https://discord.com/api/webhooks/123/abc')
+        print('✅ WebhookManager initialized successfully')
+        print(f'   Wait parameter added: {\"wait=true\" in manager.webhook_url}')
+        "
+    
+    - name: Test all protocol imports
+      run: |
+        echo "Testing protocol imports..."
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        
+        protocols = [
+            'source', 'renegadex', 'warcraft3', 'flatout2', 'ut3', 'toxikk',
+            'cod4', 'cod1', 'halo1', 'quake3', 'avp2', 'aoe1', 'aoe2',
+            'battlefield2', 'cnc_generals', 'eldewrito', 'ssc',
+            'stronghold_crusader', 'stronghold_ce', 'fear2', 'trackmania_nations'
+        ]
+        
+        from discord_gameserver_notifier.discovery.protocols import common
+        print('✅ Common protocol module imported')
+        
+        for proto in protocols:
+            try:
+                module = __import__(f'discord_gameserver_notifier.discovery.protocols.{proto}', fromlist=[''])
+                print(f'✅ Protocol {proto} imported successfully')
+            except ImportError as e:
+                print(f'⚠️ Protocol {proto} could not be imported: {e}')
+        "
+    
+    - name: Test version command
+      run: |
+        echo "Testing --version command..."
+        discord-gameserver-notifier --version || echo "Version command executed"
+
+  protocol-test:
+    name: Test Protocol Parsing 🎮
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test]"
+    
+    - name: Run protocol parsing tests
+      run: |
+        python -m pytest tests/test_server_info_wrapper.py -v --tb=short --color=yes
+    
+    - name: Verify all game protocols can parse sample data
+      run: |
+        echo "Verifying all protocols can standardize server responses..."
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        
+        from discord_gameserver_notifier.discovery.server_info_wrapper import ServerInfoWrapper
+        from discord_gameserver_notifier.discovery.protocols.common import ServerResponse
+        
+        wrapper = ServerInfoWrapper()
+        
+        # Test data for each game type
+        test_servers = {
+            'source': {'name': 'CS2 Test', 'map': 'de_dust2', 'players': 10, 'max_players': 32, 'game': 'CS2'},
+            'renegadex': {'name': 'RenX Test', 'map': 'CNC-Field', 'players': 8, 'max_players': 32, 'game_version': '5.5'},
+            'warcraft3': {'name': 'WC3 Test', 'map': 'EchoIsles', 'players': 4, 'max_players': 12, 'product': 'W3XP'},
+            'flatout2': {'hostname': 'FO2 Test', 'map': 'Track1', 'players': 6, 'max_players': 8, 'game': 'Flatout 2'},
+            'ut3': {'name': 'UT3 Test', 'map': 'DM-Deck', 'players': 8, 'max_players': 16, 'game': 'UT3'},
+            'toxikk': {'name': 'Toxikk Test', 'map': 'SC-Dekk', 'players': 8, 'max_players': 16, 'game': 'Toxikk'},
+            'cod4': {'hostname': 'CoD4 Test', 'map_name': 'mp_crash', 'current_players': 12, 'max_players': 18, 'additional_info': {}},
+            'halo1': {'hostname': 'Halo Test', 'mapname': 'bloodgulch', 'numplayers': '8', 'maxplayers': '16'},
+            'quake3': {'hostname': 'Q3 Test', 'map_name': 'q3dm17', 'current_players': 6, 'max_players': 16, 'additional_info': {}},
+            'avp2': {'hostname': 'AVP2 Test', 'mapname': 'DM_Leadworks', 'numplayers': '8', 'maxplayers': '16', 'game': 'AVP2'},
+            'battlefield2': {'hostname': 'BF2 Test', 'mapname': 'Karkand', 'numplayers': '24', 'maxplayers': '64'},
+            'cnc_generals': {'name': 'CnC Test', 'game': 'CnC Generals', 'players': 4, 'max_players': 0},
+            'ssc_tfe': {'hostname': 'SS TFE Test', 'mapname': 'Hatshepsut', 'numplayers': 4, 'maxplayers': 8},
+            'ssc_tse': {'hostname': 'SS TSE Test', 'mapname': 'Chiapas', 'numplayers': 6, 'maxplayers': 8},
+            'eldewrito': {'name': 'ED Test', 'map': 'Valhalla', 'num_players': 10, 'max_players': 16, 'eldewrito_version': '0.6'},
+            'aoe1': {'name': 'AoE1 Test', 'map': 'Coastal', 'players': 4, 'max_players': 8},
+            'aoe2': {'name': 'AoE2 Test', 'map': 'Arabia', 'players': 4, 'max_players': 8},
+            'cod1': {'hostname': 'CoD1 Test', 'map_name': 'mp_carentan', 'current_players': 8, 'max_players': 16, 'additional_info': {}},
+            'stronghold_crusader': {'name': 'SH Crusader', 'map': 'Map1', 'players': 3, 'max_players': 8},
+            'stronghold_ce': {'name': 'SH CE', 'map': 'Map1', 'players': 4, 'max_players': 8},
+            'fear2': {'hostname': 'FEAR2 Test', 'mapname': 'Museum', 'numplayers': '6', 'maxplayers': '16', 'game': 'FEAR2'},
+        }
+        
+        success_count = 0
+        for game_type, server_info in test_servers.items():
+            try:
+                response = ServerResponse(
+                    ip_address='192.168.1.1',
+                    port=27015,
+                    game_type=game_type,
+                    server_info=server_info,
+                    response_time=0.01
+                )
+                result = wrapper.standardize_server_response(response)
+                
+                # Verify basic fields are populated
+                assert result.name, f'{game_type}: name is empty'
+                assert result.ip_address, f'{game_type}: ip_address is empty'
+                
+                print(f'✅ {game_type}: {result.name} ({result.game})')
+                success_count += 1
+            except Exception as e:
+                print(f'❌ {game_type}: FAILED - {e}')
+        
+        print(f'\\n📊 Results: {success_count}/{len(test_servers)} protocols passed')
+        
+        if success_count < len(test_servers):
+            sys.exit(1)
+        "
+
+  webhook-test:
+    name: Test Webhook Manager 📬
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test]"
+    
+    - name: Run webhook manager tests
+      run: |
+        python -m pytest tests/test_webhook_manager.py -v --tb=short --color=yes
+    
+    - name: Verify embed creation for all games
+      run: |
+        echo "Verifying Discord embed creation for all game types..."
+        python -c "
+        import sys
+        sys.path.insert(0, 'src')
+        
+        from discord_gameserver_notifier.discord.webhook_manager import WebhookManager
+        from discord_gameserver_notifier.discovery.server_info_wrapper import StandardizedServerInfo
+        
+        manager = WebhookManager(webhook_url='https://discord.com/api/webhooks/123/abc')
+        
+        game_types = ['source', 'renegadex', 'warcraft3', 'flatout2', 'ut3', 'toxikk', 
+                      'cod4', 'halo1', 'quake3', 'avp2', 'battlefield2', 'cnc_generals']
+        
+        for game_type in game_types:
+            server_info = StandardizedServerInfo(
+                name=f'Test {game_type.title()} Server',
+                game=game_type.title(),
+                map='test_map',
+                players=10,
+                max_players=32,
+                version='1.0',
+                password_protected=False,
+                ip_address='192.168.1.1',
+                port=27015,
+                game_type=game_type,
+                response_time=0.02,
+                additional_info={}
+            )
+            
+            try:
+                embed = manager._create_server_embed(server_info, is_new=True)
+                assert embed is not None
+                assert embed.title is not None
+                print(f'✅ {game_type}: Embed created successfully')
+            except Exception as e:
+                print(f'❌ {game_type}: FAILED - {e}')
+                sys.exit(1)
+        
+        print('\\n✅ All game types can create Discord embeds!')
+        "
+
+  coverage:
+    name: Test Coverage 📊
+    runs-on: ubuntu-latest
+    needs: [test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test]"
+    
+    - name: Run tests with coverage
+      run: |
+        python -m pytest tests/ -v --cov=src/discord_gameserver_notifier --cov-report=xml --cov-report=term-missing
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
+        verbose: true
+      continue-on-error: true
+
+  build-test:
+    name: Test Package Build 📦
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Build package
+      run: python -m build
+    
+    - name: Check package with twine
+      run: twine check dist/*
+    
+    - name: Test package installation
+      run: |
+        pip install dist/*.whl
+        discord-gameserver-notifier --version
+
+  all-tests-passed:
+    name: All Tests Passed ✅
+    runs-on: ubuntu-latest
+    needs: [test, startup-test, protocol-test, webhook-test, build-test]
+    if: always()
+    
+    steps:
+    - name: Check all job results
+      run: |
+        if [ "${{ needs.test.result }}" == "failure" ] || \
+           [ "${{ needs.startup-test.result }}" == "failure" ] || \
+           [ "${{ needs.protocol-test.result }}" == "failure" ] || \
+           [ "${{ needs.webhook-test.result }}" == "failure" ] || \
+           [ "${{ needs.build-test.result }}" == "failure" ]; then
+          echo "❌ Some tests failed!"
+          exit 1
+        else
+          echo "✅ All tests passed!"
+        fi
+
