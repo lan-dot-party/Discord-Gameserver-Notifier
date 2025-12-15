@@ -5,13 +5,22 @@ build-backend = "hatchling.build"
 [project]
 name = "Discord-Gameserver-Notifier"
 version = "0.2.1"
+description = "A Python-based tool for automatic detection of game servers in the local network with Discord notifications via webhooks. Uses opengsq-python for game server communication."
+requires-python = ">=3.8"
+license = "GPL-3.0"
+license-files = ["LICEN[CS]E.*"]
+authors = [
+  {name = "Stephan Schaffner", email = "gamie@lan.party"},
+]
+maintainers = [
+  {name = "Stephan Schaffner", email = "gamie@lan.party"}
+]
 dependencies = [
     "pyyaml>=6.0",
     "discord-webhook>=1.3.0",
     "opengsq>=3.5.0",
     "aiohttp>=3.8.0"
 ]
-requires-python = ">=3.8"
 
 [project.optional-dependencies]
 test = [
@@ -20,27 +29,14 @@ test = [
     "pytest-mock>=3.10.0",
     "pytest-cov>=4.0.0",
 ]
-authors = [
-  {name = "Stephan Schaffner", email = "gamie@lan.party"},
-]
-maintainers = [
-  {name = "Stephan Schaffner", email = "gamie@lan.party"}
-]
-description = "A Python-based tool for automatic detection of game servers in the local network with Discord notifications via webhooks. Uses opengsq-python for game server communication."
-#readme = "README.rst"
-license = "GPL-3.0"
-license-files = ["LICEN[CS]E.*"]
-#keywords = ["egg", "bacon", "sausage", "tomatoes", "Lobster Thermidor"]
 
 [project.scripts]
 discord-gameserver-notifier = "discord_gameserver_notifier.main:main"
 
 [project.urls]
 Homepage = "https://lan.party"
-#Documentation = "https://readthedocs.org"
 Repository = "https://github.com/lan-dot-party/Discord-Gameserver-Notifier.git"
 "Bug Tracker" = "https://github.com/lan-dot-party/Discord-Gameserver-Notifier/issues"
-#Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/discord_gameserver_notifier"]
