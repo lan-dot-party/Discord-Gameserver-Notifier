@@ -35,7 +35,8 @@ from .protocols import (
     SSCTFEProtocol,
     SSCTSEProtocol,
     StrongholdCrusaderProtocol,
-    StrongholdCEProtocol
+    StrongholdCEProtocol,
+    SupComProtocol
 )
 
 
@@ -77,7 +78,8 @@ class NetworkScanner:
             'ssc_tfe': SSCTFEProtocol(self.timeout),  # Serious Sam Classic: The First Encounter
             'ssc_tse': SSCTSEProtocol(self.timeout),   # Serious Sam Classic: The Second Encounter
             'stronghold_crusader': StrongholdCrusaderProtocol(self.timeout),  # Stronghold Crusader
-            'stronghold_ce': StrongholdCEProtocol(self.timeout)  # Stronghold Crusader Extreme
+            'stronghold_ce': StrongholdCEProtocol(self.timeout),  # Stronghold Crusader Extreme
+            'supcom': SupComProtocol(self.timeout)  # Supreme Commander / Forged Alliance
         }
         
         # Initialize the server info wrapper for standardization with protocols

@@ -94,6 +94,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_stronghold_ce_server(server_response)
         elif game_type == 'jediknight':
             standardized_info = self._standardize_jediknight_server(server_response)
+        elif game_type == 'supcom':
+            standardized_info = self._standardize_supcom_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -1197,6 +1199,74 @@ class ServerInfoWrapper:
             'ammostays': info.get('ammostays', '0'),
             'infiniteammo': info.get('infiniteammo', '0'),
             'hostport': info.get('hostport', str(server_response.port))
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_supcom_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Supreme Commander server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('name', 'Unknown Supreme Commander Server')
+        
+        # Determine game title based on product code
+        product_code = info.get('product_code', 'SC1')
+        game_titles = {
+            'SC1': 'Supreme Commander',
+            'SCFA': 'Supreme Commander: Forged Alliance',
+            'SC2': 'Supreme Commander 2',
+            'FAF': 'Forged Alliance Forever'
+        }
+        game = game_titles.get(product_code, 'Supreme Commander')
+        
+        map_name = info.get('map', 'Unknown Map')
+        players = info.get('players', 0)
+        max_players = info.get('max_players', 0)
+        version = product_code  # Use product code as version identifier
+        
+        # Supreme Commander doesn't have password protection in broadcast
+        password_protected = False
+        
+        # Additional Supreme Commander-specific information
+        additional_info = {
+            'hosted_by': info.get('hosted_by', 'Unknown'),
+            'product_code': product_code,
+            'scenario_file': info.get('scenario_file', ''),
+            'game_speed': info.get('game_speed', 'normal'),
+            'victory_condition': info.get('victory_condition', 'demoralization'),
+            'fog_of_war': info.get('fog_of_war', 'explored'),
+            'unit_cap': info.get('unit_cap', '500'),
+            'cheats_enabled': info.get('cheats_enabled', False),
+            'team_lock': info.get('team_lock', 'unlocked'),
+            'team_spawn': info.get('team_spawn', 'random'),
+            'allow_observers': info.get('allow_observers', True),
+            'no_rush_option': info.get('no_rush_option', 'Off'),
+            'prebuilt_units': info.get('prebuilt_units', 'Off'),
+            'civilian_alliance': info.get('civilian_alliance', 'enemy'),
+            'timeouts': info.get('timeouts', '3'),
+            'map_id': info.get('map_id', ''),
+            'map_name_lookup': info.get('map_name_lookup', ''),
+            'map_width': info.get('map_width', 0),
+            'map_height': info.get('map_height', 0),
+            'map_size_display': info.get('map_size_display', '?'),
+            'map_size_category': info.get('map_size_category', 'Unknown'),
+            'protocol': 'Supreme Commander LAN',
+            'options': info.get('options', {}),
+            'raw': info.get('raw', {})
         }
         
         return StandardizedServerInfo(

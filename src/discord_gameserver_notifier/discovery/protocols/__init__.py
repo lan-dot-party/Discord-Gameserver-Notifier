@@ -26,6 +26,7 @@ from .quake3 import Quake3Protocol
 from .ssc import SSCProtocol, SSCTFEProtocol, SSCTSEProtocol
 from .stronghold_crusader import StrongholdCrusaderProtocol
 from .stronghold_ce import StrongholdCEProtocol
+from .supcom import SupComProtocol
 
 __all__ = [
     'ServerResponse',
@@ -54,5 +55,6 @@ __all__ = [
     'SSCTFEProtocol',
     'SSCTSEProtocol',
     'StrongholdCrusaderProtocol',
-    'StrongholdCEProtocol'
+    'StrongholdCEProtocol',
+    'SupComProtocol'
 ] 
