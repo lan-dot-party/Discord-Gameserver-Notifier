@@ -26,6 +26,7 @@ from .protocols import (
     CoD4Protocol,
     CoD5Protocol,
     CoD1Protocol,
+    JediKnightProtocol,
     ElDewritoProtocol,
     CnCGeneralsProtocol,
     Fear2Protocol,
@@ -67,6 +68,7 @@ class NetworkScanner:
             'cod4': CoD4Protocol(self.timeout),
             'cod5': CoD5Protocol(self.timeout),
             'cod1': CoD1Protocol(self.timeout),
+            'jediknight': JediKnightProtocol(self.timeout),
             'eldewrito': ElDewritoProtocol(self.timeout),
             'cnc_generals': CnCGeneralsProtocol(timeout=11.0),  # CnC Generals requires 11 seconds to detect 2 broadcasts
             'fear2': Fear2Protocol(self.timeout),

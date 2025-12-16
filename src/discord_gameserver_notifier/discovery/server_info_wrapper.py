@@ -92,6 +92,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_stronghold_crusader_server(server_response)
         elif game_type == 'stronghold_ce':
             standardized_info = self._standardize_stronghold_ce_server(server_response)
+        elif game_type == 'jediknight':
+            standardized_info = self._standardize_jediknight_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -861,6 +863,66 @@ class ServerInfoWrapper:
             'protocol': additional_info_nested.get('protocol', 'Unknown'),
             'shortversion': additional_info_nested.get('shortversion', 'Unknown'),
             'sv_maxPing': additional_info_nested.get('sv_maxPing', 'Unknown')
+        }
+        
+        return StandardizedServerInfo(
+            name=name,
+            game=game,
+            map=map_name,
+            players=players,
+            max_players=max_players,
+            version=version,
+            password_protected=password_protected,
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+    
+    def _standardize_jediknight_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Star Wars Jedi Knight: Jedi Academy server information"""
+        info = server_response.server_info
+        
+        # Extract basic information
+        name = info.get('hostname', 'Unknown Jedi Academy Server')
+        game = 'Star Wars Jedi Knight: Jedi Academy'
+        map_name = info.get('map_name', 'Unknown Map')
+        players = info.get('current_players', 0)
+        max_players = info.get('max_players', 0)
+        
+        # Get additional Jedi Academy info from the nested additional_info
+        additional_info_nested = info.get('additional_info', {})
+        version = additional_info_nested.get('version', additional_info_nested.get('protocol', 'Unknown'))
+        
+        # Check if password protected
+        password_protected = additional_info_nested.get('needpass', '0') == '1'
+        
+        # Translate gametype
+        gametype_code = additional_info_nested.get('gametype', 'unknown')
+        gametype_translations = {
+            '0': 'Free For All',
+            '3': 'Duell',
+            '4': 'Power Duell',
+            '6': 'Team FFA',
+            '7': 'Siege',
+            '8': 'Capture the Flag',
+        }
+        gametype_translated = gametype_translations.get(str(gametype_code), gametype_code)
+        
+        # Additional Jedi Academy-specific information
+        additional_info = {
+            'gametype': gametype_code,
+            'gametype_translated': gametype_translated,
+            'gamename': additional_info_nested.get('gamename', 'basejka'),
+            'needpass': additional_info_nested.get('needpass', '0'),
+            'truejedi': additional_info_nested.get('truejedi', '0'),
+            'fdisable': additional_info_nested.get('fdisable', '0'),
+            'wdisable': additional_info_nested.get('wdisable', '0'),
+            'protocol': additional_info_nested.get('protocol', 'Unknown'),
+            'sv_maxPing': additional_info_nested.get('sv_maxPing', '0'),
+            'sv_maxclients': additional_info_nested.get('sv_maxclients', '0'),
+            'players': additional_info_nested.get('players', [])
         }
         
         return StandardizedServerInfo(

@@ -16,3 +16,9 @@ test-build/
 .vscode/
 build/
 wheel-contents/
+mc_test.py
+notifier.log.1
+notifier.log.2
+notifier.log.3
+notifier.log.4
+notifier.log.5
