@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "Discord-Gameserver-Notifier"
-version = "0.3.0"
+version = "0.3.1"
 description = "A Python-based tool for automatic detection of game servers in the local network with Discord notifications via webhooks. Uses opengsq-python for game server communication."
 requires-python = ">=3.10"
 license = "GPL-3.0"
