@@ -43,8 +43,10 @@ A Python-based tool for automatic detection of game servers in local networks wi
 | Serious Sam Classic: The First Encounter | `ssc_tfe` |
 | Serious Sam Classic: The Second Encounter | `ssc_tse` |
 | Source Engine Games | `source` |
+| Star Wars Jedi Knight: Jedi Academy | `jediknight` |
 | Stronghold Crusader | `stronghold_crusader` |
 | Stronghold Crusader Extreme | `stronghold_ce` |
+| Supreme Commander / Forged Alliance | `supcom` |
 | Toxikk | `toxikk` |
 | Trackmania Nations | `trackmania_nations` |
 | Unreal Tournament 3 | `ut3` |
@@ -54,7 +56,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.9 or higher
 - Network access for UDP broadcast queries
 - Discord webhook URL
 
@@ -195,6 +197,7 @@ games:
     - "fear2"             # F.E.A.R. 2
     - "flatout2"          # Flatout 2
     - "halo1"             # Halo 1 (Combat Evolved)
+    - "jediknight"        # Star Wars Jedi Knight: Jedi Academy
     - "quake3"            # Quake 3
     - "renegadex"         # Renegade X
     - "source"            # Source Engine games
@@ -202,6 +205,7 @@ games:
     - "ssc_tse"           # Serious Sam Classic: The Second Encounter
     - "stronghold_crusader"  # Stronghold Crusader
     - "stronghold_ce"     # Stronghold Crusader Extreme
+    - "supcom"            # Supreme Commander / Forged Alliance
     - "toxikk"            # Toxikk
     - "trackmania_nations"  # Trackmania Nations
     - "ut3"               # Unreal Tournament 3
@@ -238,6 +242,8 @@ discord:
       - "<@&FLATOUT2_ROLE_ID>"
     halo1:                # Halo 1 (Combat Evolved)
       - "<@&HALO1_ROLE_ID>"
+    - "jediknight"        # Star Wars Jedi Knight: Jedi Academy
+      - "<@&JEDIKNIGHT_ROLE_ID>"
     quake3:               # Quake 3
       - "<@&QUAKE3_ROLE_ID>"
     renegadex:            # Renegade X
@@ -252,6 +258,8 @@ discord:
       - "<@&STRONGHOLD_CRUSADER_ROLE_ID>"
     stronghold_ce:        # Stronghold Crusader Extreme
       - "<@&STRONGHOLD_CE_ROLE_ID>"
+    - "supcom"        # Supreme Commander / Forged Alliance
+      - "<@&SUPCOM_ROLE_ID>"
     toxikk:               # Toxikk
       - "<@&TOXIKK_ROLE_ID>"
     trackmania_nations:   # Trackmania Nations
