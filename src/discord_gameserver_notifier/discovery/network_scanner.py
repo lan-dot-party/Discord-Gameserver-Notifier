@@ -26,6 +26,7 @@ from .protocols import (
     CoD4Protocol,
     CoD5Protocol,
     CoD1Protocol,
+    JediKnightProtocol,
     ElDewritoProtocol,
     CnCGeneralsProtocol,
     Fear2Protocol,
@@ -34,7 +35,8 @@ from .protocols import (
     SSCTFEProtocol,
     SSCTSEProtocol,
     StrongholdCrusaderProtocol,
-    StrongholdCEProtocol
+    StrongholdCEProtocol,
+    SupComProtocol
 )
 
 
@@ -67,6 +69,7 @@ class NetworkScanner:
             'cod4': CoD4Protocol(self.timeout),
             'cod5': CoD5Protocol(self.timeout),
             'cod1': CoD1Protocol(self.timeout),
+            'jediknight': JediKnightProtocol(self.timeout),
             'eldewrito': ElDewritoProtocol(self.timeout),
             'cnc_generals': CnCGeneralsProtocol(timeout=11.0),  # CnC Generals requires 11 seconds to detect 2 broadcasts
             'fear2': Fear2Protocol(self.timeout),
@@ -75,7 +78,8 @@ class NetworkScanner:
             'ssc_tfe': SSCTFEProtocol(self.timeout),  # Serious Sam Classic: The First Encounter
             'ssc_tse': SSCTSEProtocol(self.timeout),   # Serious Sam Classic: The Second Encounter
             'stronghold_crusader': StrongholdCrusaderProtocol(self.timeout),  # Stronghold Crusader
-            'stronghold_ce': StrongholdCEProtocol(self.timeout)  # Stronghold Crusader Extreme
+            'stronghold_ce': StrongholdCEProtocol(self.timeout),  # Stronghold Crusader Extreme
+            'supcom': SupComProtocol(self.timeout)  # Supreme Commander / Forged Alliance
         }
         
         # Initialize the server info wrapper for standardization with protocols

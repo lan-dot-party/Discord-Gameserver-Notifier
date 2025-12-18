@@ -17,6 +17,7 @@ from .battlefield2 import Battlefield2Protocol
 from .cod4 import CoD4Protocol
 from .cod5 import CoD5Protocol
 from .cod1 import CoD1Protocol
+from .jediknight import JediKnightProtocol
 from .eldewrito import ElDewritoProtocol
 from .cnc_generals import CnCGeneralsProtocol
 from .fear2 import Fear2Protocol
@@ -25,6 +26,7 @@ from .quake3 import Quake3Protocol
 from .ssc import SSCProtocol, SSCTFEProtocol, SSCTSEProtocol
 from .stronghold_crusader import StrongholdCrusaderProtocol
 from .stronghold_ce import StrongholdCEProtocol
+from .supcom import SupComProtocol
 
 __all__ = [
     'ServerResponse',
@@ -43,6 +45,7 @@ __all__ = [
     'CoD4Protocol',
     'CoD5Protocol',
     'CoD1Protocol',
+    'JediKnightProtocol',
     'ElDewritoProtocol',
     'CnCGeneralsProtocol',
     'Fear2Protocol',
@@ -52,5 +55,6 @@ __all__ = [
     'SSCTFEProtocol',
     'SSCTSEProtocol',
     'StrongholdCrusaderProtocol',
-    'StrongholdCEProtocol'
+    'StrongholdCEProtocol',
+    'SupComProtocol'
 ] 
