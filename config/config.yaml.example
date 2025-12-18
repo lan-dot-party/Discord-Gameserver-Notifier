@@ -14,75 +14,91 @@ network:
     # - "192.168.100.0/24"  # Example: Ignore test network
     # - "10.10.10.0/24"     # Example: Ignore development network
     # - "172.16.0.0/16"     # Example: Ignore internal network
-
 games:
   enabled:
-    - "ut3"           # Unreal Tournament 3
-    - "source"        # Source Engine games
-    - "renegadex"     # Renegade X
-    - "warcraft3"     # Warcraft 3
-    - "toxikk"        # Toxikk
-    - "eldewrito"     # ElDewrito
-    - "flatout2"      # Flatout 2
-    - "trackmania_nations"  # Trackmania Nations
-    - "aoe1"          # Age of Ampires 1
-    - "aoe2"          # Age of Ampires 2
-    - "avp2"          # Alien vs Predator 2
-    - "cod4"          # Call of Duty 4
-    - "cod1"          # Call of Duty 1
-    - "cnc_generals"  # Command & Conquer Generals Zero Hour
-    - "halo1"         # Halo 1 (Combat Evolved)
-    - "ssc_tfe"       # Serious Sam Classic: The First Encounter
-    - "ssc_tse"       # Serious Sam Classic: The Second Encounter
+    - "aoe1"              # Age of Empires 1
+    - "aoe2"              # Age of Empires 2
+    - "avp2"              # Alien vs Predator 2
+    - "battlefield2"      # Battlefield 2
+    - "cod1"              # Call of Duty 1
+    - "cod4"              # Call of Duty 4
+    - "cod5"              # Call of Duty 5
+    - "cnc_generals"      # Command & Conquer Generals Zero Hour
+    - "eldewrito"         # ElDewrito
+    - "fear2"             # F.E.A.R. 2
+    - "flatout2"          # Flatout 2
+    - "halo1"             # Halo 1 (Combat Evolved)
+    - "jediknight"        # Star Wars Jedi Knight: Jedi Academy
+    - "quake3"            # Quake 3
+    - "renegadex"         # Renegade X
+    - "source"            # Source Engine games
+    - "ssc_tfe"           # Serious Sam Classic: The First Encounter
+    - "ssc_tse"           # Serious Sam Classic: The Second Encounter
     - "stronghold_crusader"  # Stronghold Crusader
-    - "stronghold_ce"        # Stronghold Crusader Extreme
+    - "stronghold_ce"     # Stronghold Crusader Extreme
+    - "supcom"            # Supreme Commander / Forged Alliance
+    - "toxikk"            # Toxikk
+    - "trackmania_nations"  # Trackmania Nations
+    - "ut3"               # Unreal Tournament 3
+    - "warcraft3"         # Warcraft III
 
 discord:
-  # Discord Webhook URL - Get this from your Discord server settings
-  # Server Settings -> Integrations -> Webhooks -> Create Webhook
-  # Example: "https://discord.com/api/webhooks/1234567890123456789/AbCdEfGhIjKlMnOpQrStUvWxYz1234567890AbCdEfGhIjKlMnOpQrStUvWxYz"
   webhook_url: "https://discord.com/api/webhooks/..."
-  
-  # Optional: Discord Channel ID for reference (not required for webhooks)
-  channel_id: "1234567890"
-  
-  # Optional: Global mentions to include in all new server notifications
   mentions:
-    - "@everyone"     # Mention everyone
-    # - "@here"       # Mention online users only
-    # - "<@&ROLE_ID>" # Mention specific role (replace ROLE_ID with actual role ID)
+    - "@everyone"         # Optional mentions
   
-  # Optional: Game-specific mentions (these will be added to global mentions)
+  # Optional: Game-specific mentions (added to global mentions)
   game_mentions:
-    source:           # Source Engine games (Counter-Strike, Half-Life, etc.)
-      - "<@&SOURCE_ROLE_ID>"    # Mention Source Engine role
-      # - "@here"               # Additional mentions for Source games
-    renegadex:        # Renegade X
-      - "<@&RENEGADEX_ROLE_ID>" # Mention Renegade X role
-    warcraft3:        # Warcraft III
-      - "<@&WC3_ROLE_ID>"       # Mention Warcraft III role
-    ut3:              # Unreal Tournament 3
-      - "<@&UT3_ROLE_ID>"       # Mention UT3 role
-    flatout2:         # Flatout 2
-      - "<@&FLATOUT2_ROLE_ID>"  # Mention Flatout 2 role
-    toxikk:           # Toxikk
-      - "<@&TOXIKK_ROLE_ID>"    # Mention Toxikk role
-    eldewrito:        # ElDewrito
-      - "<@&ELDEWRITO_ROLE_ID>" # Mention ElDewrito role
-    trackmania_nations: # Trackmania Nations
-      - "<@&TRACKMANIA_ROLE_ID>" # Mention Trackmania Nations role
-    avp2:             # Alien vs Predator 2
-      - "<@&AVP2_ROLE_ID>"      # Mention AVP2 role
-    cod4:             # Call of Duty 4
-      - "<@&COD4_ROLE_ID>"      # Mention CoD4 role
-    cnc_generals:     # Command & Conquer Generals Zero Hour
-      - "<@&CNC_GENERALS_ROLE_ID>" # Mention CnC Generals role
-    halo1:            # Halo 1 (Combat Evolved)
-      - "<@&HALO1_ROLE_ID>"      # Mention Halo 1 role
-    ssc_tfe:          # Serious Sam Classic: The First Encounter
-      - "<@&SSC_TFE_ROLE_ID>"    # Mention SSC TFE role
-    ssc_tse:          # Serious Sam Classic: The Second Encounter
-      - "<@&SSC_TSE_ROLE_ID>"    # Mention SSC TSE role
+    aoe1:                 # Age of Empires 1
+      - "<@&AOE1_ROLE_ID>"
+    aoe2:                 # Age of Empires 2
+      - "<@&AOE2_ROLE_ID>"
+    avp2:                 # Alien vs Predator 2
+      - "<@&AVP2_ROLE_ID>"
+    battlefield2:         # Battlefield 2
+      - "<@&BATTLEFIELD2_ROLE_ID>"
+    cod1:                 # Call of Duty 1
+      - "<@&COD1_ROLE_ID>"
+    cod4:                 # Call of Duty 4
+      - "<@&COD4_ROLE_ID>"
+    cod5:                 # Call of Duty 5
+      - "<@&COD5_ROLE_ID>"
+    cnc_generals:         # Command & Conquer Generals Zero Hour
+      - "<@&CNC_GENERALS_ROLE_ID>"
+    eldewrito:            # ElDewrito
+      - "<@&ELDEWRITO_ROLE_ID>"
+    fear2:                # F.E.A.R. 2
+      - "<@&FEAR2_ROLE_ID>"
+    flatout2:             # Flatout 2
+      - "<@&FLATOUT2_ROLE_ID>"
+    halo1:                # Halo 1 (Combat Evolved)
+      - "<@&HALO1_ROLE_ID>"
+    - "jediknight"        # Star Wars Jedi Knight: Jedi Academy
+      - "<@&JEDIKNIGHT_ROLE_ID>"
+    quake3:               # Quake 3
+      - "<@&QUAKE3_ROLE_ID>"
+    renegadex:            # Renegade X
+      - "<@&RENEGADEX_ROLE_ID>"
+    source:               # Source Engine games
+      - "<@&SOURCE_ROLE_ID>"
+    ssc_tfe:              # Serious Sam Classic: The First Encounter
+      - "<@&SSC_TFE_ROLE_ID>"
+    ssc_tse:              # Serious Sam Classic: The Second Encounter
+      - "<@&SSC_TSE_ROLE_ID>"
+    stronghold_crusader:  # Stronghold Crusader
+      - "<@&STRONGHOLD_CRUSADER_ROLE_ID>"
+    stronghold_ce:        # Stronghold Crusader Extreme
+      - "<@&STRONGHOLD_CE_ROLE_ID>"
+    - "supcom"        # Supreme Commander / Forged Alliance
+      - "<@&SUPCOM_ROLE_ID>"
+    toxikk:               # Toxikk
+      - "<@&TOXIKK_ROLE_ID>"
+    trackmania_nations:   # Trackmania Nations
+      - "<@&TRACKMANIA_NATIONS_ROLE_ID>"
+    ut3:                  # Unreal Tournament 3
+      - "<@&UT3_ROLE_ID>"
+    warcraft3:            # Warcraft III
+      - "<@&WC3_ROLE_ID>"
     # default:        # Default mentions for unknown games
     #   - "<@&UNKNOWN_GAMES_ROLE_ID>"
 
