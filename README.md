@@ -242,7 +242,7 @@ discord:
       - "<@&FLATOUT2_ROLE_ID>"
     halo1:                # Halo 1 (Combat Evolved)
       - "<@&HALO1_ROLE_ID>"
-    - "jediknight"        # Star Wars Jedi Knight: Jedi Academy
+    jediknight        # Star Wars Jedi Knight: Jedi Academy
       - "<@&JEDIKNIGHT_ROLE_ID>"
     quake3:               # Quake 3
       - "<@&QUAKE3_ROLE_ID>"
@@ -258,7 +258,7 @@ discord:
       - "<@&STRONGHOLD_CRUSADER_ROLE_ID>"
     stronghold_ce:        # Stronghold Crusader Extreme
       - "<@&STRONGHOLD_CE_ROLE_ID>"
-    - "supcom"        # Supreme Commander / Forged Alliance
+    supcom        # Supreme Commander / Forged Alliance
       - "<@&SUPCOM_ROLE_ID>"
     toxikk:               # Toxikk
       - "<@&TOXIKK_ROLE_ID>"
