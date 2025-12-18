@@ -413,6 +413,8 @@ jobs:
     - package-linux
     - package-arch
     runs-on: ubuntu-latest
+    # Only run when triggered by a release event (ensures tag is available)
+    if: github.event_name == 'release'
     permissions:
       contents: write  # IMPORTANT: mandatory for uploading release assets
 
@@ -432,6 +434,7 @@ jobs:
     - name: Upload .deb, .rpm and .pkg.tar.zst files to release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ github.event.release.tag_name }}
         files: |
           packages/*.deb
           packages/*.rpm
@@ -557,7 +560,14 @@ jobs:
     - name: Install dependencies
       run: |
         dnf update -y
-        dnf install -y python3 python3-pip findutils
+        # Install Python 3.11 from AppStream (Rocky Linux 9 default python3 is 3.9, but package requires >=3.10)
+        dnf install -y python3.11 python3.11-pip findutils
+        # Make python3 point to python3.11 for the package installation
+        # Remove existing python3 symlink and create new one pointing to python3.11
+        rm -f /usr/bin/python3
+        ln -s /usr/bin/python3.11 /usr/bin/python3
+        # Verify python3 version
+        python3 --version
     
     - name: Download Linux packages
       uses: actions/download-artifact@v4
