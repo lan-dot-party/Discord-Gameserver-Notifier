@@ -1,6 +1,10 @@
 TaskList.md
 discovery/__pycache__/*
 config/config.yaml
+.env
+.env.*
+!.env.example
+venv/
 gameservers.db
 notifier.log
 .DS_Store
