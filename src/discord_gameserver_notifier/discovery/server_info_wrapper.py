@@ -739,6 +739,8 @@ class ServerInfoWrapper:
 
         additional_info = {
             'game_id': info.get('game_id', ''),
+            'environment': info.get('environment', ''),
+            'mood': info.get('mood', ''),
             'game_mode': info.get('game_mode', 'Unknown'),
             'time_limit': info.get('time_limit', 0),
             'nb_laps': info.get('nb_laps', 0),

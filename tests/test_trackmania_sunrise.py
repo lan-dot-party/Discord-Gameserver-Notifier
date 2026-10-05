@@ -50,6 +50,8 @@ def make_server_info(**overrides):
     values = dict(
         name="$o$f00Sunrise $fffLAN",
         map="$oNightFlight",
+        environment="Island",
+        mood="Night",
         players=2,
         max_players=32,
         spectators=1,
@@ -122,6 +124,7 @@ def test_discord_fields():
     fields = {field['name']: field['value']
               for field in TrackmaniaSunriseProtocol().get_discord_fields(info)}
 
+    assert fields['🏟️ Environment'] == "Island (Night)"
     assert fields['🎮 Spielmodus'] == "TimeAttack (5:00)"
     assert fields['🔐 Server-Typ'] == "Password Protected"
     assert fields['👀 Zuschauer'] == "1/32"
@@ -159,6 +162,7 @@ def test_wrapper_standardizes_trackmania_sunrise_server():
     assert result.map == "NightFlight"
     assert (result.players, result.max_players) == (2, 32)
     assert result.additional_info['game_id'] == "TmSunrise"
+    assert (result.additional_info['environment'], result.additional_info['mood']) == ("Island", "Night")
     assert result.additional_info['nb_challenges'] == 54
 
 
@@ -239,7 +243,7 @@ def make_scanning_protocol(port):
 @requires_opengsq
 @pytest.mark.asyncio
 async def test_scan_finds_trackmania_sunrise_server():
-    transport, server, port = await start_fake_server("TmOriginal")
+    transport, server, port = await start_fake_server("TmSunrise")
     protocol = make_scanning_protocol(port)
 
     try:
@@ -252,8 +256,9 @@ async def test_scan_finds_trackmania_sunrise_server():
     assert (servers[0].ip_address, servers[0].port) == ("127.0.0.1", port)
     assert servers[0].game_type == "trackmania_sunrise"
     assert servers[0].server_info['hostname'] == "Sunrise LAN Server"
-    assert servers[0].server_info['game'] == "TrackMania Original"
+    assert servers[0].server_info['game'] == "TrackMania Sunrise"
     assert servers[0].server_info['map'] == "NightFlight"
+    assert (servers[0].server_info['environment'], servers[0].server_info['mood']) == ("Island", "Night")
     assert servers[0].server_info['nb_challenges'] == 54
 
 
@@ -278,3 +283,13 @@ async def test_scan_ignores_other_udp_services():
         transport.close()
 
     assert servers == []
+
+
+@requires_opengsq
+def test_discord_fields_without_environment():
+    info = TrackmaniaSunriseProtocol._build_info_dict(
+        make_server_info(environment="", mood=""), make_session()
+    )
+    names = [field['name'] for field in TrackmaniaSunriseProtocol().get_discord_fields(info)]
+
+    assert '🏟️ Environment' not in names

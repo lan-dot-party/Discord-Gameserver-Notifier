@@ -47,6 +47,17 @@ class TrackmaniaSunriseProtocol(TrackmaniaNationsProtocol):
             'global_broadcast': True,
         }
 
+    def get_discord_fields(self, server_info: dict) -> list:
+        """Discord fields of Trackmania Nations Forever, with the mood next to the environment."""
+        fields = super().get_discord_fields(server_info)
+
+        if server_info.get('mood'):
+            for field in fields:
+                if field['name'] == '🏟️ Environment':
+                    field['value'] = f"{server_info['environment']} ({server_info['mood']})"
+
+        return fields
+
     async def scan_servers(self, scan_ranges: List[str]) -> List[ServerResponse]:
         """
         Scan for Trackmania Original/Sunrise/Nations ESWC servers.
@@ -157,7 +168,7 @@ class TrackmaniaSunriseProtocol(TrackmaniaNationsProtocol):
         try:
             server_info = await TrackmaniaSunrise(
                 ip_address, port, self.protocol_config['query_timeout']
-            ).get_info()
+            ).get_info(session.game_id)
         except Exception as e:
             self.logger.debug("Trackmania Sunrise server at %s:%d did not answer the query: %s",
                               ip_address, port, e)
@@ -187,6 +198,8 @@ class TrackmaniaSunriseProtocol(TrackmaniaNationsProtocol):
             'hostname': strip_formatting(server_info.name) or session.host_name or 'Unknown Server',
             'name_raw': server_info.name,
             'map': strip_formatting(server_info.map) or 'Unknown',
+            'environment': server_info.environment,
+            'mood': server_info.mood,
             'players': server_info.players,
             'max_players': server_info.max_players,
             'spectators': server_info.spectators,
