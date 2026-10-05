@@ -49,6 +49,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 | Supreme Commander / Forged Alliance | `supcom` |
 | Toxikk | `toxikk` |
 | Trackmania Nations | `trackmania_nations` |
+| Trackmania Original / Sunrise / Nations ESWC | `trackmania_sunrise` |
 | Unreal Tournament 3 | `ut3` |
 | Warcraft III | `warcraft3` |
 
@@ -208,6 +209,7 @@ games:
     - "supcom"            # Supreme Commander / Forged Alliance
     - "toxikk"            # Toxikk
     - "trackmania_nations"  # Trackmania Nations
+    - "trackmania_sunrise"  # Trackmania Original / Sunrise / Nations ESWC
     - "ut3"               # Unreal Tournament 3
     - "warcraft3"         # Warcraft III
 
@@ -264,6 +266,8 @@ discord:
       - "<@&TOXIKK_ROLE_ID>"
     trackmania_nations:   # Trackmania Nations
       - "<@&TRACKMANIA_NATIONS_ROLE_ID>"
+    trackmania_sunrise:   # Trackmania Original / Sunrise / Nations ESWC
+      - "<@&TRACKMANIA_SUNRISE_ROLE_ID>"
     ut3:                  # Unreal Tournament 3
       - "<@&UT3_ROLE_ID>"
     warcraft3:            # Warcraft III
@@ -337,6 +341,7 @@ discord:
 - `stronghold_ce` - Stronghold Crusader Extreme
 - `toxikk` - Toxikk
 - `trackmania_nations` - Trackmania Nations
+- `trackmania_sunrise` - Trackmania Original / Sunrise / Nations ESWC
 - `ut3` - Unreal Tournament 3
 - `warcraft3` - Warcraft III
 

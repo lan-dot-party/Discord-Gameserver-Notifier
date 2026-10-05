@@ -98,6 +98,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_supcom_server(server_response)
         elif game_type == 'trackmania_nations':
             standardized_info = self._standardize_trackmania_nations_server(server_response)
+        elif game_type == 'trackmania_sunrise':
+            standardized_info = self._standardize_trackmania_sunrise_server(server_response)
         else:
             self.logger.warning(f"Unknown game type: {game_type}")
             standardized_info = self._standardize_generic_server(server_response)
@@ -719,6 +721,42 @@ class ServerInfoWrapper:
         return StandardizedServerInfo(
             name=info.get('hostname', 'Unknown Trackmania Server'),
             game=info.get('game', 'Trackmania Nations Forever'),
+            map=info.get('map', 'Unknown Map'),
+            players=info.get('players', 0),
+            max_players=info.get('max_players', 0),
+            version=str(info.get('version') or 'Unknown'),
+            password_protected=info.get('password_protected', False),
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+
+    def _standardize_trackmania_sunrise_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Trackmania Original/Sunrise/Nations ESWC server information"""
+        info = server_response.server_info
+
+        additional_info = {
+            'game_id': info.get('game_id', ''),
+            'game_mode': info.get('game_mode', 'Unknown'),
+            'time_limit': info.get('time_limit', 0),
+            'nb_laps': info.get('nb_laps', 0),
+            'points_limit': info.get('points_limit', 0),
+            'spectators': info.get('spectators', 0),
+            'max_spectators': info.get('max_spectators', 0),
+            'spectator_password_protected': info.get('spectator_password_protected', False),
+            'ladder_server': info.get('ladder_server', False),
+            'server_login': info.get('server_login', ''),
+            'comment': info.get('comment', ''),
+            'player_names': info.get('player_names', []),
+            'next_maps': info.get('next_maps', []),
+            'nb_challenges': info.get('nb_challenges', 0),
+        }
+
+        return StandardizedServerInfo(
+            name=info.get('hostname', 'Unknown Trackmania Server'),
+            game=info.get('game', 'TrackMania Sunrise'),
             map=info.get('map', 'Unknown Map'),
             players=info.get('players', 0),
             max_players=info.get('max_players', 0),
