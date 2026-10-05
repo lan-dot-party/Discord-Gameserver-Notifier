@@ -19,6 +19,7 @@ from .protocols import (
     Warcraft3Protocol,
     ToxikkProtocol,
     TrackmaniaNationsProtocol,
+    TrackmaniaSunriseProtocol,
     AoE1Protocol,
     AoE2Protocol,
     AVP2Protocol,
@@ -62,6 +63,7 @@ class NetworkScanner:
             'warcraft3': Warcraft3Protocol(timeout=self.timeout),
             'toxikk': ToxikkProtocol(self.timeout),
             'trackmania_nations': TrackmaniaNationsProtocol(self.timeout),
+            'trackmania_sunrise': TrackmaniaSunriseProtocol(self.timeout),  # Trackmania Original / Sunrise / Nations ESWC
             'aoe1': AoE1Protocol(self.timeout),
             'aoe2': AoE2Protocol(self.timeout),
             'avp2': AVP2Protocol(self.timeout),

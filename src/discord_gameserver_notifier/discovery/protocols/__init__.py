@@ -10,6 +10,7 @@ from .ut3 import UT3Protocol
 from .warcraft3 import Warcraft3Protocol
 from .toxikk import ToxikkProtocol
 from .trackmania_nations import TrackmaniaNationsProtocol
+from .trackmania_sunrise import TrackmaniaSunriseProtocol
 from .aoe1 import AoE1Protocol
 from .aoe2 import AoE2Protocol
 from .avp2 import AVP2Protocol
@@ -38,6 +39,7 @@ __all__ = [
     'Warcraft3Protocol',
     'ToxikkProtocol',
     'TrackmaniaNationsProtocol',
+    'TrackmaniaSunriseProtocol',
     'AoE1Protocol',
     'AoE2Protocol',
     'AVP2Protocol',

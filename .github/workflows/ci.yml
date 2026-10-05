@@ -159,7 +159,8 @@ jobs:
             'source', 'renegadex', 'warcraft3', 'flatout2', 'ut3', 'toxikk',
             'cod4', 'cod1', 'halo1', 'quake3', 'avp2', 'aoe1', 'aoe2',
             'battlefield2', 'cnc_generals', 'eldewrito', 'ssc',
-            'stronghold_crusader', 'stronghold_ce', 'fear2', 'trackmania_nations'
+            'stronghold_crusader', 'stronghold_ce', 'fear2', 'trackmania_nations',
+            'trackmania_sunrise'
         ]
         
         from discord_gameserver_notifier.discovery.protocols import common
