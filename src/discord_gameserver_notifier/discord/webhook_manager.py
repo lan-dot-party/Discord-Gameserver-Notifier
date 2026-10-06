@@ -63,7 +63,25 @@ class WebhookManager:
         }
         
         self.logger.info(f"WebhookManager initialized for channel {channel_id}")
-        self.logger.debug(f"Webhook URL configured with wait=true: {self.webhook_url}")
+        self.logger.debug(f"Webhook URL configured with wait=true: {self._redact(self.webhook_url)}")
+    
+    def _redact(self, text: str) -> str:
+        """
+        Remove the webhook token from text before it is logged.
+        
+        Exception messages of requests (e.g. connection errors) contain the full
+        request URL including the token.
+        
+        Args:
+            text: Text that may contain the webhook token
+            
+        Returns:
+            Text with the token replaced by ***
+        """
+        text = str(text)
+        if self.webhook_token:
+            text = text.replace(self.webhook_token, '***')
+        return text
     
     def _ensure_wait_parameter(self, webhook_url: str) -> str:
         """
@@ -187,7 +205,7 @@ class WebhookManager:
                 return None
                 
         except Exception as e:
-            self.logger.error(f"Error sending Discord notification: {str(e)}")
+            self.logger.error(f"Error sending Discord notification: {self._redact(e)}")
             return None
     
     def delete_server_message(self, message_id: str) -> bool:
@@ -228,7 +246,7 @@ class WebhookManager:
                 return False
                 
         except Exception as e:
-            self.logger.error(f"Error deleting Discord message {message_id}: {str(e)}")
+            self.logger.error(f"Error deleting Discord message {message_id}: {self._redact(e)}")
             return False
 
     def send_server_offline_notification(self, server_info: StandardizedServerInfo, message_id: Optional[str] = None) -> bool:
@@ -271,7 +289,7 @@ class WebhookManager:
                 return False
                 
         except Exception as e:
-            self.logger.error(f"Error sending offline notification: {str(e)}")
+            self.logger.error(f"Error sending offline notification: {self._redact(e)}")
             return False
     
     def _create_server_embed(self, server_info: StandardizedServerInfo, is_new: bool = True, is_offline: bool = False) -> DiscordEmbed:
@@ -416,7 +434,7 @@ class WebhookManager:
                 return False
                 
         except Exception as e:
-            self.logger.error(f"Webhook test error: {str(e)}")
+            self.logger.error(f"Webhook test error: {self._redact(e)}")
             return False
     
     def get_webhook_info(self) -> Dict[str, Any]:

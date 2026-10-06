@@ -660,3 +660,58 @@ class TestAllGameTypesEmbedCreation:
             except Exception as e:
                 pytest.fail(f"Failed to send notification for {game_type}: {e}")
 
+
+
+class TestTokenRedaction:
+    """The webhook token must never end up in the logs."""
+    
+    TOKEN = "SuperSecretToken_abc-123"
+    URL = f"https://discord.com/api/webhooks/123456789/{TOKEN}"
+    
+    @pytest.fixture
+    def server_info(self):
+        return StandardizedServerInfo(
+            name="Test Server", game="Counter-Strike 2", map="de_dust2", players=1, max_players=8,
+            version="1", password_protected=False, ip_address="192.168.1.100", port=27015,
+            game_type="source", response_time=0.01, additional_info={}, discord_fields=None
+        )
+    
+    @staticmethod
+    def _connection_error():
+        import requests
+        return requests.exceptions.ConnectionError(
+            "HTTPSConnectionPool(host='discord.com', port=443): Max retries exceeded with url: "
+            f"/api/webhooks/123456789/{TestTokenRedaction.TOKEN}?wait=true"
+        )
+    
+    def test_init_debug_log_redacts_token(self, caplog):
+        with caplog.at_level("DEBUG"):
+            WebhookManager(webhook_url=self.URL)
+        assert "Webhook URL configured" in caplog.text
+        assert self.TOKEN not in caplog.text
+    
+    @patch('discord_gameserver_notifier.discord.webhook_manager.DiscordWebhook')
+    def test_send_error_redacts_token(self, mock_webhook_class, server_info, caplog):
+        mock_webhook_class.return_value.execute.side_effect = self._connection_error()
+        manager = WebhookManager(webhook_url=self.URL)
+        assert manager.send_new_server_notification(server_info) is None
+        assert "Error sending Discord notification" in caplog.text
+        assert self.TOKEN not in caplog.text
+    
+    @patch('discord_gameserver_notifier.discord.webhook_manager.requests.delete')
+    def test_delete_error_redacts_token(self, mock_delete, caplog):
+        mock_delete.side_effect = self._connection_error()
+        manager = WebhookManager(webhook_url=self.URL)
+        assert manager.delete_server_message("42") is False
+        assert "Error deleting Discord message" in caplog.text
+        assert self.TOKEN not in caplog.text
+    
+    @patch('discord_gameserver_notifier.discord.webhook_manager.DiscordWebhook')
+    def test_offline_and_test_webhook_errors_redact_token(self, mock_webhook_class, server_info, caplog):
+        mock_webhook_class.return_value.execute.side_effect = self._connection_error()
+        manager = WebhookManager(webhook_url=self.URL)
+        manager.send_server_offline_notification(server_info)
+        manager.test_webhook()
+        assert "Error sending offline notification" in caplog.text
+        assert "Webhook test error" in caplog.text
+        assert self.TOKEN not in caplog.text
