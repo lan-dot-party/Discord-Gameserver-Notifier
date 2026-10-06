@@ -26,3 +26,6 @@ notifier.log.2
 notifier.log.3
 notifier.log.4
 notifier.log.5
+
+# Local test webhook URL (secret)
+.hooktest
