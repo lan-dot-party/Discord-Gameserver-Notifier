@@ -3,6 +3,7 @@ Configuration manager for the Discord Gameserver Notifier
 Handles loading, validation and runtime updates of the YAML configuration.
 """
 
+import copy
 import os
 import yaml
 import ipaddress
@@ -27,7 +28,16 @@ class ConfigManager:
             'webhook_url': None,
             'channel_id': None,
             'mentions': [],
-            'game_mentions': {}
+            'game_mentions': {},
+            # Persistent, self-updating server overview (separate webhook, disabled by default)
+            'overview': {
+                'enabled': False,
+                'webhook_url': None,
+                'title': '🎮 Gameserver-Übersicht',
+                'show_stale': True,
+                'refresh_interval': 300,
+                'pause_on_shutdown': True
+            }
         },
         'database': {
             'path': 'auto',  # Auto-detect based on environment
@@ -192,6 +202,16 @@ class ConfigManager:
             self.config['discord']['channel_id'] = channel_id_env
             self.logger.debug(f"Discord channel ID overridden from environment: {channel_id_env}")
 
+        # Override Discord overview webhook URL from environment
+        overview_webhook_env = os.environ.get('DGN_DISCORD_OVERVIEW_WEBHOOK_URL')
+        if overview_webhook_env:
+            overview = self.config['discord'].get('overview')
+            if not isinstance(overview, dict):
+                overview = copy.deepcopy(self.DEFAULT_CONFIG['discord']['overview'])
+                self.config['discord']['overview'] = overview
+            overview['webhook_url'] = overview_webhook_env
+            self.logger.debug("Discord overview webhook URL overridden from environment")
+
     def _auto_detect_deployment_paths(self) -> None:
         """Auto-detect deployment environment and set appropriate paths."""
         # Check if database path is set to "auto"
@@ -251,7 +271,7 @@ class ConfigManager:
                 # Log the search paths for debugging
                 search_paths = self.get_config_search_paths()
                 self.logger.debug(f"Config search order was: {search_paths}")
-                self.config = self.DEFAULT_CONFIG.copy()
+                self.config = copy.deepcopy(self.DEFAULT_CONFIG)
                 return
 
             with open(self.config_path, 'r') as config_file:
@@ -266,26 +286,43 @@ class ConfigManager:
             # Override paths from environment variables if set (useful for service deployment)
             self._apply_environment_overrides()
             
+            # The overview webhook URL may come from the environment, so validate it afterwards
+            self._validate_overview_config()
+
             self.logger.info(f"Configuration loaded successfully from: {self.config_path}")
         except Exception as e:
             self.logger.error(f"Error loading configuration: {str(e)}")
             raise
 
     def _merge_with_defaults(self, loaded_config: Dict[str, Any]) -> Dict[str, Any]:
-        """Merge loaded configuration with default values."""
-        if loaded_config is None:
-            return self.DEFAULT_CONFIG.copy()
+        """
+        Merge loaded configuration with default values.
 
-        merged = self.DEFAULT_CONFIG.copy()
-        for section, values in loaded_config.items():
-            if section in merged:
-                if isinstance(merged[section], dict) and isinstance(values, dict):
-                    merged[section].update(values)
-                else:
-                    merged[section] = values
-            else:
-                merged[section] = values
-        return merged
+        Works on a deep copy so the class-level DEFAULT_CONFIG is never mutated,
+        and merges nested sections (e.g. discord.overview) key by key.
+        """
+        merged = copy.deepcopy(self.DEFAULT_CONFIG)
+        if loaded_config is None:
+            return merged
+        return self._deep_merge(merged, loaded_config)
+
+    @staticmethod
+    def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Recursively merge override into base (in place) and return base.
+
+        Nested dicts are merged, lists and scalars are replaced. An empty (None)
+        value for a nested section keeps the defaults of that section.
+        """
+        for key, value in override.items():
+            if isinstance(base.get(key), dict):
+                if isinstance(value, dict):
+                    ConfigManager._deep_merge(base[key], value)
+                    continue
+                if value is None:
+                    continue
+            base[key] = copy.deepcopy(value)
+        return base
 
     def _validate_config(self) -> None:
         """Validate all configuration sections."""
@@ -342,6 +379,35 @@ class ConfigManager:
                 if not isinstance(mention, str):
                     raise ValueError(f"Each mention in game_mentions for '{game_name}' must be a string")
 
+    def _validate_overview_config(self) -> None:
+        """Validate the discord.overview section (persistent server overview)."""
+        overview = self.config.get('discord', {}).get('overview')
+        if overview is None:
+            return
+        if not isinstance(overview, dict):
+            raise ValueError("discord.overview must be a mapping")
+
+        for flag in ('enabled', 'show_stale', 'pause_on_shutdown'):
+            if not isinstance(overview.get(flag), bool):
+                raise ValueError(f"discord.overview.{flag} must be a boolean value")
+
+        webhook_url = overview.get('webhook_url')
+        if webhook_url:
+            parsed_url = urlparse(str(webhook_url))
+            if (not all([parsed_url.scheme, parsed_url.netloc])
+                    or 'discord.com' not in parsed_url.netloc
+                    or '/webhooks/' not in parsed_url.path):
+                raise ValueError("Invalid Discord overview webhook URL")
+
+        title = overview.get('title')
+        if not isinstance(title, str) or not title.strip() or len(title) > 100:
+            raise ValueError("discord.overview.title must be a non-empty string (max. 100 characters)")
+
+        refresh_interval = overview.get('refresh_interval')
+        if (isinstance(refresh_interval, bool) or not isinstance(refresh_interval, int)
+                or (refresh_interval != 0 and refresh_interval < 60)):
+            raise ValueError("discord.overview.refresh_interval must be 0 (only on changes) or at least 60 seconds")
+
     def _validate_database_config(self) -> None:
         """Validate database configuration section."""
         database = self.config.get('database', {})
@@ -393,13 +459,14 @@ class ConfigManager:
     def update_config(self, new_config: Dict[str, Any]) -> None:
         """Update configuration at runtime."""
         # Store the old config in case validation fails
-        old_config = self.config.copy()
+        old_config = copy.deepcopy(self.config)
         
         try:
             # Merge new config with current config
             self.config = self._merge_with_defaults(new_config)
             # Validate the new configuration
             self._validate_config()
+            self._validate_overview_config()
             self.logger.info("Configuration updated successfully")
         except Exception as e:
             # Restore old config if validation fails

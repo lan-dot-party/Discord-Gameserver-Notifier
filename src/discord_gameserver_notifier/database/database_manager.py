@@ -84,6 +84,7 @@ class DatabaseManager:
                     # Create main tables
                     conn.execute(DatabaseSchema.CREATE_GAMESERVERS_TABLE)
                     conn.execute(DatabaseSchema.CREATE_SERVER_HISTORY_TABLE)
+                    conn.execute(DatabaseSchema.CREATE_APP_STATE_TABLE)
                     
                     # Create indexes
                     for index_sql in DatabaseSchema.CREATE_INDEXES:
@@ -289,10 +290,13 @@ class DatabaseManager:
                 self.logger.error(f"Failed to get server {ip_address}:{port}: {e}")
                 return None
     
-    def get_all_active_servers(self) -> List[GameServerModel]:
+    def get_all_active_servers(self, raise_errors: bool = False) -> List[GameServerModel]:
         """
         Get all active servers from the database.
         
+        Args:
+            raise_errors: Re-raise database errors instead of returning an empty list
+
         Returns:
             List of active GameServerModel objects
         """
@@ -315,6 +319,8 @@ class DatabaseManager:
                     
             except sqlite3.Error as e:
                 self.logger.error(f"Failed to get active servers: {e}")
+                if raise_errors:
+                    raise
                 return []
     
     def get_servers_by_game_type(self, game_type: str) -> List[GameServerModel]:
@@ -612,6 +618,74 @@ class DatabaseManager:
                 self.logger.error(f"Failed to get database stats: {e}")
                 return {}
     
+    def get_state(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        """
+        Get a value from the application state store.
+
+        Args:
+            key: State key
+            default: Value returned if the key does not exist or on error
+
+        Returns:
+            Stored value or default
+        """
+        with self._lock:
+            try:
+                with self._get_connection() as conn:
+                    cursor = conn.execute("SELECT value FROM app_state WHERE key = ?", (key,))
+                    row = cursor.fetchone()
+                    return row['value'] if row else default
+
+            except sqlite3.Error as e:
+                self.logger.error(f"Failed to read app state '{key}': {e}")
+                return default
+
+    def set_state(self, key: str, value: str) -> bool:
+        """
+        Store a value in the application state store (insert or replace).
+
+        Args:
+            key: State key
+            value: Value to store
+
+        Returns:
+            True if the value was stored, False otherwise
+        """
+        with self._lock:
+            try:
+                with self._get_connection() as conn:
+                    conn.execute("""
+                        INSERT OR REPLACE INTO app_state (key, value, updated_at)
+                        VALUES (?, ?, CURRENT_TIMESTAMP)
+                    """, (key, value))
+                    conn.commit()
+                    return True
+
+            except sqlite3.Error as e:
+                self.logger.error(f"Failed to write app state '{key}': {e}")
+                return False
+
+    def delete_state(self, key: str) -> bool:
+        """
+        Remove a value from the application state store.
+
+        Args:
+            key: State key
+
+        Returns:
+            True if the statement succeeded, False otherwise
+        """
+        with self._lock:
+            try:
+                with self._get_connection() as conn:
+                    conn.execute("DELETE FROM app_state WHERE key = ?", (key,))
+                    conn.commit()
+                    return True
+
+            except sqlite3.Error as e:
+                self.logger.error(f"Failed to delete app state '{key}': {e}")
+                return False
+
     def increment_failed_attempts_for_missing_servers(self, found_servers: List[Tuple[str, int]]) -> int:
         """
         Increment failed_attempts for servers that were not found in the current scan.

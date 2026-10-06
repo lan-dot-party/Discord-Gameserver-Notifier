@@ -316,3 +316,88 @@ class TestApplicationStartup:
         assert 'renegadex' in manager.config['games']['enabled']
         assert len(manager.config['games']['enabled']) == 4
 
+
+
+class TestOverviewConfig:
+    """Tests for the discord.overview section and the deep config merge."""
+    
+    WEBHOOK = 'https://discord.com/api/webhooks/123456/overviewtoken'
+    
+    def _write(self, temp_config_dir, config):
+        config_file = temp_config_dir / "config.yaml"
+        with open(config_file, 'w') as f:
+            yaml.dump(config, f)
+        return str(config_file)
+    
+    def test_overview_defaults(self, temp_config_dir):
+        manager = ConfigManager(self._write(temp_config_dir, {'network': {'scan_ranges': ['10.0.0.0/24']}}))
+        overview = manager.config['discord']['overview']
+        assert overview['enabled'] is False
+        assert overview['webhook_url'] is None
+        assert overview['refresh_interval'] == 300
+    
+    def test_partial_overview_keeps_defaults(self, temp_config_dir):
+        manager = ConfigManager(self._write(temp_config_dir, {
+            'network': {'scan_ranges': ['10.0.0.0/24']},
+            'discord': {'overview': {'enabled': True, 'webhook_url': self.WEBHOOK}}
+        }))
+        overview = manager.config['discord']['overview']
+        assert overview['enabled'] is True
+        assert overview['webhook_url'] == self.WEBHOOK
+        assert overview['title'] == '🎮 Gameserver-Übersicht'
+        assert overview['show_stale'] is True
+        # Existing discord keys keep their defaults as well
+        assert manager.config['discord']['mentions'] == []
+    
+    def test_empty_overview_section_keeps_defaults(self, temp_config_dir):
+        manager = ConfigManager(self._write(temp_config_dir, {
+            'network': {'scan_ranges': ['10.0.0.0/24']},
+            'discord': {'overview': None}
+        }))
+        assert manager.config['discord']['overview']['enabled'] is False
+    
+    def test_defaults_are_not_mutated(self, temp_config_dir, monkeypatch):
+        import copy
+        snapshot = copy.deepcopy(ConfigManager.DEFAULT_CONFIG)
+        monkeypatch.setenv('DGN_DISCORD_OVERVIEW_WEBHOOK_URL', self.WEBHOOK)
+        ConfigManager(self._write(temp_config_dir, {
+            'network': {'scan_ranges': ['10.0.0.0/24']},
+            'discord': {'webhook_url': 'https://discord.com/api/webhooks/1/x',
+                        'overview': {'enabled': True, 'title': 'LAN'}}
+        }))
+        assert ConfigManager.DEFAULT_CONFIG == snapshot
+    
+    def test_overview_webhook_from_environment(self, temp_config_dir, monkeypatch):
+        monkeypatch.delenv('DGN_DISCORD_WEBHOOK_URL', raising=False)
+        monkeypatch.setenv('DGN_DISCORD_OVERVIEW_WEBHOOK_URL', self.WEBHOOK)
+        manager = ConfigManager(self._write(temp_config_dir, {'network': {'scan_ranges': ['10.0.0.0/24']}}))
+        assert manager.config['discord']['overview']['webhook_url'] == self.WEBHOOK
+        # The notification webhook stays untouched
+        assert manager.config['discord']['webhook_url'] is None
+    
+    def test_invalid_overview_webhook_from_environment(self, temp_config_dir, monkeypatch):
+        monkeypatch.setenv('DGN_DISCORD_OVERVIEW_WEBHOOK_URL', 'https://example.com/not-a-webhook')
+        with pytest.raises(ValueError, match="Invalid Discord overview webhook URL"):
+            ConfigManager(self._write(temp_config_dir, {'network': {'scan_ranges': ['10.0.0.0/24']}}))
+    
+    @pytest.mark.parametrize("overview,message", [
+        ({'webhook_url': 'https://example.com/hook'}, "Invalid Discord overview webhook URL"),
+        ({'enabled': 'yes'}, "enabled must be a boolean"),
+        ({'refresh_interval': 30}, "refresh_interval"),
+        ({'refresh_interval': True}, "refresh_interval"),
+        ({'title': ''}, "title"),
+        ('not-a-mapping', "must be a mapping"),
+    ])
+    def test_invalid_overview_values(self, temp_config_dir, overview, message):
+        with pytest.raises(ValueError, match=message):
+            ConfigManager(self._write(temp_config_dir, {
+                'network': {'scan_ranges': ['10.0.0.0/24']},
+                'discord': {'overview': overview}
+            }))
+    
+    def test_refresh_interval_zero_allowed(self, temp_config_dir):
+        manager = ConfigManager(self._write(temp_config_dir, {
+            'network': {'scan_ranges': ['10.0.0.0/24']},
+            'discord': {'overview': {'refresh_interval': 0}}
+        }))
+        assert manager.config['discord']['overview']['refresh_interval'] == 0

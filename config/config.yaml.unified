@@ -47,6 +47,18 @@ discord:
   webhook_url: "https://discord.com/api/webhooks/..."
   mentions:
     - "@everyone"         # Optional mentions
+
+  # Optional: Persistent server overview in a dedicated channel.
+  # One message listing all active servers that is edited in place instead of
+  # posting new messages. Uses its OWN webhook (create it in the overview channel);
+  # the notifications above keep working unchanged.
+  overview:
+    enabled: false
+    webhook_url: ""              # or env DGN_DISCORD_OVERVIEW_WEBHOOK_URL (recommended for secrets)
+    title: "🎮 Gameserver-Übersicht"
+    show_stale: true             # mark servers missing in the last scan with 🟡 (false = hide them)
+    refresh_interval: 300        # seconds; refresh the "Stand" time at least this often (0 = only on changes)
+    pause_on_shutdown: true      # show "Übersicht pausiert" while DGN is stopped
   
   # Optional: Game-specific mentions (added to global mentions)
   game_mentions:
