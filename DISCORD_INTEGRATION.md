@@ -103,6 +103,51 @@ Protokoll: SOURCE
 | Unreal Tournament 3 | 🟣 Lila | 🔫 | Unreal Tournament 3 |
 | Unbekannt | 🟦 Blau | 🎯 | Andere/Unbekannte Protokolle |
 
+## Gameserver-Übersicht (optional)
+
+Zusätzlich zu den Benachrichtigungen kann DGN eine **dauerhaft stehende Übersicht** aller aktiven
+Gameserver in einem eigenen Channel pflegen. Die Übersicht ist eine einzelne Nachricht, die bei
+Änderungen (neue/verschwundene Server, Spielerzahl, Map) **bearbeitet** statt neu gepostet wird.
+Die bisherigen Benachrichtigungen über `discord.webhook_url` laufen unverändert weiter.
+
+### Einrichtung
+
+1. Eigenen Textchannel anlegen, z. B. `#gameserver-übersicht`, und für `@everyone` das Recht
+   „Nachrichten senden" entziehen. Der Channel sollte nur die Übersicht enthalten.
+2. In diesem Channel einen **eigenen Webhook** erstellen (nicht den der Benachrichtigungen).
+3. Konfiguration:
+
+```yaml
+discord:
+  overview:
+    enabled: true
+    webhook_url: ""              # besser: DGN_DISCORD_OVERVIEW_WEBHOOK_URL in der .env
+    title: "🎮 Gameserver-Übersicht"
+    show_stale: true             # Server, die im letzten Scan fehlten, mit 🟡 markieren (false = ausblenden)
+    refresh_interval: 300        # spätestens alle X Sekunden „Stand" aktualisieren (0 = nur bei Änderungen)
+    pause_on_shutdown: true      # beim Beenden „Übersicht pausiert" anzeigen
+```
+
+### Darstellung
+
+- Eine Box (Discord Components V2), gruppiert nach Spiel, pro Server Name, Spieler, Map und
+  `IP:Port` als kopierbarer Text.
+- 🟢 = im letzten Scan gefunden, 🟡 = zuletzt nicht erreichbar (wird nach `inactive_minutes` /
+  `cleanup_after_fails` entfernt), 🔒 = Passwort.
+- Fußzeile mit Zeitstempel (in der Zeitzone des jeweiligen Betrachters), Server- und Spielerzahl.
+- Bei sehr vielen Servern wird auf mehrere Nachrichten verteilt (max. 5).
+
+### Hinweise
+
+- Die Message-IDs werden in der Datenbank (Tabelle `app_state`) gespeichert. Nach einem Neustart
+  wird dieselbe Nachricht weiter bearbeitet. Wird die Nachricht manuell gelöscht, postet DGN sie neu.
+- Geht die Datenbank verloren oder wird der Webhook gewechselt, bleiben alte Übersichtsnachrichten
+  stehen und müssen manuell gelöscht werden (ein Webhook kann seine Nachrichten nicht auflisten).
+- Ein „Beitreten"-Button ist nicht möglich: Discord erlaubt in Links und Buttons nur `http`, `https`
+  und `discord://`, `steam://connect/...` wird abgelehnt bzw. nicht klickbar dargestellt.
+- Ist der Webhook ungültig oder gelöscht, deaktiviert sich die Übersicht bis zum nächsten Neustart
+  (Fehler im Log), damit Discord den Server nicht wegen Dauerfehlern sperrt.
+
 ## Troubleshooting
 
 ### Webhook URL nicht konfiguriert

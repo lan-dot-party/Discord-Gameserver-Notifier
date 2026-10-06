@@ -352,7 +352,27 @@ discord:
 2. Copy the webhook URL to your configuration
 3. Configure optional mentions and channel settings
 
-See `docs/DISCORD_INTEGRATION.md` for detailed setup instructions.
+See [DISCORD_INTEGRATION.md](DISCORD_INTEGRATION.md) for detailed setup instructions.
+
+#### Gameserver overview (optional)
+
+In addition to the notifications, DGN can keep a **persistent overview** of all
+active servers in a dedicated channel: one message (Discord Components V2) that is
+edited in place whenever servers, players or maps change, instead of posting new
+messages. Each row shows server name, game, players, map and `IP:Port`.
+
+1. Create a dedicated text channel (e.g. `#gameserver-übersicht`, read-only for `@everyone`)
+2. Create a **separate** webhook in that channel
+3. Enable the overview and set the webhook URL (preferably via environment variable):
+
+```yaml
+discord:
+  overview:
+    enabled: true
+    webhook_url: ""        # or DGN_DISCORD_OVERVIEW_WEBHOOK_URL
+```
+
+The regular notifications keep working unchanged through `discord.webhook_url`.
 
 ### Network Filtering
 
@@ -495,6 +515,7 @@ The application automatically manages a SQLite database:
 - **Status Updates**: New server notifications and offline alerts
 - **Message Management**: Automatic cleanup of outdated notifications
 - **Flexible Mentions**: Global and game-specific mention support
+- **Server Overview**: Optional self-updating overview message of all active servers (separate webhook)
 
 ### Performance Features
 

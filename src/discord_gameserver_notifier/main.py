@@ -23,6 +23,7 @@ from discord_gameserver_notifier.discovery.network_scanner import DiscoveryEngin
 from discord_gameserver_notifier.discovery.server_info_wrapper import ServerInfoWrapper, StandardizedServerInfo
 from discord_gameserver_notifier.database.database_manager import DatabaseManager
 from discord_gameserver_notifier.discord.webhook_manager import WebhookManager
+from discord_gameserver_notifier.discord.overview_manager import OverviewManager
 from discord_gameserver_notifier.api import APIServer
 
 class GameServerNotifier:
@@ -75,6 +76,9 @@ class GameServerNotifier:
             self.logger.error(f"Failed to initialize Discord webhook manager: {e}", exc_info=True)
             self.webhook_manager = None
         
+        # Initialize the persistent Discord server overview (separate webhook, optional)
+        self.overview_manager = self._init_overview_manager()
+
         # Initialize discovery engine
         try:
             self.discovery_engine = DiscoveryEngine(self.config_manager.config)
@@ -123,6 +127,39 @@ class GameServerNotifier:
         # Setup signal handlers
         for sig in (signal.SIGTERM, signal.SIGINT):
             signal.signal(sig, self._signal_handler)
+
+    def _init_overview_manager(self) -> Optional[OverviewManager]:
+        """Create the server overview manager if it is enabled in the configuration."""
+        discord_config = self.config_manager.config.get('discord', {})
+        overview_config = discord_config.get('overview') or {}
+        if not overview_config.get('enabled', False):
+            self.logger.info("Discord server overview disabled in configuration")
+            return None
+        if not overview_config.get('webhook_url'):
+            self.logger.warning("Discord server overview enabled but no webhook_url configured "
+                                "(discord.overview.webhook_url / DGN_DISCORD_OVERVIEW_WEBHOOK_URL) - overview disabled")
+            return None
+        if not self.database_manager:
+            self.logger.warning("Discord server overview needs the database - overview disabled")
+            return None
+        if overview_config['webhook_url'] == discord_config.get('webhook_url'):
+            self.logger.warning("Discord server overview uses the same webhook as the notifications - "
+                                "a separate channel/webhook is recommended")
+        try:
+            overview_manager = OverviewManager.from_config(overview_config, self.database_manager)
+            self.logger.info("Discord server overview initialized")
+            return overview_manager
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Discord server overview: {e}")
+            return None
+
+    def _trigger_overview(self) -> None:
+        """Request an overview update (no-op if the overview is disabled)."""
+        if self.overview_manager:
+            try:
+                self.overview_manager.trigger()
+            except Exception as e:
+                self.logger.error(f"Error triggering server overview update: {e}", exc_info=True)
 
     def _signal_handler(self, signum: int, frame) -> None:
         """Handle system signals for graceful shutdown."""
@@ -175,6 +212,15 @@ class GameServerNotifier:
             except Exception as e:
                 self.logger.error(f"Failed to start API server: {e}", exc_info=True)
         
+        # Start the Discord server overview and render the current database state
+        if self.overview_manager:
+            try:
+                await self.overview_manager.start()
+                self.overview_manager.trigger()
+            except Exception as e:
+                self.logger.error(f"Failed to start Discord server overview: {e}", exc_info=True)
+                self.overview_manager = None
+
         # Periodic cleanup interval (configurable for responsive cleanup)
         cleanup_config = self.config_manager.config.get('database', {})
         cleanup_interval = cleanup_config.get('cleanup_interval', 60)  # 1 minute in seconds
@@ -197,7 +243,8 @@ class GameServerNotifier:
                             self.logger.error(f"Error during periodic stats logging: {e}", exc_info=True)
                 
                 # Check for inactive servers and delete their Discord messages
-                if self.database_manager and self.webhook_manager:
+                # (runs without the notification webhook too, so the overview drops vanished servers)
+                if self.database_manager:
                     try:
                         await self._check_and_cleanup_inactive_servers()
                     except Exception as e:
@@ -283,6 +330,14 @@ class GameServerNotifier:
                 except Exception as e:
                     self.logger.error(f"Error closing database manager: {e}", exc_info=True)
             
+            # Stop the Discord server overview (optionally show the "paused" state)
+            if self.overview_manager:
+                try:
+                    overview_config = self.config_manager.config.get('discord', {}).get('overview') or {}
+                    await self.overview_manager.shutdown(pause=overview_config.get('pause_on_shutdown', True))
+                except Exception as e:
+                    self.logger.error(f"Error stopping Discord server overview: {e}", exc_info=True)
+
             # Close Discord webhook manager
             if self.webhook_manager:
                 try:
@@ -376,6 +431,10 @@ class GameServerNotifier:
                 should_send_discord = True
                 self.logger.debug(f"Will send Discord notification: existing server without Discord message ID")
             
+            # Show new servers in the overview without waiting for the scan to finish
+            if is_new_server:
+                self._trigger_overview()
+
             if should_send_discord and self.webhook_manager:
                 try:
                     message_id = self.webhook_manager.send_new_server_notification(standardized_server)
@@ -521,6 +580,9 @@ class GameServerNotifier:
         except Exception as e:
             self.logger.error(f"Error processing scan completion: {e}", exc_info=True)
 
+        # Players and maps are refreshed on every scan, so always re-check the overview
+        self._trigger_overview()
+
     async def _check_and_cleanup_inactive_servers(self) -> None:
         """
         Check for servers that should be marked inactive and delete their Discord messages.
@@ -545,7 +607,7 @@ class GameServerNotifier:
                 # Delete Discord messages for servers that will be marked inactive
                 discord_deletions = 0
                 for server in servers_to_cleanup:
-                    if server.discord_message_id:
+                    if server.discord_message_id and self.webhook_manager:
                         try:
                             self.logger.debug(f"Attempting to delete Discord message for server: {server.name} ({server.ip_address}:{server.port}) - Message ID: {server.discord_message_id}")
                             success = self.webhook_manager.delete_server_message(server.discord_message_id)
@@ -572,6 +634,8 @@ class GameServerNotifier:
                     for server in servers_to_cleanup:
                         self.logger.debug(f"Cleaned up server: {server.name} ({server.ip_address}:{server.port}) - failed_attempts: {server.failed_attempts}, last_seen: {server.last_seen}")
                 
+                    self._trigger_overview()
+
             else:
                 self.logger.debug("No servers need cleanup at this time")
                 

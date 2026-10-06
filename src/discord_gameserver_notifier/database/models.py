@@ -100,6 +100,15 @@ class DatabaseSchema:
         "CREATE INDEX IF NOT EXISTS idx_server_history_change_type ON server_history(change_type);"
     ]
 
+    # Small key/value store for application state (e.g. Discord overview message IDs)
+    CREATE_APP_STATE_TABLE = """
+    CREATE TABLE IF NOT EXISTS app_state (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """
+
 
 class GameServerModel:
     """
