@@ -188,4 +188,3 @@ echo "Discord Gameserver Notifier installation completed!"
 echo "📖 Documentation: https://github.com/lan-dot-party/Discord-Gameserver-Notifier"
 echo ""
 
-exit 0 

@@ -176,6 +176,7 @@ jobs:
           --depends "python3-venv" \
           --before-install "packaging/preinstall.sh" \
           --after-install "packaging/postinstall.sh" \
+          --after-upgrade "packaging/postinstall.sh" \
           --before-remove "packaging/preremove.sh" \
           --deb-systemd "packaging/discord-gameserver-notifier.service" \
           --deb-no-default-config-files \
@@ -208,6 +209,7 @@ jobs:
           --depends "python3-pip" \
           --before-install "packaging/preinstall.sh" \
           --after-install "packaging/postinstall.sh" \
+          --after-upgrade "packaging/postinstall.sh" \
           --before-remove "packaging/preremove.sh" \
           --verbose \
           wheel-contents/discord_gameserver_notifier/=/usr/lib/python3/dist-packages/discord_gameserver_notifier/ \
@@ -548,6 +550,66 @@ jobs:
         
         echo "--- Check if .install script exists in package ---"
         pacman -Qlp "${{ steps.version.outputs.PKG_FILE }}" 2>/dev/null | grep -i install || echo "No .install script in package"
+
+  test-deb-upgrade:
+    name: Test .deb upgrade from previous release 🧪
+    needs:
+    - package-linux
+    runs-on: ubuntu-latest
+    env:
+      # Last release that predates the overview feature (no overview_manager.py)
+      OLD_VERSION: "0.3.1"
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+    - name: Download new Linux packages
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-packages
+        path: packages/
+
+    - name: Download previous release .deb
+      run: |
+        mkdir -p old
+        gh release download "$OLD_VERSION" \
+          --repo "${{ github.repository }}" \
+          --pattern "*.deb" --dir old/
+        ls -la old/
+
+    - name: Install previous version
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-pip python3-venv
+        sudo dpkg -i old/*.deb || sudo apt-get install -fy
+        # Sanity check: the old version must not contain the overview feature,
+        # otherwise this test proves nothing
+        if /opt/discord-gameserver-notifier/bin/python -c "import discord_gameserver_notifier.discord.overview_manager" 2>/dev/null; then
+          echo "❌ Old version $OLD_VERSION already contains overview_manager - choose an older OLD_VERSION"
+          exit 1
+        fi
+        echo "✅ Old version installed without overview feature"
+
+    - name: Upgrade to new version
+      run: |
+        NEW_DEB=$(find packages/ -name "*.deb" | head -1)
+        echo "Upgrading with: $NEW_DEB"
+        sudo dpkg -i "$NEW_DEB"
+
+    - name: Verify venv was updated by the upgrade
+      run: |
+        NEW_DEB=$(find packages/ -name "*.deb" | head -1)
+        EXPECTED=$(basename "$NEW_DEB" | sed 's/discord-gameserver-notifier_\(.*\)_all\.deb/\1/')
+        VENV=/opt/discord-gameserver-notifier
+
+        INSTALLED=$("$VENV/bin/pip" show discord-gameserver-notifier | sed -n 's/^Version: //p')
+        echo "Expected: $EXPECTED, venv has: $INSTALLED"
+        if [ "$INSTALLED" != "$EXPECTED" ]; then
+          echo "❌ venv still contains an outdated version after upgrade"
+          exit 1
+        fi
+
+        "$VENV/bin/python" -c "import discord_gameserver_notifier.discord.overview_manager, discord_gameserver_notifier.discord.overview_renderer"
+        echo "✅ venv updated, overview modules importable"
 
   test-rpm-package:
     name: Test .rpm package installation 🧪
