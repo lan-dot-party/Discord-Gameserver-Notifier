@@ -7,6 +7,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 - 🔍 **Automatic Network Discovery**: Finds game servers in local networks using broadcast queries and passive listening
 - 🎮 **Multi-Protocol Support**: Supports multiple game protocols with specialized discovery methods
 - 📊 **Discord Integration**: Automatic notifications for new servers and server status changes via webhooks
+- 📋 **Persistent Server Overview**: Optional self-updating message in a dedicated channel listing all active servers (edited in place, no spam)
 - 🏷️ **Game-Specific Mentions**: Configure different Discord mentions for each game type (global + game-specific)
 - 💾 **Database Tracking**: Persistent storage and monitoring of discovered servers with SQLite
 - ⚡ **Real-time Updates**: Continuous monitoring of server status with configurable scan intervals
@@ -217,6 +218,15 @@ discord:
   webhook_url: "https://discord.com/api/webhooks/..."
   mentions:
     - "@everyone"         # Optional mentions
+
+  # Optional: Persistent server overview (own webhook, see "Gameserver overview" below)
+  overview:
+    enabled: false
+    webhook_url: ""              # or env DGN_DISCORD_OVERVIEW_WEBHOOK_URL
+    title: "🎮 Gameserver-Übersicht"
+    show_stale: true             # mark servers missing in the last scan with 🟡 (false = hide them)
+    refresh_interval: 300        # refresh the timestamp at least every X seconds (0 = only on changes)
+    pause_on_shutdown: true      # show "Übersicht pausiert" while DGN is stopped
   
   # Optional: Game-specific mentions (added to global mentions)
   game_mentions:
@@ -354,25 +364,63 @@ discord:
 
 See [DISCORD_INTEGRATION.md](DISCORD_INTEGRATION.md) for detailed setup instructions.
 
-#### Gameserver overview (optional)
+#### Gameserver overview (optional, since 0.4.0)
 
 In addition to the notifications, DGN can keep a **persistent overview** of all
 active servers in a dedicated channel: one message (Discord Components V2) that is
-edited in place whenever servers, players or maps change, instead of posting new
-messages. Each row shows server name, game, players, map and `IP:Port`.
+**edited in place** whenever servers appear or disappear, or players or maps change,
+instead of posting new messages. This gives players one place to see what is
+running on the LAN right now. The feature is disabled by default. The regular
+notifications keep working unchanged through `discord.webhook_url`.
 
-1. Create a dedicated text channel (e.g. `#gameserver-übersicht`, read-only for `@everyone`)
-2. Create a **separate** webhook in that channel
-3. Enable the overview and set the webhook URL (preferably via environment variable):
+**Setup:**
+
+1. Create a dedicated text channel (e.g. `#gameserver-overview`) and remove the
+   "Send Messages" permission for `@everyone`, so that the channel only contains the overview
+2. Create a **separate** webhook in that channel (do not reuse the notification webhook)
+3. Enable the overview and set the webhook URL. Using the environment variable
+   `DGN_DISCORD_OVERVIEW_WEBHOOK_URL` is recommended, so that the secret stays out of the config file:
 
 ```yaml
 discord:
   overview:
     enabled: true
-    webhook_url: ""        # or DGN_DISCORD_OVERVIEW_WEBHOOK_URL
+    webhook_url: ""              # or env DGN_DISCORD_OVERVIEW_WEBHOOK_URL
+    title: "🎮 Gameserver-Übersicht"
+    show_stale: true             # mark servers missing in the last scan with 🟡 (false = hide them)
+    refresh_interval: 300        # refresh the timestamp at least every X seconds (0 = only on changes)
+    pause_on_shutdown: true      # show "Übersicht pausiert" while DGN is stopped
 ```
 
-The regular notifications keep working unchanged through `discord.webhook_url`.
+| Option | Default | Description |
+|--------|---------|-------------|
+| `enabled` | `false` | Turns the overview on |
+| `webhook_url` | `""` | Webhook of the overview channel (env `DGN_DISCORD_OVERVIEW_WEBHOOK_URL` takes precedence) |
+| `title` | `🎮 Gameserver-Übersicht` | Heading of the overview message |
+| `show_stale` | `true` | Keep servers that did not answer the last scan and mark them 🟡. `false` hides them right away |
+| `refresh_interval` | `300` | Update the "Stand" timestamp at least this often (seconds), even without changes. `0` = only on changes |
+| `pause_on_shutdown` | `true` | On shutdown, replace the overview with a "paused" notice until DGN runs again |
+
+**What it looks like:**
+
+- One box, grouped by game. For each server it shows the name, players, map and `IP:Port` as copyable text
+- 🟢 = found in the last scan, 🟡 = not reachable in the last scan (removed after
+  `database.inactive_minutes` / `cleanup_after_fails`), 🔒 = password protected
+- Footer with timestamp (shown in each viewer's own time zone), server count and player count
+- With many servers, the overview is split across several messages (max. 5)
+
+**Good to know:**
+
+- The message IDs are stored in the database (table `app_state`). After a restart, DGN keeps
+  editing the same message. If the message is deleted manually, DGN posts it again.
+- If the database is lost or the webhook is replaced, old overview messages stay in the channel
+  and have to be deleted manually (a webhook cannot list its own messages).
+- A "Join" button is not possible. Discord only allows `http`, `https` and `discord://` in links
+  and buttons, so `steam://connect/...` is rejected or shown as plain text.
+- If the webhook is invalid or deleted, the overview disables itself until the next restart
+  (with an error in the log), so that Discord does not rate-limit DGN for repeated failures.
+
+Details (in German): [DISCORD_INTEGRATION.md](DISCORD_INTEGRATION.md#gameserver-übersicht-optional).
 
 ### Network Filtering
 
