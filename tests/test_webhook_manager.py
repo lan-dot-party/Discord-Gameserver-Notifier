@@ -289,6 +289,15 @@ class TestEmbedCreation:
         
         assert embed is not None
     
+    def test_embed_has_no_response_time_field(self, sample_server_info):
+        """Test the embed does not show the query response time."""
+        manager = WebhookManager(webhook_url="https://discord.com/api/webhooks/123/abc")
+        
+        embed = manager._create_server_embed(sample_server_info, is_new=True)
+        names = [field['name'] for field in embed.fields]
+        
+        assert "⚡ Antwortzeit" not in names
+    
     def test_embed_with_discord_fields(self):
         """Test embed creation with additional protocol-specific Discord fields."""
         webhook_url = "https://discord.com/api/webhooks/123/abc"

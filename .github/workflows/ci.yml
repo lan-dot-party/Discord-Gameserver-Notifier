@@ -160,7 +160,7 @@ jobs:
             'cod4', 'cod1', 'halo1', 'quake3', 'avp2', 'aoe1', 'aoe2',
             'battlefield2', 'cnc_generals', 'eldewrito', 'ssc',
             'stronghold_crusader', 'stronghold_ce', 'fear2', 'trackmania_nations',
-            'trackmania_sunrise'
+            'trackmania_sunrise', 'ut2004'
         ]
         
         from discord_gameserver_notifier.discovery.protocols import common
@@ -222,6 +222,7 @@ jobs:
             'warcraft3': {'name': 'WC3 Test', 'map': 'EchoIsles', 'players': 4, 'max_players': 12, 'product': 'W3XP'},
             'flatout2': {'hostname': 'FO2 Test', 'map': 'Track1', 'players': 6, 'max_players': 8, 'game': 'Flatout 2'},
             'ut3': {'name': 'UT3 Test', 'map': 'DM-Deck', 'players': 8, 'max_players': 16, 'game': 'UT3'},
+            'ut2004': {'hostname': 'UT2004 Test', 'map': 'DM-Rankin', 'players': 4, 'max_players': 16, 'game_mode': 'Deathmatch'},
             'toxikk': {'name': 'Toxikk Test', 'map': 'SC-Dekk', 'players': 8, 'max_players': 16, 'game': 'Toxikk'},
             'cod4': {'hostname': 'CoD4 Test', 'map_name': 'mp_crash', 'current_players': 12, 'max_players': 18, 'additional_info': {}},
             'halo1': {'hostname': 'Halo Test', 'mapname': 'bloodgulch', 'numplayers': '8', 'maxplayers': '16'},

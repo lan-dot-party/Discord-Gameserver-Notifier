@@ -46,6 +46,7 @@ class WebhookManager:
             'warcraft3': 0x0066CC,   # Blue for Warcraft 3
             'flatout2': 0xFF0000,    # Red for Flatout 2
             'ut3': 0x9932CC,         # Purple for Unreal Tournament 3
+            'ut2004': 0x9932CC,      # Purple for Unreal Tournament 2004
             'toxikk': 0xFF4500,      # Orange Red for Toxikk
             'cnc_generals': 0xFFD700, # Gold for Command & Conquer Generals
             'default': 0x7289DA      # Discord Blurple
@@ -57,6 +58,7 @@ class WebhookManager:
             'warcraft3': '🏰',
             'flatout2': '🏎️',
             'ut3': '🔫',
+            'ut2004': '🔫',
             'toxikk': '⚡',
             'cnc_generals': '🎖️',
             'default': '🎯'
@@ -365,14 +367,6 @@ class WebhookManager:
             value="🔐 Ja" if server_info.password_protected else "🔓 Nein",
             inline=True
         )
-        
-        # Add response time if available
-        if server_info.response_time > 0:
-            embed.add_embed_field(
-                name="⚡ Antwortzeit",
-                value=f"{server_info.response_time:.2f}s",
-                inline=True
-            )
         
         # Add protocol-specific Discord fields if available
         if server_info.discord_fields:

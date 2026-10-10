@@ -31,7 +31,7 @@ PAGE_SUFFIX_RESERVE = 10     # room for " (12/12)" in the page header
 DEFAULT_ACCENT_COLOR = 0x5865F2   # Discord Blurple
 PAUSED_ACCENT_COLOR = 0x99AAB5    # Grey
 
-# Emojis per game type for the overview headings. The first seven match the
+# Emojis per game type for the overview headings. The first eight match the
 # WebhookManager embeds so both features look consistent.
 OVERVIEW_GAME_EMOJIS = {
     'source': '🎮',
@@ -39,6 +39,7 @@ OVERVIEW_GAME_EMOJIS = {
     'warcraft3': '🏰',
     'flatout2': '🏎️',
     'ut3': '🔫',
+    'ut2004': '🔫',
     'toxikk': '⚡',
     'cnc_generals': '🎖️',
     'aoe1': '🏛️',
