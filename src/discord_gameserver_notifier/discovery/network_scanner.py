@@ -16,6 +16,7 @@ from .protocols import (
     RenegadeXProtocol,
     Flatout2Protocol,
     UT3Protocol,
+    UT2004Protocol,
     Warcraft3Protocol,
     ToxikkProtocol,
     TrackmaniaNationsProtocol,
@@ -60,6 +61,7 @@ class NetworkScanner:
             'renegadex': RenegadeXProtocol(self.timeout),
             'flatout2': Flatout2Protocol(self.timeout),
             'ut3': UT3Protocol(self.timeout),
+            'ut2004': UT2004Protocol(self.timeout),  # Unreal Tournament 2004
             'warcraft3': Warcraft3Protocol(timeout=self.timeout),
             'toxikk': ToxikkProtocol(self.timeout),
             'trackmania_nations': TrackmaniaNationsProtocol(self.timeout),

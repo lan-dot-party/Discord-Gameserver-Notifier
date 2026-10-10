@@ -29,6 +29,7 @@ games:
     - "renegadex"     # Renegade X
     - "flatout2"      # Flatout 2
     - "ut3"           # Unreal Tournament 3
+    - "ut2004"        # Unreal Tournament 2004
 ```
 
 ### 2. DiscoveryEngine (`src/discovery/network_scanner.py`)
@@ -155,6 +156,7 @@ request_data = (
        - "renegadex"       # Renegade X
        - "flatout2"        # Flatout 2
        - "ut3"             # Unreal Tournament 3
+       - "ut2004"          # Unreal Tournament 2004
    ```
 
 ### Ausführung

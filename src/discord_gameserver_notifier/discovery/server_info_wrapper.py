@@ -58,6 +58,8 @@ class ServerInfoWrapper:
             standardized_info = self._standardize_flatout2_server(server_response)
         elif game_type == 'ut3':
             standardized_info = self._standardize_ut3_server(server_response)
+        elif game_type == 'ut2004':
+            standardized_info = self._standardize_ut2004_server(server_response)
         elif game_type == 'toxikk':
             standardized_info = self._standardize_toxikk_server(server_response)
         elif game_type == 'aoe1':
@@ -319,7 +321,39 @@ class ServerInfoWrapper:
             response_time=server_response.response_time,
             additional_info=additional_info
         )
-    
+
+    def _standardize_ut2004_server(self, server_response) -> StandardizedServerInfo:
+        """Standardize Unreal Tournament 2004 server information"""
+        info = server_response.server_info
+
+        additional_info = {
+            'game_mode': info.get('game_mode', 'Unknown'),
+            'game_class': info.get('game_class', ''),
+            'goal_score': info.get('goal_score', 0),
+            'time_limit': info.get('time_limit', 0),
+            'max_spectators': info.get('max_spectators', 0),
+            'mutators': info.get('mutators', []),
+            'admin_name': info.get('admin_name', ''),
+            'server_mode': info.get('server_mode', ''),
+            'player_names': info.get('player_names', []),
+            'query_port': info.get('query_port'),
+        }
+
+        return StandardizedServerInfo(
+            name=info.get('hostname', 'Unknown UT2004 Server'),
+            game='Unreal Tournament 2004',
+            map=info.get('map', 'Unknown Map'),
+            players=info.get('players', 0),
+            max_players=info.get('max_players', 0),
+            version=str(info.get('version') or 'Unknown'),
+            password_protected=info.get('password_protected', False),
+            ip_address=server_response.ip_address,
+            port=server_response.port,
+            game_type=server_response.game_type,
+            response_time=server_response.response_time,
+            additional_info=additional_info
+        )
+
     def _standardize_toxikk_server(self, server_response) -> StandardizedServerInfo:
         """Standardize Toxikk server information"""
         info = server_response.server_info

@@ -7,6 +7,7 @@ from .source import SourceProtocol
 from .renegadex import RenegadeXProtocol
 from .flatout2 import Flatout2Protocol
 from .ut3 import UT3Protocol
+from .ut2004 import UT2004Protocol
 from .warcraft3 import Warcraft3Protocol
 from .toxikk import ToxikkProtocol
 from .trackmania_nations import TrackmaniaNationsProtocol
@@ -36,6 +37,7 @@ __all__ = [
     'RenegadeXProtocol', 
     'Flatout2Protocol',
     'UT3Protocol',
+    'UT2004Protocol',
     'Warcraft3Protocol',
     'ToxikkProtocol',
     'TrackmaniaNationsProtocol',

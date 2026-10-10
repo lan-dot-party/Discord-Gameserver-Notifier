@@ -29,3 +29,6 @@ notifier.log.5
 
 # Local test webhook URL (secret)
 .hooktest
+DGN-Overview-Findings.md
+Ut2004_PW.pcapng
+UT2004_response.pcapng
