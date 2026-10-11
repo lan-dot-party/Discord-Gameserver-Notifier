@@ -53,6 +53,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 | Trackmania Original / Sunrise / Nations ESWC | `trackmania_sunrise` |
 | Unreal Tournament 3 | `ut3` |
 | Unreal Tournament 2004 | `ut2004` |
+| Unreal Tournament 99 | `ut99` |
 | Warcraft III | `warcraft3` |
 
 ## Installation
@@ -214,6 +215,7 @@ games:
     - "trackmania_sunrise"  # Trackmania Original / Sunrise / Nations ESWC
     - "ut3"               # Unreal Tournament 3
     - "ut2004"            # Unreal Tournament 2004
+    - "ut99"              # Unreal Tournament 99
     - "warcraft3"         # Warcraft III
 
 discord:
@@ -284,6 +286,8 @@ discord:
       - "<@&UT3_ROLE_ID>"
     ut2004:               # Unreal Tournament 2004
       - "<@&UT2004_ROLE_ID>"
+    ut99:                 # Unreal Tournament 99
+      - "<@&UT99_ROLE_ID>"
     warcraft3:            # Warcraft III
       - "<@&WC3_ROLE_ID>"
 
@@ -358,6 +362,7 @@ discord:
 - `trackmania_sunrise` - Trackmania Original / Sunrise / Nations ESWC
 - `ut3` - Unreal Tournament 3
 - `ut2004` - Unreal Tournament 2004
+- `ut99` - Unreal Tournament 99
 - `warcraft3` - Warcraft III
 
 ### Discord Setup

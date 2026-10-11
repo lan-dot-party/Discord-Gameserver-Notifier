@@ -47,6 +47,7 @@ class WebhookManager:
             'flatout2': 0xFF0000,    # Red for Flatout 2
             'ut3': 0x9932CC,         # Purple for Unreal Tournament 3
             'ut2004': 0x9932CC,      # Purple for Unreal Tournament 2004
+            'ut99': 0x9932CC,        # Purple for Unreal Tournament 99
             'toxikk': 0xFF4500,      # Orange Red for Toxikk
             'cnc_generals': 0xFFD700, # Gold for Command & Conquer Generals
             'default': 0x7289DA      # Discord Blurple
@@ -59,6 +60,7 @@ class WebhookManager:
             'flatout2': '🏎️',
             'ut3': '🔫',
             'ut2004': '🔫',
+            'ut99': '🔫',
             'toxikk': '⚡',
             'cnc_generals': '🎖️',
             'default': '🎯'
