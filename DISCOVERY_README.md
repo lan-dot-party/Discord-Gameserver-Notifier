@@ -30,6 +30,7 @@ games:
     - "flatout2"      # Flatout 2
     - "ut3"           # Unreal Tournament 3
     - "ut2004"        # Unreal Tournament 2004
+    - "ut99"          # Unreal Tournament 99
 ```
 
 ### 2. DiscoveryEngine (`src/discovery/network_scanner.py`)
@@ -157,6 +158,7 @@ request_data = (
        - "flatout2"        # Flatout 2
        - "ut3"             # Unreal Tournament 3
        - "ut2004"          # Unreal Tournament 2004
+       - "ut99"            # Unreal Tournament 99
    ```
 
 ### Ausführung

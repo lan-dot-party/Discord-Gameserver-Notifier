@@ -17,6 +17,7 @@ from .protocols import (
     Flatout2Protocol,
     UT3Protocol,
     UT2004Protocol,
+    UT99Protocol,
     Warcraft3Protocol,
     ToxikkProtocol,
     TrackmaniaNationsProtocol,
@@ -62,6 +63,7 @@ class NetworkScanner:
             'flatout2': Flatout2Protocol(self.timeout),
             'ut3': UT3Protocol(self.timeout),
             'ut2004': UT2004Protocol(self.timeout),  # Unreal Tournament 2004
+            'ut99': UT99Protocol(self.timeout),  # Unreal Tournament 99
             'warcraft3': Warcraft3Protocol(timeout=self.timeout),
             'toxikk': ToxikkProtocol(self.timeout),
             'trackmania_nations': TrackmaniaNationsProtocol(self.timeout),
