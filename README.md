@@ -58,6 +58,21 @@ A Python-based tool for automatic detection of game servers in local networks wi
 
 ## Installation
 
+### From the lan.party package repository (recommended)
+
+Set up the repository once, then install and update the package with your system's package manager.
+Instructions for Debian/Ubuntu, Fedora/RHEL/Rocky, Arch Linux: **https://repo.lan.party**
+
+```sh
+curl -fsSL https://repo.lan.party/setup.sh | sudo sh   # or follow the manual steps on repo.lan.party
+
+sudo apt install discord-gameserver-notifier      # Debian / Ubuntu
+sudo dnf install discord-gameserver-notifier      # Fedora / RHEL / Rocky
+sudo pacman -S discord-gameserver-notifier        # Arch Linux
+```
+
+New releases then arrive with your normal system updates (`apt upgrade`, `dnf upgrade`, `pacman -Syu`).
+
 ### Prerequisites
 
 - Python 3.9 or higher
@@ -66,7 +81,7 @@ A Python-based tool for automatic detection of game servers in local networks wi
 
 ### Installation Methods
 
-#### Option 1: Package Installation (Recommended)
+#### Option 1: Package files from GitHub releases
 
 **From PyPI:**
 ```bash
